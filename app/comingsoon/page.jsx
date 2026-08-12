@@ -1,13 +1,23 @@
-import React from 'react';
-
 export default function ComingSoonPage() {
   return (
-    <div className=" mt-[10%] w-full min-h-screen overflow-hidden bg-[#1c1d22]">
-      <img
-        src="/comingsoon.svg"
-        alt="Coming Soon"
-        className="block h-auto w-full object-cover"
+    <main className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-black">
+      {/* Desktop */}
+      <div
+        className="hidden h-full w-full bg-cover bg-center bg-no-repeat lg:block"
+        style={{
+          backgroundImage: "url('/comingsoon.svg')",
+        }}
       />
-    </div>
+
+      {/* Mobile + Tablet */}
+      <div
+        className="block h-full w-full bg-no-repeat lg:hidden"
+        style={{
+          backgroundImage: "url('/mobile.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+        }}
+      />
+    </main>
   );
 }
