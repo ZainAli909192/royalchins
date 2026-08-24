@@ -34,13 +34,8 @@ const menuItems = [
     icon: Tags,
   },
   {
-    label: "Animals",
-    href: "/admin/animals",
-    icon: PawPrint,
-  },
-  {
-    label: "Accessories",
-    href: "/admin/accessories",
+    label: "Products",
+    href: "/admin/products",
     icon: Package,
   },
   {
@@ -109,8 +104,7 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className="hidden h-screen w-[260px] shrink-0 flex-col bg-secondary text-secondary-foreground lg:flex">
-      <div className="flex h-[130px] items-center justify-center border-b border-white/10 px-6 border-rounded rounded-full">
+<aside className="fixed left-0 top-0 z-40 hidden h-screen w-[260px] flex-col bg-secondary text-secondary-foreground lg:flex">      <div className="flex h-[130px] items-center justify-center border-b border-white/10 px-6 border-rounded rounded-full">
         <Image
           src="/logo.png"
           alt="Royal Chins"
