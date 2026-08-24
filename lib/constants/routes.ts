@@ -1,0 +1,23 @@
+export const ROUTES = {
+  admin: {
+    login: "/admin/login",
+    forgotPassword: "/admin/forgot-password",
+    resetPassword: "/admin/reset-password",
+    dashboard: "/admin/dashboard",
+    categories: "/admin/categories",
+    animals: "/admin/animals",
+    accessories: "/admin/accessories",
+    inventory: "/admin/inventory",
+    orders: "/admin/orders",
+    payments: "/admin/payments",
+    refunds: "/admin/refunds",
+    customers: "/admin/customers",
+    reviews: "/admin/reviews",
+    pages: "/admin/pages",
+    faq: "/admin/faq",
+    deliveryFees: "/admin/delivery-fees",
+    settings: "/admin/settings",
+    profile: "/admin/profile",
+    changePassword: "/admin/change-password",
+  },
+} as const;
