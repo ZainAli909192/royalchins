@@ -1,5 +1,3 @@
-"use client";
-
 import {
   forwardRef,
   type InputHTMLAttributes,
@@ -31,8 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
-    const inputId =
-      id || props.name || `input-${Math.random().toString(36).slice(2, 9)}`;
+    const inputId = id || props.name;
 
     return (
       <div className={`w-full ${containerClassName}`}>
@@ -47,13 +44,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative">
           {leftIcon && (
-            <div
-              className={[
-                "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2",
-                "flex items-center justify-center",
-                error ? "text-error" : "text-primary",
-              ].join(" ")}
-            >
+            <div className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 items-center text-primary">
               {leftIcon}
             </div>
           )}
@@ -63,71 +54,39 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             disabled={disabled}
             aria-invalid={Boolean(error)}
-            aria-describedby={
-              error
-                ? `${inputId}-error`
-                : helperText
-                ? `${inputId}-helper`
-                : undefined
-            }
-            className={[
-              "h-12 w-full rounded-md border bg-[var(--input-background)]",
-              "text-sm text-foreground outline-none",
-              "transition-all duration-200",
-              "placeholder:text-[var(--input-placeholder)]",
-
-              leftIcon ? "pl-12" : "pl-4",
-              rightIcon ? "pr-12" : "pr-4",
-
-              error
-                ? [
-                    "border-error",
-                    "focus:border-error",
-                    "focus:ring-4",
-                    "focus:ring-red-500/10",
-                  ].join(" ")
-                : [
-                    "border-[var(--input-border)]",
-                    "hover:border-[var(--border-strong)]",
-                    "focus:border-primary",
-                    "focus:ring-4",
-                    "focus:ring-[var(--focus-ring)]",
-                  ].join(" "),
-
-              disabled
-                ? "cursor-not-allowed bg-muted text-muted-foreground opacity-70"
-                : "",
-
-              className,
-            ]
-              .filter(Boolean)
-              .join(" ")}
+            className={`
+              h-12 w-full rounded-lg border bg-white text-sm text-foreground
+              outline-none transition
+              placeholder:text-muted-foreground
+              focus:border-primary focus:ring-2 focus:ring-primary/10
+              disabled:cursor-not-allowed disabled:opacity-60
+              sm:h-14 sm:text-base
+              ${leftIcon ? "pl-12" : "pl-4"}
+              ${rightIcon ? "pr-12" : "pr-4"}
+              ${error ? "border-error" : "border-border"}
+              ${className}
+            `}
             {...props}
           />
 
           {rightIcon && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
+            <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center">
               {rightIcon}
             </div>
           )}
         </div>
 
-        {error ? (
-          <p
-            id={`${inputId}-error`}
-            role="alert"
-            className="mt-2 text-sm font-medium text-error"
-          >
+        {error && (
+          <p className="mt-1.5 text-sm text-error">
             {error}
           </p>
-        ) : helperText ? (
-          <p
-            id={`${inputId}-helper`}
-            className="mt-2 text-sm text-muted-foreground"
-          >
+        )}
+
+        {!error && helperText && (
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {helperText}
           </p>
-        ) : null}
+        )}
       </div>
     );
   }
