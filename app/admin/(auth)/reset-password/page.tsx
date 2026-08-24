@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { ArrowLeft, KeyRound } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ import {
 import { adminResetPassword } from "@/lib/api/auth";
 import { getErrorMessage } from "@/lib/utils/errors";
 
-export default function AdminResetPasswordPage() {
+function AdminResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
 
@@ -154,5 +154,23 @@ export default function AdminResetPasswordPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function AdminResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-surface-subtle">
+          <div
+            className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary"
+            role="status"
+            aria-label="Loading password reset form"
+          />
+        </main>
+      }
+    >
+      <AdminResetPasswordForm />
+    </Suspense>
   );
 }

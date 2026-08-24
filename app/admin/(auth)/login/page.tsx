@@ -87,15 +87,16 @@ export default function AdminLoginPage() {
             <h1 className="mt-5 text-3xl font-bold tracking-[-0.03em] text-foreground sm:text-[40px] sm:leading-tight">
               Admin Portal
             </h1>
-    <Image
-            src="/logo.png" 
-            alt=""
-            width={112}
-            height={112}
-            priority
-            className="h-28 w-28 shrink-0 object-contain"
-            style={{ width: "50vw" }}
-          />
+   <div className="mt-4 flex justify-center">
+  <Image
+    src="/logo.png"
+    alt="Royal Chins"
+    width={160}
+    height={100}
+    priority
+    className="relative left-3 h-auto w-[130px] object-contain sm:left-0 sm:w-[150px]"
+  />
+</div>
             <p className="mt-2 text-sm text-muted-foreground sm:text-lg">
               Authorized access only
             </p>
