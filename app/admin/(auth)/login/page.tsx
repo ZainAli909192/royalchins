@@ -78,7 +78,7 @@ export default function AdminLoginPage() {
       <section className=" relative flex min-h-screen items-center justify-center bg-white px-4 pb-8 pt-28 sm:px-8 lg:bg-surface-subtle lg:px-9 lg:py-6">
      
 
-        <div className="relative z-10 w-full max-w-[640px] bg-white px-1 py-4 sm:px-8 sm:py-9 lg:flex lg:min-h-[calc(70vh-48px)] lg:flex-col lg:justify-center lg:rounded-[22px] lg:border lg:border-border lg:px-[52px] lg:py-10 lg:shadow-lg xl:px-[54px]">
+        <div className="relative z-10 w-full max-w-[640px] bg-white px-1 py-4 sm:px-8 sm:py-5 lg:flex lg:min-h-[calc(70vh-48px)] lg:flex-col lg:justify-center lg:rounded-[22px] lg:border lg:border-border lg:px-[52px] lg:py-10 lg:shadow-lg xl:px-[54px]">
           <div className="text-center">
             <div className="mx-auto flex h-[86px] w-[86px] items-center justify-center rounded-full bg-surface-subtle text-primary">
               <LockKeyhole className="h-11 w-11" strokeWidth={1.7} />
@@ -94,10 +94,10 @@ export default function AdminLoginPage() {
     width={160}
     height={100}
     priority
-    className="relative left-3 h-auto w-[130px] object-contain sm:left-0 sm:w-[150px]"
+    className="relative left-3 h-auto w-[130px] object-contain sm:left-0 sm:w-[150px] md:block hidden"
   />
 </div>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-lg">
+            <p className="mt-1 text-sm text-muted-foreground sm:text-lg md:block hidden">
               Authorized access only
             </p>
 
