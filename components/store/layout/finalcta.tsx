@@ -17,7 +17,7 @@ export default function FinalCTA() {
 
       <div className="lg:hidden">
         <div className="overflow-hidden rounded-3xl border border-border bg-secondary shadow-md">
-          <div className="relative aspect-[2/3] w-full overflow-hidden bg-surface-subtle">
+          <div className="relative h-60 w-full overflow-hidden bg-surface-subtle sm:h-72">
             <Image
               src="/finalctamob.png"
               alt="Royal Chins - Healthy Chins, Happy Lives"
@@ -27,22 +27,20 @@ export default function FinalCTA() {
             />
           </div>
 
-          <div className="px-5 py-6 text-primary-foreground sm:px-7 sm:py-8">
+          <div className="px-8 py-8 text-primary-foreground sm:px-9 sm:py-9">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground/75">
               <Sparkles aria-hidden="true" className="h-4 w-4 text-primary" strokeWidth={2} />
               Royal Chins care
             </p>
 
-            <p className="mt-3 font-serif text-4xl leading-[0.95] tracking-tight sm:text-5xl">
+            <p className="mt-4 max-w-xs font-serif text-[2.65rem] leading-[0.92] tracking-tight sm:max-w-sm sm:text-5xl">
               Give them a
               <span className="block text-primary italic">life they&apos;ll love.</span>
             </p>
 
-            <p className="mt-4 max-w-sm text-sm leading-6 text-primary-foreground/80 sm:text-base">
+            <p className="mt-5 max-w-sm text-base leading-7 text-primary-foreground/80">
               Premium companions and everyday essentials, chosen with heart.
             </p>
-
-            
           </div>
         </div>
       </div>
