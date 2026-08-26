@@ -1,1 +1,3 @@
-export default function ReviewPage() { return <main>Review Order</main>; }
+export default function Page() {
+  return null;
+}

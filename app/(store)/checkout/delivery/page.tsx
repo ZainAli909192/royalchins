@@ -1,1 +1,3 @@
-export default function DeliveryPage() { return <main>Delivery</main>; }
+export default function Page() {
+  return null;
+}

@@ -89,13 +89,14 @@ export const adminMobileBottomItems = [
     icon: LayoutDashboard,
   },
   {
-    label: "Orders",
-    href: "/admin/orders",
-    icon: ClipboardList,
-  },
-  {
     label: "Products",
     href: "/admin/products",
     icon: Package,
   },
+  {
+    label: "Orders",
+    href: "/admin/orders",
+    icon: ClipboardList,
+  },
+  
 ];

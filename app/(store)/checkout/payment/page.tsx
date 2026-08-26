@@ -1,1 +1,3 @@
-export default function PaymentPage() { return <main>Payment</main>; }
+export default function Page() {
+  return null;
+}
