@@ -239,3 +239,39 @@ button:disabled {
 .login-clip {
 clip-path: polygon(0 0, 100% 0%, 100% 91%, 0 89%);
 }
+
+/* sliding  */
+@keyframes featured-marquee-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes featured-marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-featured-marquee-left {
+  animation: featured-marquee-left 40s linear infinite;
+}
+
+.animate-featured-marquee-right {
+  animation: featured-marquee-right 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-featured-marquee-left,
+  .animate-featured-marquee-right {
+    animation: none;
+  }
+}

@@ -11,6 +11,7 @@ import {
 
 import { ProductCard } from "@/components/store/browse/product-card";
 import { BrowseHeader } from "@/components/store/browse/browse-header";
+import { FeaturedProducts } from "@/components/store/browse/featured-products";
 const products = [
   {
     slug: "white-chinchilla",
@@ -188,7 +189,9 @@ export default function BrowsePage() {
   return (
     <div className="mx-auto max-w-[1440px] space-y-10 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <BrowseHeader />
-
+    <FeaturedProducts
+  products={products}
+/>
       <CategoryCards />
 
       <section>
