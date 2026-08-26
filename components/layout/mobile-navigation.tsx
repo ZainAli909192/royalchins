@@ -13,11 +13,7 @@ import {
 } from "lucide-react";
 
 const items = [
-  {
-    label: "Browse",
-    href: "/",
-    icon: House,
-  },
+ 
   {
     label: "Categories",
     href: "/?browse=categories",
