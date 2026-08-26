@@ -12,6 +12,8 @@ import {
 import { ProductCard } from "@/components/store/browse/product-card";
 import { BrowseHeader } from "@/components/store/browse/browse-header";
 import { FeaturedProducts } from "@/components/store/browse/featured-products";
+import  FinalCTA  from "@/components/store/layout/finalcta";
+
 const products = [
   {
     slug: "white-chinchilla",
@@ -276,6 +278,7 @@ export default function BrowsePage() {
           </div>
         )}
       </section>
+<FinalCTA />
     </div>
   );
 }
