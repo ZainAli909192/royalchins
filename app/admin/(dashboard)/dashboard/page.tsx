@@ -1,12 +1,13 @@
 import Link from "next/link";
+
 import {
   Boxes,
   ClipboardList,
   Package,
   PawPrint,
-  ShoppingBag,
+  RotateCcw,
+  Star,
   Tags,
-  Users,
 } from "lucide-react";
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
@@ -15,69 +16,121 @@ const stats = [
   {
     title: "Orders Today",
     value: "18",
-    change: "↑ 12.5%",
-    comparison: "vs yesterday",
+    meta: "↑ 12.5% vs yesterday",
+    tone: "success",
     icon: ClipboardList,
-  },
-  {
-    title: "New Customers Today",
-    value: "7",
-    change: "↑ 16.7%",
-    comparison: "vs yesterday",
-    icon: Users,
-  },
-  {
-    title: "Total Animals",
-    value: "156",
-    change: "↑ 4",
-    comparison: "this week",
-    icon: PawPrint,
+    href: "/admin/orders",
   },
   {
     title: "Low Stock",
     value: "6",
-    change: "Needs attention",
-    comparison: "",
+    meta: "Needs attention",
+    tone: "warning",
     icon: Boxes,
+    href: "/admin/inventory",
+  },
+  {
+    title: "Pending Refunds",
+    value: "3",
+    meta: "Awaiting review",
+    tone: "warning",
+    icon: RotateCcw,
+    href: "/admin/refunds",
+  },
+  {
+    title: "Pending Reviews",
+    value: "5",
+    meta: "Awaiting moderation",
+    tone: "warning",
+    icon: Star,
+    href: "/admin/reviews",
+  },
+];
+
+const highlights = [
+  {
+    label: "Top Selling Animal",
+    value: "White Chinchilla",
+    meta: "12 Sold",
+    icon: PawPrint,
+  },
+  {
+    label: "Top Selling Accessory",
+    value: "Premium Cage",
+    meta: "9 Sold",
+    icon: Package,
+  },
+  {
+    label: "Top Accessory Category",
+    value: "Housing & Cages",
+    meta: "11 Orders",
+    icon: Tags,
   },
 ];
 
 const lowStockItems = [
   {
+    id: 1,
     name: "White Chinchilla",
+    type: "Animal",
     quantity: 2,
   },
   {
+    id: 2,
     name: "Guinea Pig",
+    type: "Animal",
     quantity: 1,
   },
   {
+    id: 3,
+    name: "Premium Cage",
+    type: "Accessory",
+    quantity: 2,
+  },
+  {
+    id: 4,
     name: "Micro Squirrel",
+    type: "Animal",
     quantity: 2,
   },
 ];
 
 const recentOrders = [
   {
-    id: "#RC-1028",
+    id: 1028,
+    orderNumber: "RC-1028",
     customer: "Ahmed Khan",
-    item: "Chinchilla × 2",
+    item: "White Chinchilla × 2",
     total: "AED 2,800",
+    payment: "Paid",
     status: "Delivered",
   },
   {
-    id: "#RC-1027",
+    id: 1027,
+    orderNumber: "RC-1027",
     customer: "Sara Ali",
     item: "Guinea Pig × 1",
     total: "AED 650",
+    payment: "Paid",
     status: "Processing",
   },
   {
-    id: "#RC-1026",
+    id: 1026,
+    orderNumber: "RC-1026",
     customer: "Omar Hassan",
     item: "Micro Squirrel × 1",
     total: "AED 1,200",
+    payment: "Paid",
     status: "Delivered",
+  },
+  {
+    id: 1025,
+    orderNumber: "RC-1025",
+    customer: "Mariam Noor",
+    item: "Premium Cage × 1",
+    total: "AED 420",
+    payment: "Paid",
+    status: "Confirmed",
   },
 ];
 
@@ -113,12 +166,13 @@ export default function AdminDashboardPage() {
             const Icon = item.icon;
 
             return (
-              <div
+              <Link
                 key={item.title}
-                className="rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5"
+                href={item.href}
+                className="group rounded-2xl border border-border bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:p-5"
               >
                 <div className="flex items-start gap-3 lg:justify-between">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-subtle text-primary lg:order-2 lg:h-12 lg:w-12">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-subtle text-primary transition-colors group-hover:bg-primary/10 lg:order-2 lg:h-12 lg:w-12">
                     <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
                   </div>
 
@@ -133,22 +187,59 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 text-xs">
-                  <span
-                    className={
-                      item.title === "Low Stock"
-                        ? "font-medium text-warning"
-                        : "font-medium text-success"
-                    }
-                  >
-                    {item.change}
-                  </span>
+                <p
+                  className={`mt-3 text-xs font-medium ${
+                    item.tone === "success"
+                      ? "text-success"
+                      : "text-warning"
+                  }`}
+                >
+                  {item.meta}
+                </p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
-                  {item.comparison && (
-                    <span className="ml-1 text-muted-foreground">
-                      {item.comparison}
+      <section>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-primary lg:text-foreground">
+            Sales Highlights
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Best-performing products and categories.
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {highlights.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div
+                key={item.label}
+                className="rounded-2xl border border-border bg-white p-5 shadow-sm"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-6 w-6" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {item.label}
+                    </p>
+
+                    <p className="mt-1 truncate text-base font-bold text-foreground">
+                      {item.value}
+                    </p>
+
+                    <span className="mt-3 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                      {item.meta}
                     </span>
-                  )}
+                  </div>
                 </div>
               </div>
             );
@@ -156,145 +247,78 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-primary lg:text-foreground">
-          Highlights
-        </h2>
-
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-primary/10 bg-surface-subtle p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-primary">
-                <PawPrint className="h-7 w-7" />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-primary">
-                  Top Selling Animal
-                </p>
-
-                <p className="mt-1 font-semibold text-foreground">
-                  White Chinchilla
-                </p>
-
-                <span className="mt-2 inline-block rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary">
-                  12 Sold
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-primary/10 bg-white p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-primary">
-                <Tags className="h-7 w-7" />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-primary">
-                  Top Animal Category
-                </p>
-
-                <p className="mt-1 font-semibold text-foreground">
-                  Chinchillas
-                </p>
-
-                <span className="mt-2 inline-block rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-primary">
-                  14 Orders
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-primary/10 bg-surface-subtle p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-primary">
-                <ShoppingBag className="h-7 w-7" />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-primary">
-                  Top Selling Accessory
-                </p>
-
-                <p className="mt-1 font-semibold text-foreground">
-                  Premium Cage
-                </p>
-
-                <span className="mt-2 inline-block rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary">
-                  9 Sold
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-primary/10 bg-white p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-primary">
-                <Package className="h-7 w-7" />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-primary">
-                  Top Accessory Category
-                </p>
-
-                <p className="mt-1 font-semibold text-foreground">
-                  Housing & Cages
-                </p>
-
-                <span className="mt-2 inline-block rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-primary">
-                  11 Orders
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex items-center justify-between">
+      <section className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-5">
           <div>
             <h2 className="text-lg font-semibold text-foreground">
-              Low Stock Items
+              Low Stock Products
             </h2>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Products that have reached the configured low stock threshold.
+            </p>
           </div>
 
           <Link
             href="/admin/inventory"
-            className="text-sm font-medium text-primary hover:underline"
+            className="shrink-0 text-sm font-medium text-primary hover:underline"
           >
             View All
           </Link>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
           {lowStockItems.map((item) => (
-            <div
-              key={item.name}
-              className="flex items-center justify-between rounded-xl bg-surface-subtle px-4 py-3"
+            <Link
+              key={item.id}
+              href="/admin/inventory"
+              className="rounded-xl border border-border p-4 transition-colors hover:border-primary/30 hover:bg-primary/5"
             >
-              <span className="text-sm font-medium text-foreground">
-                {item.name}
-              </span>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {item.name}
+                  </p>
 
-              <span className="text-xs font-semibold text-error">
-                {item.quantity} left
-              </span>
-            </div>
+                  <span className="mt-2 inline-flex rounded-full bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                    {item.type}
+                  </span>
+                </div>
+
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--error-background)] text-error">
+                  <Boxes className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                <span className="text-xs text-muted-foreground">
+                  Available Stock
+                </span>
+
+                <span className="text-sm font-bold text-error">
+                  {item.quantity} left
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-5">
-          <h2 className="text-lg font-semibold text-primary lg:text-foreground">
-            Recent Orders
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold text-primary lg:text-foreground">
+              Recent Orders
+            </h2>
+
+            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
+              Latest customer orders placed on Royal Chins.
+            </p>
+          </div>
 
           <Link
             href="/admin/orders"
-            className="text-sm font-medium text-primary hover:underline"
+            className="shrink-0 text-sm font-medium text-primary hover:underline"
           >
             View All
           </Link>
@@ -304,32 +328,56 @@ export default function AdminDashboardPage() {
           {recentOrders.map((order) => (
             <Link
               key={order.id}
-              href={`/admin/orders/${order.id.replace("#", "")}`}
-              className="grid grid-cols-[90px_1fr_auto] gap-3 px-4 py-4"
+              href={`/admin/orders/${order.id}`}
+              className="block p-4 transition-colors hover:bg-surface-subtle/50"
             >
-              <span className="text-sm font-semibold text-primary">
-                {order.id}
-              </span>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-primary">
+                    #{order.orderNumber}
+                  </p>
 
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {order.customer}
-                </p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
+                    {order.customer}
+                  </p>
+                </div>
 
-                <p className="mt-1 truncate text-xs text-muted-foreground">
-                  {order.item} · {order.total}
-                </p>
+                <StatusBadge
+                  status={order.status}
+                />
               </div>
 
-              <span className="h-fit rounded-full bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-primary">
-                {order.status}
-              </span>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {order.item}
+              </p>
+
+              <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-surface-subtle p-3">
+                <div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Total
+                  </p>
+
+                  <p className="mt-1 text-sm font-semibold text-foreground">
+                    {order.total}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-[11px] text-muted-foreground">
+                    Payment
+                  </p>
+
+                  <span className="mt-1 inline-flex rounded-full bg-[var(--success-background)] px-2 py-0.5 text-xs font-medium text-success">
+                    {order.payment}
+                  </span>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[760px]">
+          <table className="w-full min-w-[900px]">
             <thead className="bg-surface-subtle">
               <tr>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
@@ -349,7 +397,15 @@ export default function AdminDashboardPage() {
                 </th>
 
                 <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                  Payment
+                </th>
+
+                <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
                   Status
+                </th>
+
+                <th className="px-5 py-3 text-right text-xs font-semibold text-muted-foreground">
+                  Action
                 </th>
               </tr>
             </thead>
@@ -360,11 +416,16 @@ export default function AdminDashboardPage() {
                   key={order.id}
                   className="border-t border-border"
                 >
-                  <td className="px-5 py-4 text-sm font-medium text-primary">
-                    {order.id}
+                  <td className="px-5 py-4">
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="text-sm font-semibold text-primary hover:underline"
+                    >
+                      #{order.orderNumber}
+                    </Link>
                   </td>
 
-                  <td className="px-5 py-4 text-sm text-foreground">
+                  <td className="px-5 py-4 text-sm font-medium text-foreground">
                     {order.customer}
                   </td>
 
@@ -372,14 +433,29 @@ export default function AdminDashboardPage() {
                     {order.item}
                   </td>
 
-                  <td className="px-5 py-4 text-sm font-medium text-foreground">
+                  <td className="px-5 py-4 text-sm font-semibold text-foreground">
                     {order.total}
                   </td>
 
                   <td className="px-5 py-4">
-                    <span className="rounded-full bg-surface-subtle px-3 py-1 text-xs font-medium text-primary">
-                      {order.status}
+                    <span className="rounded-full bg-[var(--success-background)] px-3 py-1 text-xs font-medium text-success">
+                      {order.payment}
                     </span>
+                  </td>
+
+                  <td className="px-5 py-4">
+                    <StatusBadge
+                      status={order.status}
+                    />
+                  </td>
+
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      View
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -388,5 +464,43 @@ export default function AdminDashboardPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function StatusBadge({
+  status,
+}: {
+  status: string;
+}) {
+  let className =
+    "bg-surface-subtle text-muted-foreground";
+
+  if (
+    status === "Delivered"
+  ) {
+    className =
+      "bg-[var(--success-background)] text-success";
+  }
+
+  if (
+    status === "Processing"
+  ) {
+    className =
+      "bg-primary/10 text-primary";
+  }
+
+  if (
+    status === "Confirmed"
+  ) {
+    className =
+      "bg-[var(--warning-background)] text-warning";
+  }
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${className}`}
+    >
+      {status}
+    </span>
   );
 }

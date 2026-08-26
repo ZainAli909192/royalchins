@@ -109,14 +109,7 @@ export function AdminHeader() {
                     Profile
                   </Link>
 
-                  <Link
-                    href="/admin/change-password"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-surface-subtle"
-                  >
-                    <KeyRound className="h-4 w-4 text-primary" />
-                    Change Password
-                  </Link>
+               
 
                   <button
                     type="button"
