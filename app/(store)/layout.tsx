@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 
 import { StoreFooter } from "@/components/store/layout/store-footer";
 import { StoreHeader } from "@/components/store/layout/store-header";
@@ -21,7 +22,9 @@ export default function StoreLayout({
 
       <StoreFooter />
 
-      <StoreMobileNav />
+      <Suspense fallback={null}>
+        <StoreMobileNav />
+      </Suspense>
     </div>
   );
 }
