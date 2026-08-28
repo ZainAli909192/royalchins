@@ -100,10 +100,7 @@ function FeaturedCard({
   const [imageFailed, setImageFailed] =
     useState(false);
 
-  const productHref =
-    product.type === "Animal"
-      ? `/animals/${product.slug}`
-      : `/accessories/${product.slug}`;
+  const productHref = `/product/${product.slug}`;
 
   const FallbackIcon =
     product.type === "Animal"

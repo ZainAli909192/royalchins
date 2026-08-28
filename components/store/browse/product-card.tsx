@@ -33,10 +33,7 @@ export function ProductCard({
   const isOutOfStock = stock === 0;
   const isLowStock = stock > 0 && stock <= 2;
 
-  const productHref =
-    type === "Animal"
-      ? `/animals/${slug}`
-      : `/accessories/${slug}`;
+  const productHref = `/product/${slug}`;
 
   const FallbackIcon =
     type === "Animal"
