@@ -21,6 +21,7 @@ import { getErrorMessage } from "@/lib/utils/errors";
 export default function AdminForgotPasswordPage() {
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [resetUrl, setResetUrl] = useState("");
 
   const {
     register,
@@ -39,6 +40,7 @@ export default function AdminForgotPasswordPage() {
   ) => {
     setFormError("");
     setSuccessMessage("");
+    setResetUrl("");
 
     try {
       const response = await adminForgotPassword(values.email);
@@ -46,6 +48,7 @@ export default function AdminForgotPasswordPage() {
       setSuccessMessage(
         response.message || "Password reset link sent successfully."
       );
+      setResetUrl(response.resetUrl ?? "");
     } catch (error) {
       setFormError(
         getErrorMessage(
@@ -93,6 +96,12 @@ export default function AdminForgotPasswordPage() {
                 variant="success"
                 message={successMessage}
               />
+            )}
+
+            {resetUrl && (
+              <Link href={resetUrl} className="block rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-center text-sm font-semibold text-primary hover:bg-primary/10">
+                Continue to password reset
+              </Link>
             )}
 
             <Input

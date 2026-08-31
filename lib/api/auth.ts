@@ -7,7 +7,6 @@ export type AdminLoginPayload = {
 };
 
 export type AuthResponse = {
-  token: string;
   user: {
     id: string | number;
     name?: string;
@@ -17,7 +16,7 @@ export type AuthResponse = {
 };
 
 export async function adminLogin(payload: AdminLoginPayload) {
-  return apiRequest<AuthResponse>("/admin/auth/login", {
+  return apiRequest<AuthResponse>("/api/admin/auth/login", {
     method: "POST",
     auth: false,
     body: JSON.stringify(payload),
@@ -25,7 +24,7 @@ export async function adminLogin(payload: AdminLoginPayload) {
 }
 
 export async function adminForgotPassword(email: string) {
-  return apiRequest<{ message: string }>("/admin/auth/forgot-password", {
+  return apiRequest<{ message: string; resetUrl?: string }>("/api/admin/auth/forgot-password", {
     method: "POST",
     auth: false,
     body: JSON.stringify({ email }),
@@ -37,7 +36,7 @@ export async function adminResetPassword(payload: {
   password: string;
   passwordConfirmation: string;
 }) {
-  return apiRequest<{ message: string }>("/admin/auth/reset-password", {
+  return apiRequest<{ message: string }>("/api/admin/auth/reset-password", {
     method: "POST",
     auth: false,
     body: JSON.stringify(payload),
@@ -45,7 +44,7 @@ export async function adminResetPassword(payload: {
 }
 
 export async function adminLogout() {
-  return apiRequest<{ message: string }>("/admin/auth/logout", {
+  return apiRequest<{ message: string }>("/api/admin/auth/logout", {
     method: "POST",
   });
 }

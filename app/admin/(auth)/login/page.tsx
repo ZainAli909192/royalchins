@@ -21,7 +21,6 @@ import {
 } from "@/lib/validations/admin-login";
 
 import { adminLogin } from "@/lib/api/auth";
-import { saveAdminSession } from "@/lib/auth/admin-auth";
 import { getErrorMessage } from "@/lib/utils/errors";
 
 export default function AdminLoginPage() {
@@ -53,9 +52,7 @@ export default function AdminLoginPage() {
     setSuccessMessage("");
 
     try {
-      const response = await adminLogin(values);
-
-      saveAdminSession(response.token);
+      await adminLogin(values);
 
       setSuccessMessage("Login successful. Redirecting...");
 

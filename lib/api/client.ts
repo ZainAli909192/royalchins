@@ -41,7 +41,8 @@ export async function apiRequest<T>(
   try {
     const token = auth ? getAuthToken() : null;
 
-    const response = await fetch(`${appConfig.apiBaseUrl}${path}`, {
+    const url = path.startsWith("/api/") ? path : `${appConfig.apiBaseUrl}${path}`;
+    const response = await fetch(url, {
       ...requestInit,
       signal: controller.signal,
       credentials: "include",
