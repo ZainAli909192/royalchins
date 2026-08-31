@@ -5,91 +5,142 @@ import {
   Minus,
   Plus,
   ShoppingCart,
-  Star,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { addToCart } from "@/lib/store/cart-storage";
+import { saveCheckout } from "@/lib/store/checkout-storage";
 
 type PurchasePanelProps = {
-  name?: string;
+  id: string;
   slug: string;
-  price?: number;
+  name: string;
+  image: string;
+  type: "Animal" | "Accessory";
+  price: number;
   stock: number;
-  averageRating?: number;
-  reviewCount?: number;
+  shortMeta?: string;
 };
 
 export function PurchasePanel({
+  id,
   slug,
+  name,
+  image,
+  type,
+  price,
   stock,
-  averageRating = 4.9,
-  reviewCount = 124,
+  shortMeta,
 }: PurchasePanelProps) {
   const router = useRouter();
+
   const [quantity, setQuantity] = useState(1);
-  const isOutOfStock = stock === 0;
+  const [added, setAdded] = useState(false);
+
+  const isOutOfStock = stock <= 0;
+
+  const handleDecreaseQuantity = () => {
+    setQuantity((current) =>
+      Math.max(1, current - 1)
+    );
+  };
+
+  const handleIncreaseQuantity = () => {
+    setQuantity((current) =>
+      Math.min(stock, current + 1)
+    );
+  };
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
 
-    console.log("Add to cart", { slug, quantity });
+    addToCart({
+      id,
+      slug,
+      name,
+      image,
+      type,
+      price,
+      quantity,
+      shortMeta,
+    });
+
+    setAdded(true);
+
+    window.setTimeout(() => {
+      setAdded(false);
+    }, 2000);
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
 
-    const params = new URLSearchParams({
-      product: slug,
-      quantity: String(quantity),
+    saveCheckout({
+      source: "buy-now",
+      items: [
+        {
+          id,
+          slug,
+          name,
+          image,
+          type,
+          price,
+          quantity,
+          shortMeta,
+        },
+      ],
     });
 
-    router.push(`/checkout?${params.toString()}`);
+    router.push("/checkout/auth");
   };
 
   return (
     <div className="mt-5 border-t border-border pt-5 sm:mt-6 sm:pt-6">
-      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-4">
-        <div className="flex items-center gap-2 text-sm">
-          <Star
-            aria-hidden="true"
-            className="h-5 w-5 fill-primary text-primary"
-            strokeWidth={1.8}
-          />
-          <span className="font-bold text-foreground">
-            {averageRating.toFixed(1)}
-          </span>
-          <span className="text-muted-foreground">average rating</span>
-          <span className="text-muted-foreground/50">•</span>
-          <span className="text-muted-foreground">{reviewCount} reviews</span>
-        </div>
+      <div className="flex items-center justify-end gap-3">
+        <span className="text-sm font-semibold text-foreground">
+          Quantity
+        </span>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-foreground">Quantity</span>
-          <div className="flex h-11 items-center overflow-hidden rounded-xl border border-border bg-background">
-            <button
-              type="button"
-              onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-              disabled={quantity <= 1 || isOutOfStock}
-              aria-label="Decrease quantity"
-              className="flex h-full w-11 items-center justify-center text-foreground transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Minus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <span className="min-w-9 text-center text-sm font-bold tabular-nums text-foreground">
-              {quantity}
-            </span>
-            <button
-              type="button"
-              onClick={() => setQuantity((current) => Math.min(stock, current + 1))}
-              disabled={quantity >= stock || isOutOfStock}
-              aria-label="Increase quantity"
-              className="flex h-full w-11 items-center justify-center text-foreground transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-            </button>
-          </div>
+        <div className="flex h-11 items-center overflow-hidden rounded-xl border border-border bg-background">
+          <button
+            type="button"
+            onClick={handleDecreaseQuantity}
+            disabled={
+              quantity <= 1 ||
+              isOutOfStock
+            }
+            aria-label="Decrease quantity"
+            className="flex h-full w-11 items-center justify-center text-foreground transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Minus
+              aria-hidden="true"
+              className="h-4 w-4"
+              strokeWidth={2}
+            />
+          </button>
+
+          <span className="min-w-9 text-center text-sm font-bold tabular-nums text-foreground">
+            {isOutOfStock ? 0 : quantity}
+          </span>
+
+          <button
+            type="button"
+            onClick={handleIncreaseQuantity}
+            disabled={
+              quantity >= stock ||
+              isOutOfStock
+            }
+            aria-label="Increase quantity"
+            className="flex h-full w-11 items-center justify-center text-foreground transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Plus
+              aria-hidden="true"
+              className="h-4 w-4"
+              strokeWidth={2}
+            />
+          </button>
         </div>
       </div>
 
@@ -99,11 +150,20 @@ export function PurchasePanel({
           variant="secondary"
           disabled={isOutOfStock}
           onClick={handleAddToCart}
-          className="flex h-13 w-full items-center justify-center rounded-xl border border-transparent text-sm font-bold shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
+          className="h-13 w-full rounded-xl border border-transparent text-sm font-bold shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
         >
-          <span className="flex items-center gap-2.5">
-            <ShoppingCart aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
-            Add to Cart
+          <span className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap">
+            <ShoppingCart
+              aria-hidden="true"
+              className="h-5 w-5 shrink-0"
+              strokeWidth={2}
+            />
+
+            <span>
+              {added
+                ? "Added to Cart"
+                : "Add to Cart"}
+            </span>
           </span>
         </Button>
 
@@ -112,11 +172,22 @@ export function PurchasePanel({
           variant="primary"
           disabled={isOutOfStock}
           onClick={handleBuyNow}
-          className="flex h-13 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold shadow-primary transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
+          className="h-13 w-full rounded-xl text-sm font-bold shadow-primary transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
         >
-          <span className="flex items-center gap-2.5">
-            Buy Now
-            <ArrowRight aria-hidden="true" className="h-5 w-5" strokeWidth={2.2} />
+          <span className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap">
+            <span>
+              {isOutOfStock
+                ? "Out of Stock"
+                : "Buy Now"}
+            </span>
+
+            {!isOutOfStock && (
+              <ArrowRight
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0"
+                strokeWidth={2.2}
+              />
+            )}
           </span>
         </Button>
       </div>

@@ -9,7 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 import {
-  FormEvent,
+  type FormEvent,
   useState,
 } from "react";
 
@@ -30,32 +30,35 @@ export function StoreHeader() {
       search.trim();
 
     if (!value) {
-      router.push("/");
       return;
     }
 
     router.push(
-      `/?search=${encodeURIComponent(value)}`
+      `/search?q=${encodeURIComponent(
+        value
+      )}`
     );
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-black">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-[72px] items-center gap-4 lg:h-20">
+        <div className="flex h-[82px] items-center gap-3 lg:h-20">
           <Link
             href="/"
             aria-label="Royal Chins home"
             className="shrink-0"
           >
-            <Image
-              src="/logo.png"
-              alt="Royal Chins"
-              width={150}
-              height={70}
-              priority
-              className="h-[52px] w-[105px] object-contain sm:w-[115px] lg:h-[60px] lg:w-[135px]"
-            />
+            <div className="flex h-[56px] w-[120px] items-center justify-center rounded-[22px] bg-white px-3 sm:w-[135px] lg:h-auto lg:w-auto lg:rounded-none lg:bg-transparent lg:p-0">
+              <Image
+                src="/logo.png"
+                alt="Royal Chins"
+                width={150}
+                height={70}
+                priority
+                className="h-[42px] w-[95px] object-contain lg:h-[60px] lg:w-[135px]"
+              />
+            </div>
           </Link>
 
           <form
@@ -79,10 +82,10 @@ export function StoreHeader() {
             </div>
           </form>
 
-          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <Link
               href="/contact"
-              className="hidden h-10 items-center rounded-lg px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-subtle xl:flex"
+              className="hidden h-10 items-center rounded-lg px-3 text-sm font-medium text-white transition-colors hover:bg-white/10 xl:flex"
             >
               Contact
             </Link>
@@ -90,7 +93,7 @@ export function StoreHeader() {
             <Link
               href="/cart"
               aria-label={`Cart with ${cartCount} items`}
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-surface-subtle lg:h-11 lg:w-auto lg:gap-2 lg:px-3"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/15 lg:w-auto lg:gap-2 lg:rounded-xl lg:px-3"
             >
               <ShoppingBag className="h-5 w-5" />
 
@@ -99,7 +102,7 @@ export function StoreHeader() {
               </span>
 
               {cartCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground lg:-right-1 lg:-top-1">
+                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground">
                   {cartCount > 99
                     ? "99+"
                     : cartCount}
@@ -110,7 +113,7 @@ export function StoreHeader() {
             <Link
               href="/account"
               aria-label="My account"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-surface-subtle lg:h-11 lg:w-auto lg:gap-2 lg:px-3"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/15 lg:w-auto lg:gap-2 lg:rounded-xl lg:px-3"
             >
               <UserRound className="h-5 w-5" />
 
@@ -123,22 +126,30 @@ export function StoreHeader() {
 
         <form
           onSubmit={handleSearch}
-          className="pb-3 lg:hidden"
+          className="pb-4 lg:hidden"
         >
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
+          <div className="flex overflow-hidden rounded-full border-2 border-primary bg-white">
+            <div className="relative min-w-0 flex-1">
+              <input
+                type="search"
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="Search animals & accessories..."
+                className="h-12 w-full bg-white px-5 pr-11 text-base text-black outline-none placeholder:text-muted-foreground"
+              />
+            </div>
 
-            <input
-              type="search"
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              placeholder="Search animals & accessories..."
-              className="h-11 w-full rounded-xl border border-border bg-surface-subtle pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/10"
-            />
+            <button
+              type="submit"
+              aria-label="Search"
+              className="flex h-12 w-16 shrink-0 items-center justify-center bg-primary text-white transition-opacity hover:opacity-90"
+            >
+              <Search className="h-6 w-6" />
+            </button>
           </div>
         </form>
       </div>

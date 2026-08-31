@@ -1,5 +1,5 @@
-import { CheckoutFlow } from "@/components/store/checkout/checkout-flow";
+import { CheckoutConfirmation } from "@/components/store/checkout/checkout-confirmation";
 
-export default function ConfirmationCheckoutPage() {
-  return <CheckoutFlow step="confirmation" />;
+export default function CheckoutConfirmationPage() {
+  return <CheckoutConfirmation />;
 }

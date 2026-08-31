@@ -8,9 +8,9 @@ import {
 
 import { ProductGallery } from "@/components/store/product/product-gallery";
 import { PurchasePanel } from "@/components/store/product/purchase-panel";
-import { ProductReviews } from "@/components/store/product/product-reviews";
 import { AnimalDetails } from "@/components/store/product/animal-details";
 import { RelatedProducts } from "@/components/store/product/related-products";
+
 
 const animal = {
   slug: "white-chinchilla",
@@ -25,10 +25,14 @@ const animal = {
   origin: "UAE Bred",
   price: 1400,
   stock: 2,
+  averageRating: 4.9,
+
   description:
     "Beautiful white chinchilla with a gentle temperament. Raised with care, healthy, active and well socialized.",
+
   about:
     "White Chinchillas are playful, curious, and affectionate little companions. They enjoy exploring their surroundings and gentle interaction, making them a wonderful choice for families and individuals who can give them time and proper care.",
+
   images: [
     "/animals/1.png",
     "/animals/4.png",
@@ -161,21 +165,30 @@ export default function AnimalDetailsPage() {
             <span>{animal.age}</span>
           </div>
 
-          <div className="mt-4 flex items-end justify-between gap-3 sm:mt-6">
-            <p className="text-2xl font-bold text-primary sm:text-3xl">
-              AED {animal.price.toLocaleString()}
-            </p>
+          <div className="mt-4 sm:mt-6">
+  <div className="flex items-end justify-between gap-3">
+    <p className="text-2xl font-bold text-primary sm:text-3xl">
+      AED {animal.price.toLocaleString()}
+    </p>
 
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-warning sm:text-sm">
-              <span className="h-2 w-2 rounded-full bg-warning" />
-              Only {animal.stock} left
-            </div>
-          </div>
+    <div className="flex items-center gap-1.5 text-xs font-semibold text-warning sm:text-sm">
+      <span className="h-2 w-2 rounded-full bg-warning" />
+      Only {animal.stock} left
+    </div>
+  </div>
 
-          <PurchasePanel
-            slug={animal.slug}
-            stock={animal.stock}
-          />
+</div> 
+
+      <PurchasePanel
+  id={animal.slug}
+  slug={animal.slug}
+  name={animal.name}
+  image={animal.images[0]}
+  type="Animal"
+  price={animal.price}
+  stock={animal.stock}
+  shortMeta={`${animal.gender} • ${animal.age}`}
+/> 
 
           <p className="mt-5 text-sm leading-6 text-muted-foreground sm:mt-6 sm:text-base sm:leading-7">
             {animal.description}
@@ -262,7 +275,6 @@ export default function AnimalDetailsPage() {
           </div>
         </div>
       </section>
-      <ProductReviews productName={animal.name} />
 
       <div className="mt-7 sm:mt-8">
         <RelatedProducts

@@ -14,8 +14,11 @@ import { AnimalDetails } from "@/components/store/product/animal-details";
 import { RelatedProducts } from "@/components/store/product/related-products";
 
 const animal = {
+  id: "white-chinchilla",
   slug: "white-chinchilla",
   name: "White Chinchilla",
+  image: "/animals/1.png",
+  type: "Animal" as const,
   category: "Chinchillas",
   gender: "Male",
   age: "8 Months",
@@ -201,8 +204,11 @@ export default function AnimalDetailsPage() {
 
           <div className="mt-5 lg:hidden">
             <PurchasePanel
+              id={animal.id}
               name={animal.name}
               slug={animal.slug}
+              image={animal.image}
+              type={animal.type}
               price={animal.price}
               stock={animal.stock}
             />
@@ -211,8 +217,11 @@ export default function AnimalDetailsPage() {
 
         <div className="hidden lg:block">
           <PurchasePanel
+            id={animal.id}
             name={animal.name}
             slug={animal.slug}
+            image={animal.image}
+            type={animal.type}
             price={animal.price}
             stock={animal.stock}
           />
