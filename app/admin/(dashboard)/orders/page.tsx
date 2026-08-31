@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { CancelOrderDialog } from "@/components/admin/orders/cancel-order-dialog";
+import { getOrders, updateOrder, type OrderResponse } from "@/lib/api/orders";
+import { getErrorMessage } from "@/lib/api/error-message";
 
 type OrderStatus =
   | "Pending"
@@ -46,7 +48,7 @@ type PaymentMethod =
   | "Tabby";
 
 type Order = {
-  id: number;
+  id: string;
   orderNumber: string;
   customerName: string;
   email: string;
@@ -59,7 +61,7 @@ type Order = {
   placedAt: string;
 };
 
-const orders: Order[] = [
+const legacyOrders = [
   {
     id: 1,
     orderNumber: "RC-1028",
@@ -182,14 +184,30 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] =
     useState(1);
 
-  const [openMenuId, setOpenMenuId] =
-    useState<number | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [formError, setFormError] = useState("");
 
   const [cancelOrder, setCancelOrder] =
     useState<Order | null>(null);
 
   const [successMessage, setSuccessMessage] =
     useState("");
+
+  useEffect(() => {
+    getOrders()
+      .then((items) => {
+        const mapped = items.map((order: OrderResponse): Order => ({
+          id: order.id, orderNumber: order.orderNumber, customerName: order.customerName,
+          email: order.email, phone: order.phone, itemCount: order.items.length,
+          total: Number(order.total), paymentStatus: order.paymentStatus,
+          paymentMethod: order.paymentMethod as PaymentMethod, orderStatus: order.orderStatus,
+          placedAt: new Intl.DateTimeFormat("en-AE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.createdAt)),
+        }));
+        setOrders(mapped);
+      })
+      .catch((error) => setFormError(getErrorMessage(error, "Unable to load orders.")));
+  }, []);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -248,6 +266,7 @@ export default function OrdersPage() {
     orderStatus,
     paymentStatus,
     dateFilter,
+    orders,
   ]);
 
   const totalPages = Math.ceil(
@@ -260,21 +279,8 @@ export default function OrdersPage() {
       currentPage * pageSize
     );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    search,
-    orderStatus,
-    paymentStatus,
-    dateFilter,
-  ]);
-
   const ordersToday =
-    orders.filter((order) =>
-      order.placedAt.startsWith(
-        "24 Aug 2026"
-      )
-    ).length;
+    orders.filter((order) => new Date(order.placedAt).toDateString() === new Date().toDateString()).length;
 
   const pendingCount =
     orders.filter(
@@ -300,11 +306,7 @@ export default function OrdersPage() {
 ) => {
   if (!cancelOrder) return;
 
-  console.log("Cancel order:", {
-    id: cancelOrder.id,
-    reason,
-    notes,
-  });
+  try { await updateOrder(cancelOrder.id, { orderStatus: "Cancelled", notes: `${reason}${notes ? `: ${notes}` : ""}` }); setOrders((current) => current.map((order) => order.id === cancelOrder.id ? { ...order, orderStatus: "Cancelled" } : order)); } catch (error) { setFormError(getErrorMessage(error, "Unable to cancel order.")); return; }
 
   setSuccessMessage(
     `Order #${cancelOrder.orderNumber} cancelled successfully.`
@@ -367,6 +369,8 @@ export default function OrdersPage() {
         title="Orders"
         description="Manage customer orders, payments and delivery progress."
       />
+
+      {formError && <FormAlert variant="error" message={formError} onClose={() => setFormError("")} />}
 
       {successMessage && (
         <FormAlert

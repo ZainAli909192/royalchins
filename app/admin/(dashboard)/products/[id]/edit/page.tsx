@@ -103,7 +103,7 @@ export default function CreateProductPage() {
     return categories.filter(
       (category) => category.type === productType
     );
-  }, [productType]);
+  }, [categories, productType]);
 
   useEffect(() => {
     const mainCategory =

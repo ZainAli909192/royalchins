@@ -1,3 +1,5 @@
 import { apiRequest } from "@/lib/api/client";
-export const getInventory = () => apiRequest<unknown[]>("/admin/inventory");
-export const updateInventory = (id: string | number, quantity: number) => apiRequest<unknown>(`/admin/inventory/${id}`, { method: "PATCH", body: JSON.stringify({ quantity }) });
+
+export type InventoryResponse = { id: string; name: string; sku: string; type: "Animal" | "Accessory"; quantity: number; lowStockThreshold: number; updatedAt: string; category: { name: string } };
+export const getInventory = () => apiRequest<InventoryResponse[]>("/api/admin/inventory");
+export const updateInventory = (payload: { productId: string; action: "Add" | "Remove" | "Set" | "Threshold"; quantity: number; reason?: string; notes?: string }) => apiRequest<InventoryResponse>("/api/admin/inventory", { method: "PATCH", body: JSON.stringify(payload) });

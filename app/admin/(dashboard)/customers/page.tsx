@@ -20,13 +20,14 @@ import { AdminEmptyState } from "@/components/admin/shared/admin-empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
+import { getCustomers, type CustomerResponse } from "@/lib/api/customers";
 
 type CustomerStatus =
   | "Active"
   | "Inactive";
 
 type Customer = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -37,7 +38,7 @@ type Customer = {
   status: CustomerStatus;
 };
 
-const customers: Customer[] = [
+const legacyCustomers = [
   {
     id: 101,
     name: "Ahmed Daniyal",
@@ -132,6 +133,7 @@ const pageSize = 6;
 
 export default function CustomersPage() {
   const router = useRouter();
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] =
@@ -140,6 +142,8 @@ export default function CustomersPage() {
     useState("all");
   const [currentPage, setCurrentPage] =
     useState(1);
+
+  useEffect(() => { getCustomers().then((items) => setCustomers(items.map((customer: CustomerResponse) => ({ id: customer.id, name: customer.name, email: customer.email, phone: customer.phone, totalOrders: customer._count.orders, totalSpent: customer.orders.reduce((sum, order) => sum + Number(order.total), 0), lastOrder: customer.orders[0] ? new Intl.DateTimeFormat("en-AE", { dateStyle: "medium" }).format(new Date(customer.orders[0].createdAt)) : "—", memberSince: new Intl.DateTimeFormat("en-AE", { dateStyle: "medium" }).format(new Date(customer.createdAt)), status: customer.isActive ? "Active" : "Inactive" })))); }, []);
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
@@ -184,6 +188,7 @@ export default function CustomersPage() {
     search,
     status,
     activity,
+    customers,
   ]);
 
   const totalPages = Math.ceil(
@@ -195,14 +200,6 @@ export default function CustomersPage() {
       (currentPage - 1) * pageSize,
       currentPage * pageSize
     );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    search,
-    status,
-    activity,
-  ]);
 
   const totalCustomers =
     customers.length;

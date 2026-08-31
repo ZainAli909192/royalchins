@@ -26,6 +26,7 @@ import {
   getAutoApproveReviews,
   saveAutoApproveReviews,
 } from "@/lib/reviews/review-settings";
+import { getReviews, type ReviewResponse } from "@/lib/api/reviews";
 type ReviewStatus =
   | "Pending"
   | "Approved"
@@ -36,18 +37,18 @@ type ProductType =
   | "Accessory";
 
 type Review = {
-  id: number;
+  id: string;
 
-  productId: number;
+  productId: string;
   productName: string;
   productType: ProductType;
   productImage: string;
 
-  customerId: number;
+  customerId: string;
   customerName: string;
   customerEmail: string;
 
-  orderId: number;
+  orderId: string;
   orderNumber: string;
 
   rating: number;
@@ -64,7 +65,7 @@ type Review = {
   rejectionReason?: string;
 };
 
-const initialReviews: Review[] = [
+const legacyReviews = [
   {
     id: 1,
 
@@ -236,7 +237,7 @@ export default function ReviewsPage() {
   const router = useRouter();
 
   const [reviews, setReviews] =
-    useState<Review[]>(initialReviews);
+    useState<Review[]>([]);
 
   const [search, setSearch] =
     useState("");
@@ -274,6 +275,20 @@ useEffect(() => {
     getAutoApproveReviews()
   );
 }, []);
+  useEffect(() => {
+    getReviews().then((items) => {
+      const mapped = items.map((review: ReviewResponse): Review => ({
+        id: review.id, productId: review.product.id, productName: review.product.name,
+        productType: review.product.type, productImage: review.product.images[0]?.url ?? "/logo.png",
+        customerId: review.customer.id, customerName: review.customer.name, customerEmail: review.customer.email,
+        orderId: review.order?.id ?? "", orderNumber: review.order?.orderNumber ?? "—",
+        rating: review.rating, title: review.title ?? undefined, comment: review.comment, status: review.status,
+        submittedAt: new Intl.DateTimeFormat("en-AE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(review.createdAt)),
+        rejectionReason: review.rejectionReason ?? undefined,
+      }));
+      setReviews(mapped);
+    });
+  }, []);
   const filteredReviews =
     useMemo(() => {
       return reviews.filter(

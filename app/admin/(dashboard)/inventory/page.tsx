@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Pagination } from "@/components/ui/pagination";
+import { getInventory, updateInventory } from "@/lib/api/inventory";
+import { getErrorMessage } from "@/lib/api/error-message";
 
 type ProductType = "Animal" | "Accessory";
 
@@ -33,7 +35,7 @@ type StockAction =
   | "threshold";
 
 type InventoryItem = {
-  id: number;
+  id: string;
   name: string;
   sku: string;
   type: ProductType;
@@ -43,7 +45,7 @@ type InventoryItem = {
   updatedAt: string;
 };
 
-const initialInventoryItems: InventoryItem[] = [
+const legacyInventoryItems = [
   {
     id: 1,
     name: "White Chinchilla",
@@ -139,8 +141,8 @@ const initialInventoryItems: InventoryItem[] = [
 const pageSize = 6;
 
 export default function InventoryPage() {
-  const [inventoryItems, setInventoryItems] =
-    useState(initialInventoryItems);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [formError, setFormError] = useState("");
 
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
@@ -152,7 +154,7 @@ export default function InventoryPage() {
     useState(1);
 
   const [selectedIds, setSelectedIds] =
-    useState<number[]>([]);
+    useState<string[]>([]);
 
   const [bulkAction, setBulkAction] =
     useState<StockAction | "">("");
@@ -183,6 +185,8 @@ export default function InventoryPage() {
 
   const [successMessage, setSuccessMessage] =
     useState("");
+
+  useEffect(() => { getInventory().then((items) => setInventoryItems(items.map((item) => ({ id: item.id, name: item.name, sku: item.sku, type: item.type, category: item.category.name, quantity: item.quantity, lowStockThreshold: item.lowStockThreshold, updatedAt: new Intl.DateTimeFormat("en-AE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.updatedAt)) })))).catch((error) => setFormError(getErrorMessage(error, "Unable to load inventory."))); }, []);
 
   const categories = useMemo(() => {
     const items =
@@ -314,7 +318,7 @@ export default function InventoryPage() {
     setCategory("all");
   }, [type]);
 
-  const toggleItem = (id: number) => {
+  const toggleItem = (id: string) => {
     setSelectedIds((current) =>
       current.includes(id)
         ? current.filter(
@@ -472,63 +476,9 @@ export default function InventoryPage() {
     try {
       setUpdating(true);
 
-      setInventoryItems((current) =>
-        current.map((item) => {
-          if (!ids.includes(item.id)) {
-            return item;
-          }
-
-          if (
-            dialogAction === "threshold"
-          ) {
-            return {
-              ...item,
-              lowStockThreshold: value,
-              updatedAt: "Just now",
-            };
-          }
-
-          let nextQuantity =
-            item.quantity;
-
-          if (dialogAction === "add") {
-            nextQuantity =
-              item.quantity + value;
-          }
-
-          if (
-            dialogAction === "remove"
-          ) {
-            nextQuantity = Math.max(
-              0,
-              item.quantity - value
-            );
-          }
-
-          if (dialogAction === "set") {
-            nextQuantity = value;
-          }
-
-          return {
-            ...item,
-            quantity: nextQuantity,
-            updatedAt: "Just now",
-          };
-        })
-      );
-
-      const payload = {
-        ids,
-        action: dialogAction,
-        quantity: value,
-        reason,
-        notes,
-      };
-
-      console.log(
-        "Update inventory:",
-        payload
-      );
+      const action = dialogAction === "threshold" ? "Threshold" : dialogAction[0].toUpperCase() + dialogAction.slice(1) as "Add" | "Remove" | "Set";
+      const updated = await Promise.all(ids.map((productId) => updateInventory({ productId, action, quantity: value, reason, notes })));
+      setInventoryItems((current) => current.map((item) => { const record = updated.find((entry) => entry.id === item.id); return record ? { ...item, quantity: record.quantity, lowStockThreshold: record.lowStockThreshold, updatedAt: "Just now" } : item; }));
 
       setSuccessMessage(
         selectedProduct
@@ -541,10 +491,8 @@ export default function InventoryPage() {
       setSelectedProduct(null);
       setDialogOpen(false);
       resetDialog();
-    } catch {
-      setDialogError(
-        "Unable to update stock. Please try again."
-      );
+    } catch (error) {
+      setDialogError(getErrorMessage(error, "Unable to update stock. Please try again."));
     } finally {
       setUpdating(false);
     }
@@ -570,6 +518,8 @@ export default function InventoryPage() {
         title="Inventory"
         description="Manage product stock levels and inventory."
       />
+
+      {formError && <FormAlert variant="error" message={formError} onClose={() => setFormError("")} />}
 
       {successMessage && (
         <FormAlert

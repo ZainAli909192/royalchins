@@ -74,7 +74,7 @@ export default function ProductsPage() {
         filtered.map((product) => product.category)
       ),
     ];
-  }, [mainCategory]);
+  }, [mainCategory, products]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -128,6 +128,7 @@ export default function ProductsPage() {
     subCategory,
     stock,
     status,
+    products,
   ]);
 
   const totalPages = Math.ceil(

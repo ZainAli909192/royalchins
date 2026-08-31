@@ -34,11 +34,20 @@ for (const [name, slug, sku, type, categoryName, regularPrice, quantity, image, 
 
 const whiteChinchilla = await prisma.product.findUnique({ where: { slug: "white-chinchilla" } });
 const cage = await prisma.product.findUnique({ where: { slug: "premium-chinchilla-cage" } });
+const ahmed = await prisma.customer.upsert({ where: { email: "ahmed@example.com" }, update: { name: "Ahmed Daniyal", phone: "+971 50 123 4567", isActive: true }, create: { name: "Ahmed Daniyal", email: "ahmed@example.com", phone: "+971 50 123 4567", isActive: true } });
+const sara = await prisma.customer.upsert({ where: { email: "sara@example.com" }, update: { name: "Sara Khan", phone: "+971 52 222 4110", isActive: true }, create: { name: "Sara Khan", email: "sara@example.com", phone: "+971 52 222 4110", isActive: true } });
 if (whiteChinchilla && cage) {
-  await prisma.order.upsert({
+  const order = await prisma.order.upsert({
     where: { orderNumber: "RC-1028" },
-    update: {},
-    create: { orderNumber: "RC-1028", customerName: "Ahmed Daniyal", email: "ahmed@example.com", phone: "+971 50 123 4567", paymentMethod: "Card", paymentStatus: "Paid", orderStatus: "Processing", total: 2100, items: { create: [{ productId: whiteChinchilla.id, productName: whiteChinchilla.name, quantity: 1, unitPrice: 1450 }, { productId: cage.id, productName: cage.name, quantity: 1, unitPrice: 650 }] } },
+    update: { customerId: ahmed.id },
+    create: { orderNumber: "RC-1028", customerName: "Ahmed Daniyal", email: "ahmed@example.com", phone: "+971 50 123 4567", customerId: ahmed.id, paymentMethod: "Card", paymentStatus: "Paid", orderStatus: "Processing", total: 2100, items: { create: [{ productId: whiteChinchilla.id, productName: whiteChinchilla.name, quantity: 1, unitPrice: 1450 }, { productId: cage.id, productName: cage.name, quantity: 1, unitPrice: 650 }] } },
   });
+  await prisma.review.upsert({ where: { id: "seed-review-ahmed" }, update: { rating: 5, title: "Beautiful and calm", comment: "Very calm and healthy chinchilla. The overall experience was excellent.", status: "Approved" }, create: { id: "seed-review-ahmed", customerId: ahmed.id, productId: whiteChinchilla.id, orderId: order.id, rating: 5, title: "Beautiful and calm", comment: "Very calm and healthy chinchilla. The overall experience was excellent.", status: "Approved", moderatedAt: new Date(), moderatedBy: "Admin" } });
+  await prisma.review.upsert({ where: { id: "seed-review-sara" }, update: { rating: 4, title: "Good quality", comment: "The cage is spacious and feels sturdy.", status: "Pending" }, create: { id: "seed-review-sara", customerId: sara.id, productId: cage.id, rating: 4, title: "Good quality", comment: "The cage is spacious and feels sturdy.", status: "Pending" } });
+}
+
+for (const product of await prisma.product.findMany({ select: { id: true, quantity: true } })) {
+  const existingEvent = await prisma.inventoryAdjustment.findFirst({ where: { productId: product.id } });
+  if (!existingEvent) await prisma.inventoryAdjustment.create({ data: { productId: product.id, previous: 0, quantity: product.quantity, action: "Set", reason: "initial-seed", notes: "Initial inventory record" } });
 }
 await prisma.$disconnect();
