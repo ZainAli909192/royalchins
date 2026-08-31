@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Boxes,
@@ -11,53 +12,31 @@ import {
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
 import { Button } from "@/components/ui/button";
+import { getProduct, type ProductResponse } from "@/lib/api/products";
 
 type Animal = {
-  id: number;
+  id: string;
   name: string;
   category: string;
   price: number;
   quantity: number;
-  status: "Active" | "Inactive";
+  status: "Draft" | "Active" | "Inactive";
   description: string;
   images: string[];
 };
 
-const animals: Animal[] = [
-  {
-    id: 1,
-    name: "White Chinchilla",
-    category: "Chinchillas",
-    price: 1450,
-    quantity: 8,
-    status: "Active",
-    description:
-      "Beautiful white chinchilla with a soft coat and calm temperament.",
-    images: [
-      "/images/animals/chinchilla-1.jpg",
-      "/images/animals/chinchilla-2.jpg",
-    ],
-  },
-  {
-    id: 2,
-    name: "Grey Chinchilla",
-    category: "Chinchillas",
-    price: 1350,
-    quantity: 2,
-    status: "Active",
-    description:
-      "Friendly grey chinchilla with a soft coat and active personality.",
-    images: [],
-  },
-];
+function toDetailProduct(product: ProductResponse): Animal { return { id: product.id, name: product.name, category: product.category.name, price: Number(product.salePrice ?? product.regularPrice), quantity: product.quantity, status: product.status, description: product.description, images: product.images.map((image) => image.url) }; }
 
 export default function AnimalDetailsPage() {
   const router = useRouter();
   const params = useParams();
 
-  const animalId = Number(params.id);
+  const animalId = String(params.id);
+  const [animal, setAnimal] = useState<Animal | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => { getProduct(animalId).then((product) => setAnimal(toDetailProduct(product))).finally(() => setIsLoading(false)); }, [animalId]);
 
-  const animal = animals.find((item) => item.id === animalId);
+  if (isLoading) return <div className="rounded-xl border border-border bg-white p-8 text-center text-sm text-muted-foreground shadow-sm">Loading product…</div>;
 
   if (!animal) {
     return (
@@ -107,7 +86,7 @@ export default function AnimalDetailsPage() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
-              onClick={() => router.push("/admin/animals")}
+              onClick={() => router.push("/admin/products")}
             >
               <span className="flex items-center gap-2 whitespace-nowrap">
                 <ArrowLeft className="h-4 w-4" />
@@ -118,7 +97,7 @@ export default function AnimalDetailsPage() {
             <Button
               variant="primary"
               onClick={() =>
-                router.push(`/admin/animals/${animal.id}/edit`)
+                router.push(`/admin/products/${animal.id}/edit`)
               }
             >
               <span className="flex items-center gap-2 whitespace-nowrap">

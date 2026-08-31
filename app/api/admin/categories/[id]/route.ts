@@ -1,0 +1,10 @@
+import { NextResponse } from "next/server";
+
+import { CategoryStoreError, findCategory, removeCategory, updateCategory } from "@/lib/categories/category-store";
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { categorySchema } from "@/lib/validations/category";
+
+type Context = { params: Promise<{ id: string }> };
+export async function GET(request: Request, { params }: Context) { if (!(await requireAdmin(request))) return NextResponse.json({ message: "Unauthorized." }, { status: 401 }); const category = await findCategory((await params).id); return category ? NextResponse.json(category) : NextResponse.json({ message: "Category not found." }, { status: 404 }); }
+export async function PATCH(request: Request, { params }: Context) { if (!(await requireAdmin(request))) return NextResponse.json({ message: "Unauthorized." }, { status: 401 }); const parsed = categorySchema.partial().safeParse(await request.json().catch(() => null)); if (!parsed.success) return NextResponse.json({ message: "Please correct the category details.", errors: parsed.error.flatten().fieldErrors }, { status: 400 }); try { const category = await updateCategory((await params).id, parsed.data); return category ? NextResponse.json(category) : NextResponse.json({ message: "Category not found." }, { status: 404 }); } catch (error) { return NextResponse.json({ message: error instanceof Error ? error.message : "Unable to update category." }, { status: error instanceof CategoryStoreError ? error.status : 500 }); } }
+export async function DELETE(request: Request, { params }: Context) { if (!(await requireAdmin(request))) return NextResponse.json({ message: "Unauthorized." }, { status: 401 }); try { const category = await removeCategory((await params).id); return category ? NextResponse.json({ message: `Category \"${category.name}\" deleted successfully.` }) : NextResponse.json({ message: "Category not found." }, { status: 404 }); } catch (error) { return NextResponse.json({ message: error instanceof Error ? error.message : "Unable to delete category." }, { status: error instanceof CategoryStoreError ? error.status : 500 }); } }

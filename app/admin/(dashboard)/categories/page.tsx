@@ -16,114 +16,17 @@ import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
+import { deleteCategory as deleteCategoryRequest, getCategories } from "@/lib/api/categories";
+import { getErrorMessage } from "@/lib/utils/errors";
 
 type Category = {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   type: "Animal" | "Accessory";
   status: "Active" | "Inactive";
   items: number;
 };
-
-const categories: Category[] = [
-  {
-    id: 1,
-    name: "Chinchillas",
-    slug: "chinchillas",
-    type: "Animal",
-    status: "Active",
-    items: 18,
-  },
-  {
-    id: 2,
-    name: "Guinea Pigs",
-    slug: "guinea-pigs",
-    type: "Animal",
-    status: "Active",
-    items: 14,
-  },
-  {
-    id: 3,
-    name: "Micro Squirrels",
-    slug: "micro-squirrels",
-    type: "Animal",
-    status: "Active",
-    items: 9,
-  },
-  {
-    id: 4,
-    name: "Housing & Cages",
-    slug: "housing-cages",
-    type: "Accessory",
-    status: "Active",
-    items: 11,
-  },
-  {
-    id: 5,
-    name: "Food & Nutrition",
-    slug: "food-nutrition",
-    type: "Accessory",
-    status: "Active",
-    items: 8,
-  },
-  {
-    id: 6,
-    name: "Bedding",
-    slug: "bedding",
-    type: "Accessory",
-    status: "Active",
-    items: 6,
-  },
-  {
-    id: 7,
-    name: "Toys",
-    slug: "toys",
-    type: "Accessory",
-    status: "Active",
-    items: 13,
-  },
-  {
-    id: 8,
-    name: "Grooming",
-    slug: "grooming",
-    type: "Accessory",
-    status: "Inactive",
-    items: 4,
-  },
-  {
-    id: 9,
-    name: "Travel",
-    slug: "travel",
-    type: "Accessory",
-    status: "Active",
-    items: 7,
-  },
-  {
-    id: 10,
-    name: "Treats",
-    slug: "treats",
-    type: "Accessory",
-    status: "Active",
-    items: 15,
-  },
-  {
-    id: 11,
-    name: "Water Bottles",
-    slug: "water-bottles",
-    type: "Accessory",
-    status: "Active",
-    items: 5,
-  },
-  {
-    id: 12,
-    name: "Hideouts",
-    slug: "hideouts",
-    type: "Accessory",
-    status: "Active",
-    items: 8,
-  },
-];
 
 const pageSize = 10;
 
@@ -140,6 +43,27 @@ export default function CategoriesPage() {
     useState<Category | null>(null);
 
   const [successMessage, setSuccessMessage] = useState("");
+  const [formError, setFormError] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const result = await getCategories();
+        setCategories(result.map((category) => ({
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+          type: category.type,
+          status: category.isActive ? "Active" : "Inactive",
+          items: category.items,
+        })));
+      } catch (error) {
+        setFormError(getErrorMessage(error, "Unable to load categories."));
+      }
+    };
+    loadCategories();
+  }, []);
 
   const filteredCategories = useMemo(() => {
     return categories.filter((category) => {
@@ -163,7 +87,7 @@ export default function CategoriesPage() {
         matchesType
       );
     });
-  }, [search, status, type]);
+  }, [categories, search, status, type]);
 
   const totalPages = Math.ceil(
     filteredCategories.length / pageSize
@@ -174,21 +98,18 @@ export default function CategoriesPage() {
     currentPage * pageSize
   );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, status, type]);
-
   const handleDelete = async () => {
     if (!deleteCategory) return;
 
-    const categoryName = deleteCategory.name;
-
-    console.log("Delete category:", deleteCategory.id);
-
-    setDeleteCategory(null);
-    setSuccessMessage(
-      `"${categoryName}" deleted successfully.`
-    );
+    try {
+      const response = await deleteCategoryRequest(deleteCategory.id);
+      setCategories((current) => current.filter((category) => category.id !== deleteCategory.id));
+      setSuccessMessage(response.message);
+      setDeleteCategory(null);
+    } catch (error) {
+      setFormError(getErrorMessage(error, "Unable to delete category."));
+      setDeleteCategory(null);
+    }
   };
 
   return (
@@ -220,15 +141,24 @@ export default function CategoriesPage() {
         />
       )}
 
+      {formError && (
+        <FormAlert
+          variant="error"
+          message={formError}
+          onClose={() => setFormError("")}
+        />
+      )}
+
       <section className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px]">
           <Input
             type="search"
             placeholder="Search categories..."
             value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setCurrentPage(1);
+            }}
             leftIcon={
               <Search className="h-5 w-5" />
             }
@@ -236,9 +166,10 @@ export default function CategoriesPage() {
 
           <select
             value={type}
-            onChange={(event) =>
-              setType(event.target.value)
-            }
+            onChange={(event) => {
+              setType(event.target.value);
+              setCurrentPage(1);
+            }}
             className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           >
             <option value="all">
@@ -256,9 +187,10 @@ export default function CategoriesPage() {
 
           <select
             value={status}
-            onChange={(event) =>
-              setStatus(event.target.value)
-            }
+            onChange={(event) => {
+              setStatus(event.target.value);
+              setCurrentPage(1);
+            }}
             className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           >
             <option value="all">

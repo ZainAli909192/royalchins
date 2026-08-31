@@ -10,6 +10,6 @@ export async function POST(request: Request) {
   if (!admin) return NextResponse.json({ message: "Invalid email address or password." }, { status: 401 });
   const { token, maxAge } = await createAdminSession(admin, parsed.data.rememberMe);
   const response = NextResponse.json({ user: { id: admin.id, name: admin.name, email: admin.email, role: "admin" } });
-  response.cookies.set(ADMIN_SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge });
+  response.cookies.set(ADMIN_SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: new URL(request.url).protocol === "https:", path: "/", maxAge });
   return response;
 }

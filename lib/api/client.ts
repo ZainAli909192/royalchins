@@ -44,6 +44,7 @@ export async function apiRequest<T>(
     const url = path.startsWith("/api/") ? path : `${appConfig.apiBaseUrl}${path}`;
     const response = await fetch(url, {
       ...requestInit,
+      cache: "no-store",
       signal: controller.signal,
       credentials: "include",
       headers: {

@@ -1,0 +1,3 @@
+-- The Order, OrderItem and InventoryAdjustment tables were applied during the
+-- approved Prisma migration run. This migration records that schema state for
+-- subsequent Prisma migrations.

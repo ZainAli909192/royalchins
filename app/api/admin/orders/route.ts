@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const orderSchema = z.object({ orderNumber: z.string().trim().min(1), customerName: z.string().trim().min(1), email: z.string().email(), phone: z.string().trim().min(1), paymentMethod: z.enum(["Card", "Tamara", "Tabby", "Cash"]), items: z.array(z.object({ productId: z.string().optional(), productName: z.string().trim().min(1), quantity: z.number().int().positive(), unitPrice: z.number().positive() })).min(1) });
+export async function GET(request: Request) { if (!(await requireAdmin(request))) return NextResponse.json({ message: "Unauthorized." }, { status: 401 }); return NextResponse.json(await prisma.order.findMany({ include: { items: true }, orderBy: { createdAt: "desc" } })); }
+export async function POST(request: Request) { if (!(await requireAdmin(request))) return NextResponse.json({ message: "Unauthorized." }, { status: 401 }); const parsed = orderSchema.safeParse(await request.json().catch(() => null)); if (!parsed.success) return NextResponse.json({ message: "Please correct the order details." }, { status: 400 }); const input = parsed.data; try { const total = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0); return NextResponse.json(await prisma.order.create({ data: { orderNumber: input.orderNumber, customerName: input.customerName, email: input.email, phone: input.phone, paymentMethod: input.paymentMethod, total, items: { create: input.items } }, include: { items: true } }), { status: 201 }); } catch { return NextResponse.json({ message: "An order with this number already exists." }, { status: 409 }); } }

@@ -22,49 +22,9 @@ import {
   productSchema,
   type ProductFormValues,
 } from "@/lib/validations/product";
-
-const categories = [
-  {
-    id: "1",
-    name: "Chinchillas",
-    type: "Animal",
-  },
-  {
-    id: "2",
-    name: "Guinea Pigs",
-    type: "Animal",
-  },
-  {
-    id: "3",
-    name: "Micro Squirrels",
-    type: "Animal",
-  },
-  {
-    id: "4",
-    name: "Housing & Cages",
-    type: "Accessory",
-  },
-  {
-    id: "5",
-    name: "Food & Nutrition",
-    type: "Accessory",
-  },
-  {
-    id: "6",
-    name: "Bedding",
-    type: "Accessory",
-  },
-  {
-    id: "7",
-    name: "Water Bottles",
-    type: "Accessory",
-  },
-  {
-    id: "8",
-    name: "Travel",
-    type: "Accessory",
-  },
-];
+import { createProduct } from "@/lib/api/products";
+import { getCategories, type CategoryResponse } from "@/lib/api/categories";
+import { getErrorMessage } from "@/lib/api/error-message";
 
 const makeSlug = (value: string) => {
   return value
@@ -88,6 +48,7 @@ export default function CreateProductPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imageError, setImageError] = useState("");
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
 
   const {
     register,
@@ -126,6 +87,10 @@ export default function CreateProductPage() {
   const productType = watch("type");
   const productName = watch("name");
   const sku = watch("sku");
+
+  useEffect(() => {
+    getCategories().then((items) => setCategories(items.filter((category) => category.isActive))).catch((error) => setFormError(getErrorMessage(error, "Unable to load categories.")));
+  }, []);
 
   const filteredCategories = useMemo(() => {
     return categories.filter(
@@ -260,15 +225,8 @@ export default function CreateProductPage() {
     }
 
     try {
-      const payload = {
-        ...values,
-        images,
-      };
-
-      console.log(
-        "Create product:",
-        payload
-      );
+      const imageUrls = await Promise.all(images.map((image) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Unable to read an image.")); reader.readAsDataURL(image); })));
+      await createProduct({ ...values, images: imageUrls });
 
       setSuccessMessage(
         "Product created successfully."
@@ -278,10 +236,8 @@ export default function CreateProductPage() {
         router.push("/admin/products");
         router.refresh();
       }, 700);
-    } catch {
-      setFormError(
-        "Unable to create product. Please try again."
-      );
+    } catch (error) {
+      setFormError(getErrorMessage(error, "Unable to create product. Please try again."));
     }
   };
 
@@ -538,7 +494,15 @@ export default function CreateProductPage() {
           </div>
 
           <div className="space-y-5">
-        
+            <Textarea
+              {...register("shortDescription")}
+              label="Short Description"
+              required
+              placeholder="Brief product summary"
+              rows={3}
+              disabled={isSubmitting}
+              error={errors.shortDescription?.message}
+            />
 
             <Textarea
               {...register(

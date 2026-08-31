@@ -17,129 +17,24 @@ import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
+import { deleteProduct as deleteProductRequest, getProducts, type ProductResponse } from "@/lib/api/products";
+import { getErrorMessage } from "@/lib/api/error-message";
 
 type ProductType = "Animal" | "Accessory";
 
 type Product = {
-  id: number;
+  id: string;
   name: string;
   type: ProductType;
   category: string;
   price: number;
   quantity: number;
-  status: "Active" | "Inactive";
+  status: "Draft" | "Active" | "Inactive";
 };
 
-const products: Product[] = [
-  {
-    id: 1,
-    name: "White Chinchilla",
-    type: "Animal",
-    category: "Chinchillas",
-    price: 1450,
-    quantity: 8,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Grey Chinchilla",
-    type: "Animal",
-    category: "Chinchillas",
-    price: 1350,
-    quantity: 2,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "American Guinea Pig",
-    type: "Animal",
-    category: "Guinea Pigs",
-    price: 450,
-    quantity: 6,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Abyssinian Guinea Pig",
-    type: "Animal",
-    category: "Guinea Pigs",
-    price: 550,
-    quantity: 1,
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Micro Squirrel",
-    type: "Animal",
-    category: "Micro Squirrels",
-    price: 850,
-    quantity: 0,
-    status: "Inactive",
-  },
-  {
-    id: 6,
-    name: "Premium Chinchilla Cage",
-    type: "Accessory",
-    category: "Housing & Cages",
-    price: 650,
-    quantity: 12,
-    status: "Active",
-  },
-  {
-    id: 7,
-    name: "Wooden Hideout",
-    type: "Accessory",
-    category: "Housing & Cages",
-    price: 120,
-    quantity: 4,
-    status: "Active",
-  },
-  {
-    id: 8,
-    name: "Premium Animal Bedding",
-    type: "Accessory",
-    category: "Bedding",
-    price: 85,
-    quantity: 15,
-    status: "Active",
-  },
-  {
-    id: 9,
-    name: "Water Bottle",
-    type: "Accessory",
-    category: "Water Bottles",
-    price: 75,
-    quantity: 2,
-    status: "Active",
-  },
-  {
-    id: 10,
-    name: "Nutrition Mix",
-    type: "Accessory",
-    category: "Food & Nutrition",
-    price: 95,
-    quantity: 9,
-    status: "Active",
-  },
-  {
-    id: 11,
-    name: "Animal Travel Carrier",
-    type: "Accessory",
-    category: "Travel",
-    price: 190,
-    quantity: 3,
-    status: "Active",
-  },
-  {
-    id: 12,
-    name: "Beige Chinchilla",
-    type: "Animal",
-    category: "Chinchillas",
-    price: 1500,
-    quantity: 5,
-    status: "Active",
-  },
-];
+function toListProduct(product: ProductResponse): Product {
+  return { id: product.id, name: product.name, type: product.type, category: product.category.name, price: Number(product.salePrice ?? product.regularPrice), quantity: product.quantity, status: product.status };
+}
 
 const pageSize = 6;
 const lowStockThreshold = 2;
@@ -158,6 +53,12 @@ export default function ProductsPage() {
     useState<Product | null>(null);
 
   const [successMessage, setSuccessMessage] = useState("");
+  const [formError, setFormError] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    getProducts().then((result) => setProducts(result.map(toListProduct))).catch((error) => setFormError(getErrorMessage(error, "Unable to load products.")));
+  }, []);
 
   const subCategories = useMemo(() => {
     const filtered =
@@ -238,32 +139,13 @@ export default function ProductsPage() {
     currentPage * pageSize
   );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    search,
-    mainCategory,
-    subCategory,
-    stock,
-    status,
-  ]);
-
-  useEffect(() => {
-    setSubCategory("all");
-  }, [mainCategory]);
-
   const handleDelete = async () => {
     if (!deleteProduct) return;
 
     const productName = deleteProduct.name;
 
-    console.log("Delete product:", deleteProduct.id);
-
-    setDeleteProduct(null);
-
-    setSuccessMessage(
-      `"${productName}" deleted successfully.`
-    );
+    try { await deleteProductRequest(deleteProduct.id); setProducts((current) => current.filter((product) => product.id !== deleteProduct.id)); setDeleteProduct(null); setSuccessMessage(`"${productName}" deleted successfully.`); }
+    catch (error) { setFormError(getErrorMessage(error, "Unable to delete product.")); }
   };
 
   const getStockBadge = (quantity: number) => {
@@ -319,15 +201,15 @@ export default function ProductsPage() {
         />
       )}
 
+      {formError && <FormAlert variant="error" message={formError} onClose={() => setFormError("")} />}
+
       <section className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_160px_190px_160px_160px]">
           <Input
             type="search"
             placeholder="Search products..."
             value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
+            onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
             leftIcon={
               <Search className="h-5 w-5" />
             }
@@ -335,9 +217,7 @@ export default function ProductsPage() {
 
           <select
             value={mainCategory}
-            onChange={(event) =>
-              setMainCategory(event.target.value)
-            }
+            onChange={(event) => { setMainCategory(event.target.value); setSubCategory("all"); setCurrentPage(1); }}
             className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           >
             <option value="all">
@@ -355,9 +235,7 @@ export default function ProductsPage() {
 
           <select
             value={subCategory}
-            onChange={(event) =>
-              setSubCategory(event.target.value)
-            }
+            onChange={(event) => { setSubCategory(event.target.value); setCurrentPage(1); }}
             className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           >
             <option value="all">
@@ -376,9 +254,7 @@ export default function ProductsPage() {
 
           <select
             value={stock}
-            onChange={(event) =>
-              setStock(event.target.value)
-            }
+            onChange={(event) => { setStock(event.target.value); setCurrentPage(1); }}
             className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           >
             <option value="all">
@@ -400,9 +276,7 @@ export default function ProductsPage() {
 
           <select
             value={status}
-            onChange={(event) =>
-              setStatus(event.target.value)
-            }
+            onChange={(event) => { setStatus(event.target.value); setCurrentPage(1); }}
             className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           >
             <option value="all">

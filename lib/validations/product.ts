@@ -157,3 +157,9 @@ export const productSchema = z
 export type ProductFormValues = z.infer<
   typeof productSchema
 >;
+
+export const productApiSchema = productSchema.extend({
+  images: z.array(z.string().trim().min(1)).min(1, "At least one product image is required.").max(5),
+});
+
+export type ProductApiValues = z.infer<typeof productApiSchema>;

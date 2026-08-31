@@ -6,9 +6,10 @@ export type CategoryPayload = {
   description?: string;
   isActive: boolean;
 };
-export const getCategories = () => apiRequest<unknown[]>("/admin/categories");
-export const createCategory = (payload: CategoryPayload) => apiRequest<unknown>("/admin/categories", { method: "POST", body: JSON.stringify(payload) });
-export const updateCategory = (id: string | number, payload: Partial<CategoryPayload>) => apiRequest<unknown>(`/admin/categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-export const deleteCategory = (id: string | number) => apiRequest<{ message: string }>(`/admin/categories/${id}`, { method: "DELETE" });
+export type CategoryResponse = CategoryPayload & { id: string; slug: string; items: number; createdAt: string; updatedAt: string };
+export const getCategories = () => apiRequest<CategoryResponse[]>("/api/admin/categories");
+export const createCategory = (payload: CategoryPayload) => apiRequest<CategoryResponse>("/api/admin/categories", { method: "POST", body: JSON.stringify(payload) });
+export const updateCategory = (id: string | number, payload: Partial<CategoryPayload>) => apiRequest<CategoryResponse>(`/api/admin/categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+export const deleteCategory = (id: string | number) => apiRequest<{ message: string }>(`/api/admin/categories/${id}`, { method: "DELETE" });
 export const getCategory = (id: string | number) =>
-  apiRequest<any>(`/admin/categories/${id}`);
+  apiRequest<CategoryResponse>(`/api/admin/categories/${id}`);
