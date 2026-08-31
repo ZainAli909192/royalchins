@@ -60,7 +60,7 @@ export default async function ProductDetailsPage({
 
   const images =
     product.images.map(
-      (image) => image.url
+      (image: { url: string }) => image.url
     );
 
   const reviewCount =
@@ -69,7 +69,7 @@ export default async function ProductDetailsPage({
   const averageRating =
     reviewCount
       ? product.reviews.reduce(
-          (sum, review) =>
+          (sum: number, review: { rating: number }) =>
             sum + review.rating,
           0
         ) / reviewCount
@@ -86,7 +86,7 @@ export default async function ProductDetailsPage({
         : "In stock";
 
   const relatedProducts =
-    related.map((item) => ({
+    related.map((item: { slug: string; name: string; images: { url: string }[]; type: "Animal" | "Accessory"; salePrice: unknown; regularPrice: unknown; gender: string | null; age: string | null; shortDescription: string }) => ({
       slug:
         item.slug,
 

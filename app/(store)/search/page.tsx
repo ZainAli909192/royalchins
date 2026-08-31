@@ -170,7 +170,7 @@ export default async function SearchPage({
   const products: Product[] =
     (
       await listStoreProducts()
-    ).map((product) => ({
+    ).map((product: { id: string; slug: string; name: string; images: { url: string }[]; type: "Animal" | "Accessory"; category: { name: string }; salePrice: unknown; regularPrice: unknown; gender: string | null; age: string | null; shortDescription: string }) => ({
       id: product.id,
 
       slug:

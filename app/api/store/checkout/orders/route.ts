@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { prisma } from "@/lib/prisma";
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ message: "Your order is incomplete. Please review your items and delivery address." }, { status: 400 });
   const input = parsed.data;
   try {
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const customer = await tx.customer.findUnique({ where: { id: session.sub } });
       const address = await tx.customerAddress.findFirst({ where: { id: input.addressId, customerId: session.sub } });
       if (!customer || !address) throw new Error("ADDRESS_NOT_FOUND");

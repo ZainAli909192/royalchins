@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { prisma } from "@/lib/prisma";
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ message: "Please complete the delivery address." }, { status: 400 });
   const input = parsed.data;
   const count = await prisma.customerAddress.count({ where: { customerId } });
-  const address = await prisma.$transaction(async (tx) => {
+  const address = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     if (input.isDefault || count === 0) await tx.customerAddress.updateMany({ where: { customerId }, data: { isDefault: false } });
     return tx.customerAddress.create({ data: { ...input, isDefault: input.isDefault || count === 0, customerId } });
   });

@@ -7,8 +7,8 @@ const schema = z.object({ productId: z.string().min(1), orderNumber: z.string().
 export async function GET() {
  const session = await getCustomerSession(); if (!session?.sub) return NextResponse.json({ message: "Please sign in." }, { status: 401 });
  const [reviews, orders] = await Promise.all([prisma.review.findMany({ where: { customerId: session.sub }, include: { product: { include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } } }, order: true }, orderBy: { createdAt: "desc" } }), prisma.order.findMany({ where: { customerId: session.sub, orderStatus: "Delivered" }, include: { items: { include: { product: { include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } } } } } } })]);
- const reviewed = new Set(reviews.map(review => `${review.orderId}-${review.productId}`));
- const reviewable = orders.flatMap(order => order.items.filter(item => item.productId && !reviewed.has(`${order.id}-${item.productId}`)).map(item => ({ orderNumber: order.orderNumber, deliveredAt: order.updatedAt, product: item.product })));
+ const reviewed = new Set(reviews.map((review: { orderId: string | null; productId: string }) => `${review.orderId}-${review.productId}`));
+ const reviewable = orders.flatMap((order: { id: string; orderNumber: string; updatedAt: Date; items: { productId: string | null; product: unknown }[] }) => order.items.filter((item: { productId: string | null }) => item.productId && !reviewed.has(`${order.id}-${item.productId}`)).map((item: { product: unknown }) => ({ orderNumber: order.orderNumber, deliveredAt: order.updatedAt, product: item.product })));
  return NextResponse.json({ reviews, reviewable });
 }
 export async function POST(request: Request) {
