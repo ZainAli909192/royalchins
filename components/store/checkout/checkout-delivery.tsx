@@ -14,6 +14,7 @@ import {
   Plus,
   UserRound,
 } from "lucide-react";
+
 import {
   type Dispatch,
   type FormEvent,
@@ -24,11 +25,19 @@ import {
   useState,
 } from "react";
 
+import {
+  Reveal,
+  RevealGroup,
+  RevealItem,
+} from "@/components/store/shared/reveal";
+
 import { Button } from "@/components/ui/button";
+
 import {
   type CheckoutOrderItem,
   OrderSummary,
 } from "@/components/store/checkout/order-summary";
+
 import {
   getCheckout,
   saveCheckout,
@@ -89,20 +98,60 @@ const deliveryFees: Record<
 export function CheckoutDelivery() {
   const router = useRouter();
 
-  const [checkoutItems, setCheckoutItems] =
-    useState<CheckoutOrderItem[]>([]);
+  const [
+    checkoutItems,
+    setCheckoutItems,
+  ] =
+    useState<CheckoutOrderItem[]>(
+      []
+    );
 
-  const [checkoutLoaded, setCheckoutLoaded] =
+  const [
+    checkoutLoaded,
+    setCheckoutLoaded,
+  ] =
     useState(false);
 
-  const [addressMode, setAddressMode] =
-    useState<AddressMode>("saved");
-  const [savedAddress, setSavedAddress] = useState(fallbackAddress);
-  const [savedAddressId, setSavedAddressId] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [
+    addressMode,
+    setAddressMode,
+  ] =
+    useState<AddressMode>(
+      "saved"
+    );
 
-  const [form, setForm] =
+  const [
+    savedAddress,
+    setSavedAddress,
+  ] =
+    useState(
+      fallbackAddress
+    );
+
+  const [
+    savedAddressId,
+    setSavedAddressId,
+  ] =
+    useState<
+      string | null
+    >(null);
+
+  const [
+    submitError,
+    setSubmitError,
+  ] =
+    useState("");
+
+  const [
+    submitting,
+    setSubmitting,
+  ] =
+    useState(false);
+
+  const [
+    form,
+    setForm,
+  ] =
     useState<DeliveryForm>({
       fullName: "",
       phone: "",
@@ -117,95 +166,291 @@ export function CheckoutDelivery() {
     });
 
   useEffect(() => {
-    const checkout = getCheckout();
+    const checkout =
+      getCheckout();
 
-    if (!checkout || checkout.items.length === 0) {
-      setCheckoutLoaded(true);
+    if (
+      !checkout ||
+      checkout.items.length ===
+        0
+    ) {
+      setCheckoutLoaded(
+        true
+      );
+
       return;
     }
 
     setCheckoutItems(
-      checkout.items.map((item) => ({
-        id: item.id,
-        slug: item.slug,
-        name: item.name,
-        image: item.image,
-        type: item.type,
-        price: item.price,
-        quantity: item.quantity,
-        shortMeta: item.shortMeta,
-      }))
+      checkout.items.map(
+        (item) => ({
+          id: item.id,
+          slug: item.slug,
+          name: item.name,
+          image: item.image,
+          type: item.type,
+          price: item.price,
+          quantity:
+            item.quantity,
+          shortMeta:
+            item.shortMeta,
+        })
+      )
     );
 
-    setCheckoutLoaded(true);
+    setCheckoutLoaded(
+      true
+    );
   }, []);
 
   useEffect(() => {
-    fetch("/api/store/auth/session")
-      .then(async (response) => ({ response, data: await response.json() }))
-      .then(({ response, data }) => {
-        if (!response.ok) { router.replace("/checkout/auth"); return; }
-        const address = data.customer?.addresses?.[0];
-        if (!address) { setAddressMode("new"); return; }
-        setSavedAddress({ id: address.id, label: address.label, fullName: address.recipientName, phone: address.phone, emirate: address.emirate, area: address.area, street: address.street, building: address.building, unit: address.unit ?? "" });
-        setSavedAddressId(address.id);
-      })
-      .catch(() => router.replace("/checkout/auth"));
+    fetch(
+      "/api/store/auth/session"
+    )
+      .then(
+        async (
+          response
+        ) => ({
+          response,
+          data:
+            await response.json(),
+        })
+      )
+      .then(
+        ({
+          response,
+          data,
+        }) => {
+          if (
+            !response.ok
+          ) {
+            router.replace(
+              "/checkout/auth"
+            );
+
+            return;
+          }
+
+          const address =
+            data.customer
+              ?.addresses?.[0];
+
+          if (!address) {
+            setAddressMode(
+              "new"
+            );
+
+            return;
+          }
+
+          setSavedAddress({
+            id:
+              address.id,
+
+            label:
+              address.label,
+
+            fullName:
+              address.recipientName,
+
+            phone:
+              address.phone,
+
+            emirate:
+              address.emirate,
+
+            area:
+              address.area,
+
+            street:
+              address.street,
+
+            building:
+              address.building,
+
+            unit:
+              address.unit ??
+              "",
+          });
+
+          setSavedAddressId(
+            address.id
+          );
+        }
+      )
+      .catch(() =>
+        router.replace(
+          "/checkout/auth"
+        )
+      );
   }, [router]);
 
   const selectedEmirate =
-    addressMode === "saved"
+    addressMode ===
+    "saved"
       ? savedAddress.emirate
       : form.emirate;
 
   const deliveryFee =
     selectedEmirate
-      ? deliveryFees[selectedEmirate]
+      ? deliveryFees[
+          selectedEmirate
+        ]
       : null;
 
-  const subtotal = useMemo(
-    () =>
-      checkoutItems.reduce(
-        (total, item) =>
-          total +
-          item.price * item.quantity,
+  const subtotal =
+    useMemo(
+      () =>
+        checkoutItems.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            item.price *
+              item.quantity,
+          0
+        ),
+      [checkoutItems]
+    );
+
+  const handleSubmit =
+    async (
+      event: FormEvent<HTMLFormElement>
+    ) => {
+      event.preventDefault();
+
+      if (
+        checkoutItems.length ===
         0
-      ),
-    [checkoutItems]
-  );
-
-  const handleSubmit = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
-
-    if (checkoutItems.length === 0) {
-      return;
-    }
-
-    setSubmitError("");
-    setSubmitting(true);
-    try {
-      let addressId = savedAddressId;
-      if (addressMode === "new" || !addressId) {
-        const response = await fetch("/api/store/checkout/addresses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label: "Home", recipientName: form.fullName, phone: form.phone, emirate: form.emirate, area: form.area, street: form.street, building: form.building, unit: form.unit, landmark: form.landmark, notes: form.notes, isDefault: form.saveAddress }) });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.message);
-        addressId = result.id;
+      ) {
+        return;
       }
-      const checkout = getCheckout();
-      if (checkout && addressId) saveCheckout({ ...checkout, addressId, deliveryFee: deliveryFee ?? 0 });
-      router.push("/checkout/review");
-    } catch (caught) {
-      setSubmitError(caught instanceof Error ? caught.message : "Unable to save this delivery address.");
-    } finally { setSubmitting(false); }
-  };
+
+      setSubmitError("");
+      setSubmitting(true);
+
+      try {
+        let addressId =
+          savedAddressId;
+
+        if (
+          addressMode ===
+            "new" ||
+          !addressId
+        ) {
+          const response =
+            await fetch(
+              "/api/store/checkout/addresses",
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body:
+                  JSON.stringify(
+                    {
+                      label:
+                        "Home",
+
+                      recipientName:
+                        form.fullName,
+
+                      phone:
+                        form.phone,
+
+                      emirate:
+                        form.emirate,
+
+                      area:
+                        form.area,
+
+                      street:
+                        form.street,
+
+                      building:
+                        form.building,
+
+                      unit:
+                        form.unit,
+
+                      landmark:
+                        form.landmark,
+
+                      notes:
+                        form.notes,
+
+                      isDefault:
+                        form.saveAddress,
+                    }
+                  ),
+              }
+            );
+
+          const result =
+            await response.json();
+
+          if (
+            !response.ok
+          ) {
+            throw new Error(
+              result.message
+            );
+          }
+
+          addressId =
+            result.id;
+        }
+
+        const checkout =
+          getCheckout();
+
+        if (
+          checkout &&
+          addressId
+        ) {
+          saveCheckout({
+            ...checkout,
+            addressId,
+            deliveryFee:
+              deliveryFee ??
+              0,
+          });
+        }
+
+        router.push(
+          "/checkout/review"
+        );
+      } catch (
+        caught
+      ) {
+        setSubmitError(
+          caught instanceof
+          Error
+            ? caught.message
+            : "Unable to save this delivery address."
+        );
+      } finally {
+        setSubmitting(
+          false
+        );
+      }
+    };
 
   if (!checkoutLoaded) {
-    return <DeliveryLoading />;
+    return (
+      <DeliveryLoading />
+    );
   }
 
-  if (checkoutItems.length === 0) {
+  if (
+    checkoutItems.length ===
+    0
+  ) {
     return (
       <EmptyCheckout
         onBrowse={() =>
@@ -217,161 +462,262 @@ export function CheckoutDelivery() {
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={
+        handleSubmit
+      }
       className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]"
     >
       <div className="min-w-0">
-        <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-              Delivery Details
-            </p>
-
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Where should we deliver?
-            </h1>
-
-            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-              Choose a saved address
-              or enter a new delivery
-              address for your order.
-            </p>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 rounded-xl bg-surface-subtle p-1">
-            <button
-              type="button"
-              onClick={() =>
-                setAddressMode(
-                  "saved"
-                )
-              }
-              className={`flex h-11 items-center justify-center gap-2 rounded-lg px-2 text-xs font-bold transition-colors sm:text-sm ${
-                addressMode ===
-                "saved"
-                  ? "bg-background text-primary shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+        <Reveal
+          direction="left"
+          distance={40}
+          duration={0.6}
+        >
+          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
+            <Reveal
+              direction="up"
+              distance={25}
+              duration={0.55}
             >
-              <Home
-                aria-hidden="true"
-                className="h-4 w-4 shrink-0"
-              />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  Delivery Details
+                </p>
 
-              <span>
-                Saved Address
-              </span>
-            </button>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  Where should we
+                  deliver?
+                </h1>
 
-            <button
-              type="button"
-              onClick={() =>
-                setAddressMode("new")
-              }
-              className={`flex h-11 items-center justify-center gap-2 rounded-lg px-2 text-xs font-bold transition-colors sm:text-sm ${
-                addressMode === "new"
-                  ? "bg-background text-primary shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Choose a saved
+                  address or enter a
+                  new delivery address
+                  for your order.
+                </p>
+              </div>
+            </Reveal>
+
+            <Reveal
+              direction="scale"
+              scaleFrom={0.96}
+              delay={0.05}
             >
-              <Plus
-                aria-hidden="true"
-                className="h-4 w-4 shrink-0"
-              />
-
-              <span>
-                New Address
-              </span>
-            </button>
-          </div>
-
-          {addressMode ===
-          "saved" ? (
-            <SavedAddress address={savedAddress} />
-          ) : (
-            <NewAddressForm
-              form={form}
-              setForm={setForm}
-            />
-          )}
-
-          {deliveryFee !==
-            null && (
-            <div className="mt-6 flex items-start justify-between gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:p-5">
-              <div className="flex min-w-0 items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <MapPin
+              <div className="mt-6 grid grid-cols-2 rounded-xl bg-surface-subtle p-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAddressMode(
+                      "saved"
+                    )
+                  }
+                  className={`flex h-11 items-center justify-center gap-2 rounded-lg px-2 text-xs font-bold transition-colors sm:text-sm ${
+                    addressMode ===
+                    "saved"
+                      ? "bg-background text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Home
                     aria-hidden="true"
-                    className="h-4 w-4"
+                    className="h-4 w-4 shrink-0"
                   />
-                </span>
 
-                <div>
-                  <p className="text-sm font-bold text-foreground">
-                    Delivery to{" "}
-                    {
-                      selectedEmirate
-                    }
-                  </p>
+                  <span>
+                    Saved Address
+                  </span>
+                </button>
 
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Delivery fee
-                    calculated for the
-                    selected emirate.
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAddressMode(
+                      "new"
+                    )
+                  }
+                  className={`flex h-11 items-center justify-center gap-2 rounded-lg px-2 text-xs font-bold transition-colors sm:text-sm ${
+                    addressMode ===
+                    "new"
+                      ? "bg-background text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Plus
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0"
+                  />
+
+                  <span>
+                    New Address
+                  </span>
+                </button>
+              </div>
+            </Reveal>
+
+            {addressMode ===
+            "saved" ? (
+              <Reveal
+                key="saved-address"
+                direction="scale"
+                scaleFrom={0.96}
+                duration={0.5}
+              >
+                <SavedAddress
+                  address={
+                    savedAddress
+                  }
+                />
+              </Reveal>
+            ) : (
+              <Reveal
+                key="new-address"
+                direction="up"
+                distance={25}
+                duration={0.5}
+              >
+                <NewAddressForm
+                  form={form}
+                  setForm={
+                    setForm
+                  }
+                />
+              </Reveal>
+            )}
+
+            {deliveryFee !==
+              null && (
+              <Reveal
+                direction="scale"
+                scaleFrom={0.96}
+                duration={0.5}
+              >
+                <div className="mt-6 flex items-start justify-between gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:p-5">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <MapPin
+                        aria-hidden="true"
+                        className="h-4 w-4"
+                      />
+                    </span>
+
+                    <div>
+                      <p className="text-sm font-bold text-foreground">
+                        Delivery to{" "}
+                        {
+                          selectedEmirate
+                        }
+                      </p>
+
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        Delivery fee
+                        calculated for
+                        the selected
+                        emirate.
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="shrink-0 text-base font-bold text-primary">
+                    AED{" "}
+                    {deliveryFee.toLocaleString()}
                   </p>
                 </div>
-              </div>
+              </Reveal>
+            )}
 
-              <p className="shrink-0 text-base font-bold text-primary">
-                AED{" "}
-                {deliveryFee.toLocaleString()}
-              </p>
-            </div>
-          )}
-
-          {submitError && <p className="mt-5 rounded-xl bg-error/10 px-4 py-3 text-sm font-semibold text-error">{submitError}</p>}
-          <div className="mt-7 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <Button
-              asChild
-              type="button"
-              variant="secondary"
-              className="h-12 rounded-xl px-5"
-            >
-              <Link
-                href="/checkout/auth"
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap"
+            {submitError && (
+              <Reveal
+                direction="up"
+                distance={15}
+                duration={0.4}
               >
-                <ArrowLeft
-                  aria-hidden="true"
-                  className="h-4 w-4 shrink-0"
-                />
+                <p className="mt-5 rounded-xl bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+                  {
+                    submitError
+                  }
+                </p>
+              </Reveal>
+            )}
 
-                <span>Back</span>
-              </Link>
-            </Button>
-
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={submitting}
-              className="h-12 rounded-xl px-6 text-sm font-bold"
+            <Reveal
+              direction="up"
+              distance={20}
+              delay={0.05}
             >
-              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-                <span>
-                  {submitting ? "Saving..." : "Review"}
-                </span>
+              <div className="mt-7 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  asChild
+                  type="button"
+                  variant="secondary"
+                  className="h-12 rounded-xl px-5"
+                >
+                  <Link
+                    href="/checkout/auth"
+                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <ArrowLeft
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0"
+                    />
 
-                <ArrowRight
-                  aria-hidden="true"
-                  className="h-5 w-5 shrink-0"
-                  strokeWidth={2}
-                />
-              </span>
-            </Button>
-          </div>
-        </section>
+                    <span>
+                      Back
+                    </span>
+                  </Link>
+                </Button>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={
+                    submitting
+                  }
+                  className="h-12 rounded-xl px-6 text-sm font-bold"
+                >
+                  <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                    <span>
+                      {submitting
+                        ? "Saving..."
+                        : "Review"}
+                    </span>
+
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="h-5 w-5 shrink-0"
+                      strokeWidth={
+                        2
+                      }
+                    />
+                  </span>
+                </Button>
+              </div>
+            </Reveal>
+          </section>
+        </Reveal>
 
         <div className="mt-4 lg:hidden">
+          <Reveal
+            direction="up"
+            distance={30}
+          >
+            <OrderSummary
+              items={
+                checkoutItems
+              }
+              deliveryFee={
+                deliveryFee
+              }
+            />
+          </Reveal>
+        </div>
+      </div>
+
+      <div className="hidden lg:block">
+        <Reveal
+          direction="right"
+          distance={40}
+          delay={0.08}
+        >
           <OrderSummary
             items={
               checkoutItems
@@ -380,28 +726,24 @@ export function CheckoutDelivery() {
               deliveryFee
             }
           />
-        </div>
-      </div>
-
-      <div className="hidden lg:block">
-        <OrderSummary
-          items={
-            checkoutItems
-          }
-          deliveryFee={
-            deliveryFee
-          }
-        />
+        </Reveal>
       </div>
     </form>
   );
 }
 
-function SavedAddress({ address: savedAddress }: { address: typeof fallbackAddress }) {
+function SavedAddress({
+  address:
+    savedAddress,
+}: {
+  address:
+    typeof fallbackAddress;
+}) {
   return (
     <div className="mt-6">
       <p className="mb-3 text-sm font-bold text-foreground">
-        Select delivery address
+        Select delivery
+        address
       </p>
 
       <button
@@ -412,7 +754,9 @@ function SavedAddress({ address: savedAddress }: { address: typeof fallbackAddre
           <Check
             aria-hidden="true"
             className="h-3.5 w-3.5"
-            strokeWidth={2.5}
+            strokeWidth={
+              2.5
+            }
           />
         </span>
 
@@ -515,120 +859,207 @@ function NewAddressForm({
   >;
 }) {
   return (
-    <div className="mt-6 space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Full Name"
-          required
-        >
-          <InputWrapper
-            icon={UserRound}
+    <RevealGroup
+      stagger={0.05}
+      className="mt-6 space-y-4"
+    >
+      <RevealItem
+        direction="up"
+        distance={15}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Full Name"
+            required
           >
-            <input
-              type="text"
-              required
-              value={form.fullName}
-              onChange={(event) =>
-                setForm(
-                  (current) => ({
-                    ...current,
-                    fullName:
-                      event.target
-                        .value,
-                  })
-                )
-              }
-              placeholder="Full name"
-              className={inputClass}
-            />
-          </InputWrapper>
-        </Field>
-
-        <Field
-          label="Mobile Number"
-          required
-        >
-          <div className="flex h-12 overflow-hidden rounded-xl border border-border bg-background transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
-            <span className="flex shrink-0 items-center border-r border-border bg-surface-subtle px-3 text-sm font-semibold text-foreground">
-              +971
-            </span>
-
-            <input
-              type="tel"
-              required
-              value={form.phone}
-              onChange={(event) =>
-                setForm(
-                  (current) => ({
-                    ...current,
-                    phone:
-                      event.target
-                        .value,
-                  })
-                )
-              }
-              placeholder="50 123 4567"
-              className="min-w-0 flex-1 bg-transparent px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
-            />
-          </div>
-        </Field>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Emirate"
-          required
-        >
-          <div className="relative">
-            <MapPin
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-
-            <select
-              required
-              value={form.emirate}
-              onChange={(event) =>
-                setForm(
-                  (current) => ({
-                    ...current,
-                    emirate:
-                      event.target
-                        .value as Emirate,
-                  })
-                )
-              }
-              className="h-12 w-full appearance-none rounded-xl border border-border bg-background pl-10 pr-10 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+            <InputWrapper
+              icon={UserRound}
             >
-              <option value="">
-                Select emirate
-              </option>
+              <input
+                type="text"
+                required
+                value={
+                  form.fullName
+                }
+                onChange={(
+                  event
+                ) =>
+                  setForm(
+                    (
+                      current
+                    ) => ({
+                      ...current,
 
-              {Object.keys(
-                deliveryFees
-              ).map(
-                (emirate) => (
-                  <option
-                    key={emirate}
-                    value={
-                      emirate
-                    }
-                  >
-                    {emirate}
-                  </option>
-                )
-              )}
-            </select>
+                      fullName:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
+                }
+                placeholder="Full name"
+                className={
+                  inputClass
+                }
+              />
+            </InputWrapper>
+          </Field>
 
-            <ChevronDown
-              aria-hidden="true"
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-          </div>
-        </Field>
+          <Field
+            label="Mobile Number"
+            required
+          >
+            <div className="flex h-12 overflow-hidden rounded-xl border border-border bg-background transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+              <span className="flex shrink-0 items-center border-r border-border bg-surface-subtle px-3 text-sm font-semibold text-foreground">
+                +971
+              </span>
 
+              <input
+                type="tel"
+                required
+                value={
+                  form.phone
+                }
+                onChange={(
+                  event
+                ) =>
+                  setForm(
+                    (
+                      current
+                    ) => ({
+                      ...current,
+
+                      phone:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
+                }
+                placeholder="50 123 4567"
+                className="min-w-0 flex-1 bg-transparent px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+          </Field>
+        </div>
+      </RevealItem>
+
+      <RevealItem
+        direction="up"
+        distance={15}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Emirate"
+            required
+          >
+            <div className="relative">
+              <MapPin
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              />
+
+              <select
+                required
+                value={
+                  form.emirate
+                }
+                onChange={(
+                  event
+                ) =>
+                  setForm(
+                    (
+                      current
+                    ) => ({
+                      ...current,
+
+                      emirate:
+                        event
+                          .target
+                          .value as Emirate,
+                    })
+                  )
+                }
+                className="h-12 w-full appearance-none rounded-xl border border-border bg-background pl-10 pr-10 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+              >
+                <option value="">
+                  Select emirate
+                </option>
+
+                {Object.keys(
+                  deliveryFees
+                ).map(
+                  (
+                    emirate
+                  ) => (
+                    <option
+                      key={
+                        emirate
+                      }
+                      value={
+                        emirate
+                      }
+                    >
+                      {
+                        emirate
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+
+              <ChevronDown
+                aria-hidden="true"
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              />
+            </div>
+          </Field>
+
+          <Field
+            label="Area / Community"
+            required
+          >
+            <InputWrapper
+              icon={MapPin}
+            >
+              <input
+                type="text"
+                required
+                value={
+                  form.area
+                }
+                onChange={(
+                  event
+                ) =>
+                  setForm(
+                    (
+                      current
+                    ) => ({
+                      ...current,
+
+                      area:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
+                }
+                placeholder="e.g. Dubai Marina"
+                className={
+                  inputClass
+                }
+              />
+            </InputWrapper>
+          </Field>
+        </div>
+      </RevealItem>
+
+      <RevealItem
+        direction="up"
+        distance={15}
+      >
         <Field
-          label="Area / Community"
+          label="Street"
           required
         >
           <InputWrapper
@@ -637,176 +1068,222 @@ function NewAddressForm({
             <input
               type="text"
               required
-              value={form.area}
-              onChange={(event) =>
+              value={
+                form.street
+              }
+              onChange={(
+                event
+              ) =>
                 setForm(
-                  (current) => ({
+                  (
+                    current
+                  ) => ({
                     ...current,
-                    area:
-                      event.target
+
+                    street:
+                      event
+                        .target
                         .value,
                   })
                 )
               }
-              placeholder="e.g. Dubai Marina"
-              className={inputClass}
+              placeholder="Street name"
+              className={
+                inputClass
+              }
             />
           </InputWrapper>
         </Field>
-      </div>
+      </RevealItem>
 
-      <Field
-        label="Street"
-        required
+      <RevealItem
+        direction="up"
+        distance={15}
       >
-        <InputWrapper
-          icon={MapPin}
-        >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Building / Villa"
+            required
+          >
+            <InputWrapper
+              icon={Building2}
+            >
+              <input
+                type="text"
+                required
+                value={
+                  form.building
+                }
+                onChange={(
+                  event
+                ) =>
+                  setForm(
+                    (
+                      current
+                    ) => ({
+                      ...current,
+
+                      building:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
+                }
+                placeholder="Building or villa"
+                className={
+                  inputClass
+                }
+              />
+            </InputWrapper>
+          </Field>
+
+          <Field
+            label="Apartment / Villa No."
+            required
+          >
+            <InputWrapper
+              icon={Home}
+            >
+              <input
+                type="text"
+                required
+                value={
+                  form.unit
+                }
+                onChange={(
+                  event
+                ) =>
+                  setForm(
+                    (
+                      current
+                    ) => ({
+                      ...current,
+
+                      unit:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
+                }
+                placeholder="e.g. 1204"
+                className={
+                  inputClass
+                }
+              />
+            </InputWrapper>
+          </Field>
+        </div>
+      </RevealItem>
+
+      <RevealItem
+        direction="up"
+        distance={15}
+      >
+        <Field label="Landmark">
           <input
             type="text"
-            required
-            value={form.street}
-            onChange={(event) =>
+            value={
+              form.landmark
+            }
+            onChange={(
+              event
+            ) =>
               setForm(
-                (current) => ({
+                (
+                  current
+                ) => ({
                   ...current,
-                  street:
-                    event.target
+
+                  landmark:
+                    event
+                      .target
                       .value,
                 })
               )
             }
-            placeholder="Street name"
-            className={inputClass}
+            placeholder="Nearby landmark (optional)"
+            className="h-12 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
           />
-        </InputWrapper>
-      </Field>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Building / Villa"
-          required
-        >
-          <InputWrapper
-            icon={Building2}
-          >
-            <input
-              type="text"
-              required
-              value={
-                form.building
-              }
-              onChange={(event) =>
-                setForm(
-                  (current) => ({
-                    ...current,
-                    building:
-                      event.target
-                        .value,
-                  })
-                )
-              }
-              placeholder="Building or villa"
-              className={inputClass}
-            />
-          </InputWrapper>
         </Field>
+      </RevealItem>
 
-        <Field
-          label="Apartment / Villa No."
-          required
-        >
-          <InputWrapper
-            icon={Home}
-          >
-            <input
-              type="text"
-              required
-              value={form.unit}
-              onChange={(event) =>
-                setForm(
-                  (current) => ({
-                    ...current,
-                    unit:
-                      event.target
-                        .value,
-                  })
-                )
-              }
-              placeholder="e.g. 1204"
-              className={inputClass}
-            />
-          </InputWrapper>
+      <RevealItem
+        direction="up"
+        distance={15}
+      >
+        <Field label="Delivery Notes">
+          <textarea
+            value={
+              form.notes
+            }
+            onChange={(
+              event
+            ) =>
+              setForm(
+                (
+                  current
+                ) => ({
+                  ...current,
+
+                  notes:
+                    event
+                      .target
+                      .value,
+                })
+              )
+            }
+            placeholder="Any instructions for delivery? (optional)"
+            rows={4}
+            className="w-full resize-none rounded-xl border border-border bg-background px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
+          />
         </Field>
-      </div>
+      </RevealItem>
 
-      <Field label="Landmark">
-        <input
-          type="text"
-          value={form.landmark}
-          onChange={(event) =>
-            setForm(
-              (current) => ({
-                ...current,
-                landmark:
-                  event.target.value,
-              })
-            )
-          }
-          placeholder="Nearby landmark (optional)"
-          className="h-12 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
-        />
-      </Field>
+      <RevealItem
+        direction="up"
+        distance={15}
+      >
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
+          <input
+            type="checkbox"
+            checked={
+              form.saveAddress
+            }
+            onChange={(
+              event
+            ) =>
+              setForm(
+                (
+                  current
+                ) => ({
+                  ...current,
 
-      <Field label="Delivery Notes">
-        <textarea
-          value={form.notes}
-          onChange={(event) =>
-            setForm(
-              (current) => ({
-                ...current,
-                notes:
-                  event.target.value,
-              })
-            )
-          }
-          placeholder="Any instructions for delivery? (optional)"
-          rows={4}
-          className="w-full resize-none rounded-xl border border-border bg-background px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
-        />
-      </Field>
+                  saveAddress:
+                    event
+                      .target
+                      .checked,
+                })
+              )
+            }
+            className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+          />
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
-        <input
-          type="checkbox"
-          checked={
-            form.saveAddress
-          }
-          onChange={(event) =>
-            setForm(
-              (current) => ({
-                ...current,
-                saveAddress:
-                  event.target
-                    .checked,
-              })
-            )
-          }
-          className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
-        />
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              Save this address
+            </p>
 
-        <div>
-          <p className="text-sm font-semibold text-foreground">
-            Save this address
-          </p>
-
-          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-            Use this address faster
-            on your next order.
-          </p>
-        </div>
-      </label>
-    </div>
+            <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+              Use this address
+              faster on your next
+              order.
+            </p>
+          </div>
+        </label>
+      </RevealItem>
+    </RevealGroup>
   );
 }
 
@@ -885,34 +1362,43 @@ function EmptyCheckout({
 }) {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <div className="w-full max-w-lg rounded-3xl border border-border bg-background p-7 text-center shadow-sm sm:p-10">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <MapPin
-            aria-hidden="true"
-            className="h-6 w-6"
-          />
-        </span>
+      <Reveal
+        direction="scale"
+        scaleFrom={0.9}
+        className="w-full max-w-lg"
+      >
+        <div className="w-full rounded-3xl border border-border bg-background p-7 text-center shadow-sm sm:p-10">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <MapPin
+              aria-hidden="true"
+              className="h-6 w-6"
+            />
+          </span>
 
-        <h1 className="mt-5 text-xl font-bold text-foreground sm:text-2xl">
-          No active checkout
-        </h1>
+          <h1 className="mt-5 text-xl font-bold text-foreground sm:text-2xl">
+            No active checkout
+          </h1>
 
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-          Your checkout does not
-          contain any products. Choose
-          an animal or accessory to
-          continue.
-        </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+            Your checkout does
+            not contain any
+            products. Choose an
+            animal or accessory
+            to continue.
+          </p>
 
-        <Button
-          type="button"
-          variant="primary"
-          onClick={onBrowse}
-          className="mt-6 h-12 rounded-xl px-6 font-bold"
-        >
-          Browse Products
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={
+              onBrowse
+            }
+            className="mt-6 h-12 rounded-xl px-6 font-bold"
+          >
+            Browse Products
+          </Button>
+        </div>
+      </Reveal>
     </div>
   );
 }

@@ -10,201 +10,482 @@ import {
   ShieldCheck,
   WalletCards,
 } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useState,
+} from "react";
 
+import {
+  Reveal,
+  RevealGroup,
+  RevealItem,
+} from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
 import type { CheckoutOrderItem } from "@/components/store/checkout/order-summary";
-import { clearCheckout, getCheckout } from "@/lib/store/checkout-storage";
+import {
+  clearCheckout,
+  getCheckout,
+} from "@/lib/store/checkout-storage";
 
-type PaymentMethod = "card" | "tamara" | "tabby";
+type PaymentMethod =
+  | "card"
+  | "tamara"
+  | "tabby";
 
 export function CheckoutPayment() {
   const router = useRouter();
 
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("card");
+  const [
+    paymentMethod,
+    setPaymentMethod,
+  ] =
+    useState<PaymentMethod>(
+      "card"
+    );
 
-  const [isSubmitting, setIsSubmitting] =
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] =
     useState(false);
-  const [checkoutItems, setCheckoutItems] = useState<CheckoutOrderItem[]>([]);
-  const [addressId, setAddressId] = useState<string | null>(null);
-  const [deliveryFee, setDeliveryFee] = useState(0);
-  const [error, setError] = useState("");
+
+  const [
+    checkoutItems,
+    setCheckoutItems,
+  ] =
+    useState<
+      CheckoutOrderItem[]
+    >([]);
+
+  const [
+    addressId,
+    setAddressId,
+  ] =
+    useState<
+      string | null
+    >(null);
+
+  const [
+    deliveryFee,
+    setDeliveryFee,
+  ] =
+    useState(0);
+
+  const [
+    error,
+    setError,
+  ] =
+    useState("");
 
   useEffect(() => {
-    const checkout = getCheckout();
-    if (!checkout?.items.length || !checkout.addressId) { router.replace("/checkout/delivery"); return; }
-    setCheckoutItems(checkout.items);
-    setAddressId(checkout.addressId);
-    setDeliveryFee(checkout.deliveryFee ?? 0);
+    const checkout =
+      getCheckout();
+
+    if (
+      !checkout?.items.length ||
+      !checkout.addressId
+    ) {
+      router.replace(
+        "/checkout/delivery"
+      );
+
+      return;
+    }
+
+    setCheckoutItems(
+      checkout.items
+    );
+
+    setAddressId(
+      checkout.addressId
+    );
+
+    setDeliveryFee(
+      checkout.deliveryFee ??
+        0
+    );
   }, [router]);
 
-  const subtotal = checkoutItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const subtotal =
+    checkoutItems.reduce(
+      (
+        total,
+        item
+      ) =>
+        total +
+        item.price *
+          item.quantity,
+      0
+    );
 
-  const total = subtotal + deliveryFee;
+  const total =
+    subtotal +
+    deliveryFee;
 
-  const handleSubmit = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
-    if (!addressId || checkoutItems.length === 0) return;
-    setError("");
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/store/checkout/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addressId, paymentMethod: paymentMethod === "card" ? "Card" : paymentMethod === "tamara" ? "Tamara" : "Tabby", items: checkoutItems.map((item) => ({ productId: item.id, quantity: item.quantity })) }) });
-      const order = await response.json();
-      if (!response.ok) throw new Error(order.message);
-      clearCheckout();
-      router.push(`/checkout/confirmation?order=${encodeURIComponent(order.orderNumber)}`);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to place your order.");
-    } finally { setIsSubmitting(false); }
-  };
+  const handleSubmit =
+    async (
+      event: FormEvent<HTMLFormElement>
+    ) => {
+      event.preventDefault();
+
+      if (
+        !addressId ||
+        checkoutItems.length ===
+          0
+      ) {
+        return;
+      }
+
+      setError("");
+      setIsSubmitting(
+        true
+      );
+
+      try {
+        const response =
+          await fetch(
+            "/api/store/checkout/orders",
+            {
+              method:
+                "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  {
+                    addressId,
+
+                    paymentMethod:
+                      paymentMethod ===
+                      "card"
+                        ? "Card"
+                        : paymentMethod ===
+                            "tamara"
+                          ? "Tamara"
+                          : "Tabby",
+
+                    items:
+                      checkoutItems.map(
+                        (
+                          item
+                        ) => ({
+                          productId:
+                            item.id,
+
+                          quantity:
+                            item.quantity,
+                        })
+                      ),
+                  }
+                ),
+            }
+          );
+
+        const order =
+          await response.json();
+
+        if (
+          !response.ok
+        ) {
+          throw new Error(
+            order.message
+          );
+        }
+
+        clearCheckout();
+
+        router.push(
+          `/checkout/confirmation?order=${encodeURIComponent(
+            order.orderNumber
+          )}`
+        );
+      } catch (
+        caught
+      ) {
+        setError(
+          caught instanceof
+          Error
+            ? caught.message
+            : "Unable to place your order."
+        );
+      } finally {
+        setIsSubmitting(
+          false
+        );
+      }
+    };
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={
+        handleSubmit
+      }
       className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]"
     >
       <div className="min-w-0 space-y-4 sm:space-y-5">
-        <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-              Payment
-            </p>
-
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Choose how you want to pay
-            </h1>
-
-            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-              Select your preferred payment method to complete your Royal Chins
-              order.
-            </p>
-          </div>
-
-          <div className="mt-7 space-y-3">
-            <PaymentOption
-              active={paymentMethod === "card"}
-              title="Credit / Debit Card"
-              description="Pay securely using your Visa or Mastercard."
-              icon={CreditCard}
-              onClick={() => setPaymentMethod("card")}
+        <Reveal
+          direction="left"
+          distance={40}
+        >
+          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
+            <Reveal
+              direction="up"
+              distance={25}
             >
-              <div className="flex items-center gap-1.5">
-                <PaymentBadge>VISA</PaymentBadge>
-                <PaymentBadge>Mastercard</PaymentBadge>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  Payment
+                </p>
+
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  Choose how you
+                  want to pay
+                </h1>
+
+                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Select your
+                  preferred
+                  payment method
+                  to complete your
+                  Royal Chins
+                  order.
+                </p>
               </div>
-            </PaymentOption>
+            </Reveal>
 
-            <PaymentOption
-              active={paymentMethod === "tamara"}
-              title="Tamara"
-              description="Split your payment with Tamara."
-              icon={WalletCards}
-              onClick={() => setPaymentMethod("tamara")}
+            <RevealGroup
+              stagger={0.08}
+              delay={0.05}
+              className="mt-7 space-y-3"
             >
-              <span className="rounded-md bg-foreground px-2.5 py-1 text-[10px] font-bold text-background">
-                tamara
-              </span>
-            </PaymentOption>
+              <RevealItem
+                direction="scale"
+                scaleFrom={0.95}
+              >
+                <PaymentOption
+                  active={
+                    paymentMethod ===
+                    "card"
+                  }
+                  title="Credit / Debit Card"
+                  description="Pay securely using your Visa or Mastercard."
+                  icon={
+                    CreditCard
+                  }
+                  onClick={() =>
+                    setPaymentMethod(
+                      "card"
+                    )
+                  }
+                >
+                  <div className="flex items-center gap-1.5">
+                    <PaymentBadge>
+                      VISA
+                    </PaymentBadge>
 
-            <PaymentOption
-              active={paymentMethod === "tabby"}
-              title="Tabby"
-              description="Pay later or split your purchase with Tabby."
-              icon={WalletCards}
-              onClick={() => setPaymentMethod("tabby")}
+                    <PaymentBadge>
+                      Mastercard
+                    </PaymentBadge>
+                  </div>
+                </PaymentOption>
+              </RevealItem>
+
+              <RevealItem
+                direction="scale"
+                scaleFrom={0.95}
+              >
+                <PaymentOption
+                  active={
+                    paymentMethod ===
+                    "tamara"
+                  }
+                  title="Tamara"
+                  description="Split your payment with Tamara."
+                  icon={
+                    WalletCards
+                  }
+                  onClick={() =>
+                    setPaymentMethod(
+                      "tamara"
+                    )
+                  }
+                >
+                  <span className="rounded-md bg-foreground px-2.5 py-1 text-[10px] font-bold text-background">
+                    tamara
+                  </span>
+                </PaymentOption>
+              </RevealItem>
+
+              <RevealItem
+                direction="scale"
+                scaleFrom={0.95}
+              >
+                <PaymentOption
+                  active={
+                    paymentMethod ===
+                    "tabby"
+                  }
+                  title="Tabby"
+                  description="Pay later or split your purchase with Tabby."
+                  icon={
+                    WalletCards
+                  }
+                  onClick={() =>
+                    setPaymentMethod(
+                      "tabby"
+                    )
+                  }
+                >
+                  <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[10px] font-bold text-foreground">
+                    tabby
+                  </span>
+                </PaymentOption>
+              </RevealItem>
+            </RevealGroup>
+          </section>
+        </Reveal>
+
+        {paymentMethod ===
+          "card" && (
+          <Reveal
+            key="card-payment"
+            direction="up"
+            distance={25}
+            duration={0.5}
+          >
+            <CardPaymentNotice />
+          </Reveal>
+        )}
+
+        {paymentMethod ===
+          "tamara" && (
+          <Reveal
+            key="tamara-payment"
+            direction="scale"
+            scaleFrom={0.95}
+            duration={0.5}
+          >
+            <ExternalPaymentNotice
+              name="Tamara"
+              text="After you continue, you will be redirected to Tamara to complete your payment securely."
+            />
+          </Reveal>
+        )}
+
+        {paymentMethod ===
+          "tabby" && (
+          <Reveal
+            key="tabby-payment"
+            direction="scale"
+            scaleFrom={0.95}
+            duration={0.5}
+          >
+            <ExternalPaymentNotice
+              name="Tabby"
+              text="After you continue, you will be redirected to Tabby to complete your payment securely."
+            />
+          </Reveal>
+        )}
+
+        <Reveal
+          direction="up"
+          distance={30}
+        >
+          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-5">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                asChild
+                type="button"
+                variant="secondary"
+                className="h-12 rounded-xl px-5"
+              >
+                <Link
+                  href="/checkout/review"
+                  className="whitespace-nowrap"
+                >
+                  <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                    <ArrowLeft
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0"
+                      strokeWidth={
+                        2
+                      }
+                    />
+
+                    <span>
+                      Review
+                    </span>
+                  </span>
+                </Link>
+              </Button>
+
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={
+                  isSubmitting
+                }
+                className="h-12 rounded-xl px-6 text-sm font-bold sm:min-w-[220px]"
+              >
+                <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                  <LockKeyhole
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0"
+                    strokeWidth={
+                      2
+                    }
+                  />
+
+                  <span>
+                    {isSubmitting
+                      ? "Processing..."
+                      : getPaymentButtonText(
+                          paymentMethod,
+                          total
+                        )}
+                  </span>
+                </span>
+              </Button>
+            </div>
+
+            {error && (
+              <Reveal
+                direction="up"
+                distance={15}
+                duration={0.4}
+              >
+                <p className="mt-4 rounded-xl bg-error/10 px-4 py-3 text-center text-sm font-semibold text-error">
+                  {error}
+                </p>
+              </Reveal>
+            )}
+
+            <Reveal
+              direction="fade"
+              delay={0.05}
             >
-              <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[10px] font-bold text-foreground">
-                tabby
-              </span>
-            </PaymentOption>
-          </div>
-        </section>
+              <div className="mt-4 flex items-start justify-center gap-2 border-t border-border pt-4">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
 
-        {paymentMethod === "card" && (
-          <CardPaymentNotice />
-        )}
-
-        {paymentMethod === "tamara" && (
-          <ExternalPaymentNotice
-            name="Tamara"
-            text="After you continue, you will be redirected to Tamara to complete your payment securely."
-          />
-        )}
-
-        {paymentMethod === "tabby" && (
-          <ExternalPaymentNotice
-            name="Tabby"
-            text="After you continue, you will be redirected to Tabby to complete your payment securely."
-          />
-        )}
-
-       
-
-        <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-5">
-         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-  <Button
-    asChild
-    type="button"
-    variant="secondary"
-    className="h-12 rounded-xl px-5"
-  >
-    <Link
-      href="/checkout/review"
-      className="whitespace-nowrap"
-    >
-      <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-        <ArrowLeft
-          aria-hidden="true"
-          className="h-4 w-4 shrink-0"
-          strokeWidth={2}
-        />
-
-        <span>Reveiw</span>
-      </span>
-    </Link>
-  </Button>
-
-  <Button
-    type="submit"
-    variant="primary"
-    disabled={isSubmitting}
-    className="h-12 rounded-xl px-6 text-sm font-bold sm:min-w-[220px]"
-  >
-    <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-      <LockKeyhole
-        aria-hidden="true"
-        className="h-4 w-4 shrink-0"
-        strokeWidth={2}
-      />
-
-      <span>
-        {isSubmitting
-          ? "Processing..."
-          : getPaymentButtonText(paymentMethod, total)}
-      </span>
-    </span>
-  </Button>
-</div>
-
-          {error && <p className="rounded-xl bg-error/10 px-4 py-3 text-center text-sm font-semibold text-error">{error}</p>}
-          <div className="mt-4 flex items-start justify-center gap-2 border-t border-border pt-4">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-
-            <p className="max-w-md text-center text-[11px] leading-5 text-muted-foreground">
-              Your payment is processed securely. Royal Chins does not store
-              your complete card details.
-            </p>
-          </div>
-        </section>
+                <p className="max-w-md text-center text-[11px] leading-5 text-muted-foreground">
+                  Your payment is
+                  processed
+                  securely. Royal
+                  Chins does not
+                  store your
+                  complete card
+                  details.
+                </p>
+              </div>
+            </Reveal>
+          </section>
+        </Reveal>
       </div>
-
-      
     </form>
   );
 }
@@ -215,7 +496,8 @@ type PaymentOptionProps = {
   description: string;
   icon: React.ElementType;
   onClick: () => void;
-  children?: React.ReactNode;
+  children?:
+    React.ReactNode;
 };
 
 function PaymentOption({
@@ -230,7 +512,9 @@ function PaymentOption({
     <button
       type="button"
       onClick={onClick}
-      aria-pressed={active}
+      aria-pressed={
+        active
+      }
       className={`relative w-full rounded-2xl border-2 p-4 text-left transition-all sm:p-5 ${
         active
           ? "border-primary bg-primary/5"
@@ -247,7 +531,9 @@ function PaymentOption({
         >
           <Icon
             className="h-5 w-5"
-            strokeWidth={2}
+            strokeWidth={
+              2
+            }
           />
         </span>
 
@@ -275,7 +561,9 @@ function PaymentOption({
           {active && (
             <Check
               className="h-3.5 w-3.5"
-              strokeWidth={3}
+              strokeWidth={
+                3
+              }
             />
           )}
         </span>
@@ -287,7 +575,8 @@ function PaymentOption({
 function PaymentBadge({
   children,
 }: {
-  children: React.ReactNode;
+  children:
+    React.ReactNode;
 }) {
   return (
     <span className="rounded-md border border-border bg-background px-2 py-1 text-[9px] font-bold text-muted-foreground">
@@ -309,33 +598,57 @@ function CardPaymentNotice() {
 
         <div>
           <h2 className="text-sm font-bold text-foreground sm:text-base">
-            Secure Card Payment
+            Secure Card
+            Payment
           </h2>
 
           <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
-            Your card details will be entered securely through the payment
-            provider. We will connect the live payment gateway here during
-            backend integration.
+            Your card details
+            will be entered
+            securely through the
+            payment provider. We
+            will connect the live
+            payment gateway here
+            during backend
+            integration.
           </p>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <SecurityPoint
-          title="Encrypted"
-          text="Secure payment connection"
-        />
+      <RevealGroup
+        stagger={0.07}
+        className="mt-4 grid gap-3 sm:grid-cols-3"
+      >
+        <RevealItem
+          direction="scale"
+          scaleFrom={0.92}
+        >
+          <SecurityPoint
+            title="Encrypted"
+            text="Secure payment connection"
+          />
+        </RevealItem>
 
-        <SecurityPoint
-          title="Protected"
-          text="Card data stays private"
-        />
+        <RevealItem
+          direction="scale"
+          scaleFrom={0.92}
+        >
+          <SecurityPoint
+            title="Protected"
+            text="Card data stays private"
+          />
+        </RevealItem>
 
-        <SecurityPoint
-          title="Verified"
-          text="Payment confirmation"
-        />
-      </div>
+        <RevealItem
+          direction="scale"
+          scaleFrom={0.92}
+        >
+          <SecurityPoint
+            title="Verified"
+            text="Payment confirmation"
+          />
+        </RevealItem>
+      </RevealGroup>
     </section>
   );
 }
@@ -400,5 +713,6 @@ function getPaymentButtonText(
   total: number
 ) {
   const amount = `AED ${total.toLocaleString()}`;
+
   return `Place order · ${amount}`;
 }

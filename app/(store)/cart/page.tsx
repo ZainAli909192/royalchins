@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 import {
   ArrowRight,
   Minus,
@@ -14,6 +15,7 @@ import {
   Trash2,
   Truck,
 } from "lucide-react";
+
 import {
   useEffect,
   useMemo,
@@ -21,12 +23,21 @@ import {
 } from "react";
 
 import { FeaturedProducts } from "@/components/store/browse/featured-products";
+
+import {
+  Reveal,
+  RevealGroup,
+  RevealItem,
+} from "@/components/store/shared/reveal";
+
 import { Button } from "@/components/ui/button";
+
 import {
   getCart,
   removeFromCart,
   updateCartQuantity,
 } from "@/lib/store/cart-storage";
+
 import {
   saveCheckout,
 } from "@/lib/store/checkout-storage";
@@ -53,18 +64,23 @@ const featuredItems: CartItem[] = [
     price: 1400,
     stock: 2,
     quantity: 1,
-    shortMeta: "Male • 8 months",
+    shortMeta:
+      "Male • 8 months",
   },
   {
-    id: "premium-chinchilla-cage",
-    slug: "premium-chinchilla-cage",
-    name: "Premium Chinchilla Cage",
+    id:
+      "premium-chinchilla-cage",
+    slug:
+      "premium-chinchilla-cage",
+    name:
+      "Premium Chinchilla Cage",
     image: "/animals/3.png",
     type: "Accessory",
     price: 650,
     stock: 12,
     quantity: 1,
-    shortMeta: "Large premium habitat",
+    shortMeta:
+      "Large premium habitat",
   },
   {
     id: "wooden-hideout",
@@ -75,47 +91,72 @@ const featuredItems: CartItem[] = [
     price: 75,
     stock: 8,
     quantity: 1,
-    shortMeta: "Natural wood shelter",
+    shortMeta:
+      "Natural wood shelter",
   },
 ];
 
 export default function CartPage() {
   const router = useRouter();
 
-  const [items, setItems] =
+  const [
+    items,
+    setItems,
+  ] =
     useState<CartItem[]>([]);
 
-  const [cartLoaded, setCartLoaded] =
+  const [
+    cartLoaded,
+    setCartLoaded,
+  ] =
     useState(false);
 
   useEffect(() => {
-    const storedCart = getCart();
+    const storedCart =
+      getCart();
 
-    setItems(storedCart as CartItem[]);
+    setItems(
+      storedCart as CartItem[]
+    );
+
     setCartLoaded(true);
   }, []);
 
-  const subtotal = useMemo(
-  () =>
-    items.reduce(
-      (total, item) =>
-        total +
-        Number(item.price ?? 0) *
-          Number(item.quantity ?? 1),
-      0
-    ),
-  [items]
-);
+  const subtotal =
+    useMemo(
+      () =>
+        items.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            Number(
+              item.price ?? 0
+            ) *
+              Number(
+                item.quantity ??
+                  1
+              ),
+          0
+        ),
+      [items]
+    );
 
-  const totalItems = useMemo(
-    () =>
-      items.reduce(
-        (total, item) =>
-          total + item.quantity,
-        0
-      ),
-    [items]
-  );
+  const totalItems =
+    useMemo(
+      () =>
+        items.reduce(
+          (
+            total,
+            item
+          ) =>
+            total +
+            item.quantity,
+          0
+        ),
+      [items]
+    );
 
   const updateQuantity = (
     id: string,
@@ -123,27 +164,35 @@ export default function CartPage() {
       | "increase"
       | "decrease"
   ) => {
-    const item = items.find(
-      (cartItem) =>
-        cartItem.id === id
-    );
+    const item =
+      items.find(
+        (cartItem) =>
+          cartItem.id ===
+          id
+      );
 
     if (!item) {
       return;
     }
 
-    if (item.type === "Animal") {
+    if (
+      item.type ===
+      "Animal"
+    ) {
       return;
     }
 
     const nextQuantity =
-      direction === "increase"
+      direction ===
+      "increase"
         ? Math.min(
-            item.quantity + 1,
+            item.quantity +
+              1,
             item.stock
           )
         : Math.max(
-            item.quantity - 1,
+            item.quantity -
+              1,
             1
           );
 
@@ -161,253 +210,316 @@ export default function CartPage() {
   const removeItem = (
     id: string
   ) => {
-    const item = items.find(
-      (cartItem) =>
-        cartItem.id === id
-    );
+    const item =
+      items.find(
+        (cartItem) =>
+          cartItem.id ===
+          id
+      );
 
     if (!item) {
       return;
     }
 
     const updatedCart =
-      removeFromCart(item.slug);
+      removeFromCart(
+        item.slug
+      );
 
     setItems(
       updatedCart as CartItem[]
     );
   };
 
-  const handleCheckout = () => {
-    if (items.length === 0) {
-      return;
-    }
+  const handleCheckout =
+    () => {
+      if (
+        items.length === 0
+      ) {
+        return;
+      }
 
-    saveCheckout({
-      source: "cart",
-      items: items.map(
-        ({
-          id,
-          slug,
-          name,
-          image,
-          type,
-          price,
-          quantity,
-          shortMeta,
-        }) => ({
-          id,
-          slug,
-          name,
-          image,
-          type,
-          price,
-          quantity,
-          shortMeta,
-        })
-      ),
-    });
+      saveCheckout({
+        source: "cart",
 
-    router.push(
-      "/checkout/auth"
-    );
-  };
+        items: items.map(
+          ({
+            id,
+            slug,
+            name,
+            image,
+            type,
+            price,
+            quantity,
+            shortMeta,
+          }) => ({
+            id,
+            slug,
+            name,
+            image,
+            type,
+            price,
+            quantity,
+            shortMeta,
+          })
+        ),
+      });
+
+      router.push(
+        "/checkout/auth"
+      );
+    };
 
   if (!cartLoaded) {
-    return (
-      <CartLoading />
-    );
+    return <CartLoading />;
   }
 
-  if (items.length === 0) {
+  if (
+    items.length === 0
+  ) {
     return <EmptyCart />;
   }
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <div className="mb-6 sm:mb-8">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-          Your Selection
-        </p>
+      <Reveal
+        direction="left"
+        distance={45}
+      >
+        <div className="mb-6 sm:mb-8">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            Your Selection
+          </p>
 
-        <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-              Shopping Cart
-            </h1>
+          <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+                Shopping Cart
+              </h1>
 
-            <p className="mt-2 text-sm text-muted-foreground">
-              {totalItems}{" "}
-              {totalItems === 1
-                ? "item"
-                : "items"}{" "}
-              in your cart
-            </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {totalItems}{" "}
+                {totalItems ===
+                1
+                  ? "item"
+                  : "items"}{" "}
+                in your cart
+              </p>
+            </div>
+
+            <Link
+              href="/"
+              className="hidden text-sm font-semibold text-primary transition-opacity hover:opacity-80 sm:inline-flex"
+            >
+              Continue
+              Shopping
+            </Link>
           </div>
-
-          <Link
-            href="/"
-            className="hidden text-sm font-semibold text-primary transition-opacity hover:opacity-80 sm:inline-flex"
-          >
-            Continue Shopping
-          </Link>
         </div>
-      </div>
+      </Reveal>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8">
         <section className="space-y-3 sm:space-y-4">
-          <div className="hidden items-center justify-between border-b border-border pb-3 sm:flex">
-            <p className="text-sm font-bold text-foreground">
-              Cart items
-            </p>
-
-            <p className="text-xs font-medium text-muted-foreground">
-              Review your selection
-              before checkout
-            </p>
-          </div>
-
-          {items.map((item) => (
-            <CartItemCard
-              key={`${item.id}-${item.slug}`}
-              item={item}
-              onIncrease={() =>
-                updateQuantity(
-                  item.id,
-                  "increase"
-                )
-              }
-              onDecrease={() =>
-                updateQuantity(
-                  item.id,
-                  "decrease"
-                )
-              }
-              onRemove={() =>
-                removeItem(item.id)
-              }
-            />
-          ))}
-
-          <Link
-            href="/"
-            className="flex h-12 items-center justify-center rounded-xl border border-border text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary sm:hidden"
+          <Reveal
+            direction="left"
+            distance={30}
           >
-            Continue Shopping
-          </Link>
+            <div className="hidden items-center justify-between border-b border-border pb-3 sm:flex">
+              <p className="text-sm font-bold text-foreground">
+                Cart items
+              </p>
+
+              <p className="text-xs font-medium text-muted-foreground">
+                Review your
+                selection before
+                checkout
+              </p>
+            </div>
+          </Reveal>
+
+          <RevealGroup
+            stagger={0.08}
+            delay={0.05}
+            className="space-y-3 sm:space-y-4"
+          >
+            {items.map(
+              (item) => (
+                <RevealItem
+                  key={`${item.id}-${item.slug}`}
+                  direction="scale"
+                  scaleFrom={0.94}
+                  duration={0.5}
+                >
+                  <CartItemCard
+                    item={item}
+                    onIncrease={() =>
+                      updateQuantity(
+                        item.id,
+                        "increase"
+                      )
+                    }
+                    onDecrease={() =>
+                      updateQuantity(
+                        item.id,
+                        "decrease"
+                      )
+                    }
+                    onRemove={() =>
+                      removeItem(
+                        item.id
+                      )
+                    }
+                  />
+                </RevealItem>
+              )
+            )}
+          </RevealGroup>
+
+          <Reveal
+            direction="up"
+            distance={25}
+          >
+            <Link
+              href="/"
+              className="flex h-12 items-center justify-center rounded-xl border border-border text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary sm:hidden"
+            >
+              Continue Shopping
+            </Link>
+          </Reveal>
         </section>
 
-        <aside className="h-fit rounded-3xl border border-border bg-background p-5 shadow-md lg:sticky lg:top-24 lg:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                Checkout
-              </p>
-
-              <h2 className="mt-1 text-xl font-bold text-foreground">
-                Order summary
-              </h2>
-            </div>
-
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <ShoppingBag
-                aria-hidden="true"
-                className="h-5 w-5"
-                strokeWidth={1.9}
-              />
-            </span>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            <SummaryRow
-              label={`Items (${totalItems})`}
-              value={`AED ${subtotal.toLocaleString()}`}
-            />
-
-            <SummaryRow
-              label="Delivery"
-              value="Calculated at checkout"
-              muted
-            />
-          </div>
-
-          <div className="my-5 border-t border-border" />
-
-          <div className="rounded-2xl bg-surface-subtle p-4">
-            <div className="flex items-end justify-between gap-4">
+        <Reveal
+          direction="right"
+          distance={45}
+          delay={0.08}
+        >
+          <aside className="h-fit rounded-3xl border border-border bg-background p-5 shadow-md lg:sticky lg:top-24 lg:p-6">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-muted-foreground">
-                  Subtotal
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                  Checkout
                 </p>
 
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Excluding delivery
-                  fees
-                </p>
+                <h2 className="mt-1 text-xl font-bold text-foreground">
+                  Order summary
+                </h2>
               </div>
 
-              <p className="text-2xl font-bold text-primary">
-                AED{" "}
-                {subtotal.toLocaleString()}
-              </p>
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <ShoppingBag
+                  aria-hidden="true"
+                  className="h-5 w-5"
+                  strokeWidth={
+                    1.9
+                  }
+                />
+              </span>
             </div>
-          </div>
 
-          <Button
-            type="button"
-            variant="primary"
-            onClick={handleCheckout}
-            className="mt-5 h-13 w-full rounded-xl text-sm font-bold shadow-primary transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
-          >
-            <span className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap">
-              <span>
-                Proceed to checkout
+            <div className="mt-5 space-y-3">
+              <SummaryRow
+                label={`Items (${totalItems})`}
+                value={`AED ${subtotal.toLocaleString()}`}
+              />
+
+              <SummaryRow
+                label="Delivery"
+                value="Calculated at checkout"
+                muted
+              />
+            </div>
+
+            <div className="my-5 border-t border-border" />
+
+            <div className="rounded-2xl bg-surface-subtle p-4">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    Subtotal
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Excluding
+                    delivery fees
+                  </p>
+                </div>
+
+                <p className="text-2xl font-bold text-primary">
+                  AED{" "}
+                  {subtotal.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="primary"
+              onClick={
+                handleCheckout
+              }
+              className="mt-5 h-13 w-full rounded-xl text-sm font-bold shadow-primary transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
+            >
+              <span className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap">
+                <span>
+                  Proceed to
+                  checkout
+                </span>
+
+                <ArrowRight
+                  aria-hidden="true"
+                  className="h-5 w-5 shrink-0"
+                  strokeWidth={
+                    2
+                  }
+                />
+              </span>
+            </Button>
+
+            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-border bg-surface-subtle p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Truck
+                  aria-hidden="true"
+                  className="h-5 w-5"
+                  strokeWidth={
+                    2
+                  }
+                />
               </span>
 
-              <ArrowRight
-                aria-hidden="true"
-                className="h-5 w-5 shrink-0"
-                strokeWidth={2}
-              />
-            </span>
-          </Button>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  UAE Delivery
+                </p>
 
-          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-border bg-surface-subtle p-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Truck
-                aria-hidden="true"
-                className="h-5 w-5"
-                strokeWidth={2}
-              />
-            </span>
-
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                UAE Delivery
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Delivery details and
-                fees are confirmed
-                during checkout.
-              </p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Delivery details
+                  and fees are
+                  confirmed during
+                  checkout.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] leading-5 text-muted-foreground">
-            <ShieldCheck
-              aria-hidden="true"
-              className="h-3.5 w-3.5 shrink-0 text-primary"
-            />
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] leading-5 text-muted-foreground">
+              <ShieldCheck
+                aria-hidden="true"
+                className="h-3.5 w-3.5 shrink-0 text-primary"
+              />
 
-            Secure checkout. Animal
-            quantities are limited to
-            one per cart line.
-          </p>
-        </aside>
+              Secure checkout.
+              Animal quantities
+              are limited to one
+              per cart line.
+            </p>
+          </aside>
+        </Reveal>
       </div>
 
-      <div className="mt-10 border-t border-border pt-8 sm:mt-12 sm:pt-10">
+      <Reveal
+        direction="up"
+        distance={40}
+        className="mt-10 border-t border-border pt-8 sm:mt-12 sm:pt-10"
+      >
         <FeaturedProducts
           products={featuredItems.map(
             ({
@@ -427,7 +539,7 @@ export default function CartPage() {
             })
           )}
         />
-      </div>
+      </Reveal>
     </div>
   );
 }
@@ -446,15 +558,20 @@ function CartItemCard({
   onRemove,
 }: CartItemCardProps) {
   const isAnimal =
-    item.type === "Animal";
+    item.type ===
+    "Animal";
 
-    const safePrice =
-  Number(item.price ?? 0);
+  const safePrice =
+    Number(
+      item.price ?? 0
+    );
+
   const productHref =
-    `/products/${item.slug}`;
+    `/product/${item.slug}`;
 
   const TypeIcon =
-    item.type === "Animal"
+    item.type ===
+    "Animal"
       ? PawPrint
       : PackageOpen;
 
@@ -482,14 +599,18 @@ function CartItemCard({
                 <TypeIcon
                   aria-hidden="true"
                   className="h-3 w-3"
-                  strokeWidth={2}
+                  strokeWidth={
+                    2
+                  }
                 />
 
                 {item.type}
               </span>
 
               <Link
-                href={productHref}
+                href={
+                  productHref
+                }
                 className="mt-2 block"
               >
                 <h2 className="line-clamp-2 text-sm font-bold leading-5 text-foreground transition-colors hover:text-primary sm:text-base">
@@ -499,21 +620,27 @@ function CartItemCard({
 
               {item.shortMeta && (
                 <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground sm:text-xs">
-                  {item.shortMeta}
+                  {
+                    item.shortMeta
+                  }
                 </p>
               )}
             </div>
 
             <button
               type="button"
-              onClick={onRemove}
+              onClick={
+                onRemove
+              }
               aria-label={`Remove ${item.name} from cart`}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-error/15 hover:bg-error/10 hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Trash2
                 aria-hidden="true"
                 className="h-4 w-4"
-                strokeWidth={2}
+                strokeWidth={
+                  2
+                }
               />
             </button>
           </div>
@@ -522,13 +649,14 @@ function CartItemCard({
             <div>
               <p className="text-lg font-bold tracking-tight text-foreground sm:text-xl">
                 AED{" "}
-            {(
-  safePrice *
-  item.quantity
-).toLocaleString()}
+                {(
+                  safePrice *
+                  item.quantity
+                ).toLocaleString()}
               </p>
 
-              {item.quantity > 1 && (
+              {item.quantity >
+                1 && (
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
                   AED{" "}
                   {safePrice.toLocaleString()}{" "}
@@ -545,9 +673,12 @@ function CartItemCard({
               <div className="flex h-10 items-center overflow-hidden rounded-xl border border-border bg-background shadow-sm">
                 <button
                   type="button"
-                  onClick={onDecrease}
+                  onClick={
+                    onDecrease
+                  }
                   disabled={
-                    item.quantity <= 1
+                    item.quantity <=
+                    1
                   }
                   aria-label={`Decrease ${item.name} quantity`}
                   className="flex h-full w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-surface-subtle hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-35"
@@ -555,17 +686,23 @@ function CartItemCard({
                   <Minus
                     aria-hidden="true"
                     className="h-4 w-4"
-                    strokeWidth={2}
+                    strokeWidth={
+                      2
+                    }
                   />
                 </button>
 
                 <span className="min-w-8 text-center text-sm font-bold tabular-nums text-foreground">
-                  {item.quantity}
+                  {
+                    item.quantity
+                  }
                 </span>
 
                 <button
                   type="button"
-                  onClick={onIncrease}
+                  onClick={
+                    onIncrease
+                  }
                   disabled={
                     item.quantity >=
                     item.stock
@@ -576,7 +713,9 @@ function CartItemCard({
                   <Plus
                     aria-hidden="true"
                     className="h-4 w-4"
-                    strokeWidth={2}
+                    strokeWidth={
+                      2
+                    }
                   />
                 </button>
               </div>
@@ -619,33 +758,43 @@ function SummaryRow({
 function EmptyCart() {
   return (
     <div className="mx-auto flex min-h-[65vh] max-w-[600px] items-center justify-center px-4 py-12">
-      <div className="w-full rounded-3xl border border-border bg-background p-8 text-center shadow-sm sm:p-12">
-        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <ShoppingBag
-            aria-hidden="true"
-            className="h-7 w-7"
-            strokeWidth={1.8}
-          />
-        </span>
+      <Reveal
+        direction="scale"
+        scaleFrom={0.88}
+        className="w-full"
+      >
+        <div className="w-full rounded-3xl border border-border bg-background p-8 text-center shadow-sm sm:p-12">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <ShoppingBag
+              aria-hidden="true"
+              className="h-7 w-7"
+              strokeWidth={
+                1.8
+              }
+            />
+          </span>
 
-        <h1 className="mt-5 text-2xl font-bold text-foreground">
-          Your cart is empty
-        </h1>
+          <h1 className="mt-5 text-2xl font-bold text-foreground">
+            Your cart is
+            empty
+          </h1>
 
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-          Explore available
-          companions and accessories
-          and add something to your
-          cart.
-        </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+            Explore available
+            companions and
+            accessories and add
+            something to your
+            cart.
+          </p>
 
-        <Link
-          href="/"
-          className="mt-6 inline-flex h-12 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-primary transition-[transform,opacity] duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transform-none"
-        >
-          Browse Products
-        </Link>
-      </div>
+          <Link
+            href="/"
+            className="mt-6 inline-flex h-12 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-primary transition-[transform,opacity] duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transform-none"
+          >
+            Browse Products
+          </Link>
+        </div>
+      </Reveal>
     </div>
   );
 }
@@ -663,7 +812,9 @@ function CartLoading() {
             {[1, 2, 3].map(
               (item) => (
                 <div
-                  key={item}
+                  key={
+                    item
+                  }
                   className="h-[155px] rounded-2xl bg-surface-subtle"
                 />
               )

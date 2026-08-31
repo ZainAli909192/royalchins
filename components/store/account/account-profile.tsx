@@ -9,8 +9,17 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useState,
+} from "react";
 
+import {
+  Reveal,
+  RevealGroup,
+  RevealItem,
+} from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
 
 type ProfileForm = {
@@ -28,36 +37,112 @@ const initialProfile: ProfileForm = {
 };
 
 export function AccountProfile() {
-  const [form, setForm] =
-    useState<ProfileForm>(initialProfile);
+  const [
+    form,
+    setForm,
+  ] =
+    useState<ProfileForm>(
+      initialProfile
+    );
 
-  const [savedProfile, setSavedProfile] =
-    useState<ProfileForm>(initialProfile);
+  const [
+    savedProfile,
+    setSavedProfile,
+  ] =
+    useState<ProfileForm>(
+      initialProfile
+    );
 
-  const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const [
+    saved,
+    setSaved,
+  ] = useState(false);
 
   useEffect(() => {
-    fetch("/api/store/auth/session").then(async (response) => ({ response, data: await response.json() })).then(({ response, data }) => {
-      if (!response.ok) return;
-      const names = data.customer.name.trim().split(/\s+/);
-      const profile = { firstName: names[0] ?? "", lastName: names.slice(1).join(" "), email: data.customer.email, phone: data.customer.phone.replace(/^\+971\s?/, "") };
-      setForm(profile); setSavedProfile(profile);
-    }).catch(() => undefined);
+    fetch(
+      "/api/store/auth/session"
+    )
+      .then(
+        async (
+          response
+        ) => ({
+          response,
+          data:
+            await response.json(),
+        })
+      )
+      .then(
+        ({
+          response,
+          data,
+        }) => {
+          if (
+            !response.ok
+          ) {
+            return;
+          }
+
+          const names =
+            data.customer.name
+              .trim()
+              .split(
+                /\s+/
+              );
+
+          const profile = {
+            firstName:
+              names[0] ??
+              "",
+
+            lastName:
+              names
+                .slice(1)
+                .join(" "),
+
+            email:
+              data.customer
+                .email,
+
+            phone:
+              data.customer.phone.replace(
+                /^\+971\s?/,
+                ""
+              ),
+          };
+
+          setForm(profile);
+
+          setSavedProfile(
+            profile
+          );
+        }
+      )
+      .catch(
+        () => undefined
+      );
   }, []);
 
   const hasChanges =
     JSON.stringify(form) !==
-    JSON.stringify(savedProfile);
+    JSON.stringify(
+      savedProfile
+    );
 
   function updateField(
     field: keyof ProfileForm,
     value: string
   ) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    setForm(
+      (current) => ({
+        ...current,
+        [field]: value,
+      })
+    );
 
     setError("");
     setSaved(false);
@@ -68,275 +153,503 @@ export function AccountProfile() {
   ) {
     event.preventDefault();
 
-    const firstName = form.firstName.trim();
-    const lastName = form.lastName.trim();
-    const email = form.email.trim().toLowerCase();
+    const firstName =
+      form.firstName.trim();
 
-    const cleanPhone = form.phone
-      .replace(/\D/g, "")
-      .replace(/^971/, "")
-      .replace(/^0/, "");
+    const lastName =
+      form.lastName.trim();
 
-    if (!firstName || !lastName || !email) {
+    const email =
+      form.email
+        .trim()
+        .toLowerCase();
+
+    const cleanPhone =
+      form.phone
+        .replace(
+          /\D/g,
+          ""
+        )
+        .replace(
+          /^971/,
+          ""
+        )
+        .replace(
+          /^0/,
+          ""
+        );
+
+    if (
+      !firstName ||
+      !lastName ||
+      !email
+    ) {
       setError(
         "Please complete all required fields."
       );
+
       return;
     }
 
-    if (!isValidEmail(email)) {
+    if (
+      !isValidEmail(
+        email
+      )
+    ) {
       setError(
         "Please enter a valid email address."
       );
+
       return;
     }
 
-    if (cleanPhone.length !== 9) {
+    if (
+      cleanPhone.length !==
+      9
+    ) {
       setError(
         "Please enter a valid UAE mobile number."
       );
+
       return;
     }
 
-    const updatedProfile: ProfileForm = {
-      firstName,
-      lastName,
-      email,
-      phone: formatPhone(cleanPhone),
-    };
+    const updatedProfile: ProfileForm =
+      {
+        firstName,
+        lastName,
+        email,
+        phone:
+          formatPhone(
+            cleanPhone
+          ),
+      };
 
     try {
-      const response = await fetch("/api/store/account/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: `${firstName} ${lastName}`.trim(), email, phone: `+971 ${formatPhone(cleanPhone)}` }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message);
-      setForm(updatedProfile); setSavedProfile(updatedProfile); setError(""); setSaved(true);
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "We couldn't update your profile."); return; }
+      const response =
+        await fetch(
+          "/api/store/account/profile",
+          {
+            method:
+              "PATCH",
 
-    window.setTimeout(() => {
-      setSaved(false);
-    }, 4000);
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                name: `${firstName} ${lastName}`.trim(),
+
+                email,
+
+                phone: `+971 ${formatPhone(
+                  cleanPhone
+                )}`,
+              }),
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok
+      ) {
+        throw new Error(
+          result.message
+        );
+      }
+
+      setForm(
+        updatedProfile
+      );
+
+      setSavedProfile(
+        updatedProfile
+      );
+
+      setError("");
+      setSaved(true);
+    } catch (
+      caught
+    ) {
+      setError(
+        caught instanceof
+        Error
+          ? caught.message
+          : "We couldn't update your profile."
+      );
+
+      return;
+    }
+
+    window.setTimeout(
+      () => {
+        setSaved(false);
+      },
+      4000
+    );
   }
 
   function handleCancelChanges() {
-    setForm(savedProfile);
+    setForm(
+      savedProfile
+    );
+
     setError("");
     setSaved(false);
   }
 
   return (
     <div className="mx-auto max-w-[900px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <Link
-        href="/account"
-        className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground transition-colors hover:text-primary"
+      <Reveal
+        direction="left"
+        distance={25}
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Account
-      </Link>
+        <Link
+          href="/account"
+          className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground transition-colors hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" />
 
-      <header className="mt-5">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-          My Account
-        </p>
+          <span>
+            Back to Account
+          </span>
+        </Link>
+      </Reveal>
 
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Profile Information
-        </h1>
+      <Reveal
+        direction="left"
+        distance={40}
+        className="mt-5"
+      >
+        <header>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            My Account
+          </p>
 
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-          Manage the personal and contact
-          information associated with your
-          Royal Chins account.
-        </p>
-      </header>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Profile
+            Information
+          </h1>
+
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+            Manage the
+            personal and
+            contact
+            information
+            associated with
+            your Royal Chins
+            account.
+          </p>
+        </header>
+      </Reveal>
 
       {saved && (
-        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-success/20 bg-success/5 p-4">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+        <Reveal
+          direction="scale"
+          scaleFrom={0.95}
+          duration={0.4}
+          className="mt-6"
+        >
+          <div className="flex items-start gap-3 rounded-2xl border border-success/20 bg-success/5 p-4">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
 
-          <div>
-            <p className="text-sm font-bold text-foreground">
-              Profile updated
-            </p>
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                Profile
+                updated
+              </p>
 
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Your account information has been
-              saved successfully.
-            </p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Your account
+                information has
+                been saved
+                successfully.
+              </p>
+            </div>
           </div>
-        </div>
+        </Reveal>
       )}
 
-      <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-background shadow-sm sm:rounded-3xl">
-        <ProfileHeader
-          firstName={savedProfile.firstName}
-          lastName={savedProfile.lastName}
-          email={savedProfile.email}
-        />
+      <Reveal
+        direction="up"
+        distance={35}
+        className="mt-6"
+      >
+        <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm sm:rounded-3xl">
+          <Reveal
+            direction="scale"
+            scaleFrom={0.96}
+          >
+            <ProfileHeader
+              firstName={
+                savedProfile.firstName
+              }
+              lastName={
+                savedProfile.lastName
+              }
+              email={
+                savedProfile.email
+              }
+            />
+          </Reveal>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 sm:p-6"
-        >
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormField
-              label="First Name"
-              required
+          <form
+            onSubmit={
+              handleSubmit
+            }
+            className="p-4 sm:p-6"
+          >
+            <RevealGroup
+              stagger={0.06}
+              className="grid gap-5 sm:grid-cols-2"
             >
-              <div className="relative">
-                <UserRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-                <input
-                  value={form.firstName}
-                  onChange={(event) =>
-                    updateField(
-                      "firstName",
-                      event.target.value
-                    )
-                  }
-                  autoComplete="given-name"
-                  placeholder="First name"
-                  className={`${inputClass} pl-11`}
-                />
-              </div>
-            </FormField>
-
-            <FormField
-              label="Last Name"
-              required
-            >
-              <div className="relative">
-                <UserRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-                <input
-                  value={form.lastName}
-                  onChange={(event) =>
-                    updateField(
-                      "lastName",
-                      event.target.value
-                    )
-                  }
-                  autoComplete="family-name"
-                  placeholder="Last name"
-                  className={`${inputClass} pl-11`}
-                />
-              </div>
-            </FormField>
-
-            <div className="sm:col-span-2">
-              <FormField
-                label="Email Address"
-                required
+              <RevealItem
+                direction="up"
+                distance={15}
               >
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormField
+                  label="First Name"
+                  required
+                >
+                  <div className="relative">
+                    <UserRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(event) =>
-                      updateField(
-                        "email",
-                        event.target.value
-                      )
-                    }
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    className={`${inputClass} pl-11`}
-                  />
+                    <input
+                      value={
+                        form.firstName
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateField(
+                          "firstName",
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                      autoComplete="given-name"
+                      placeholder="First name"
+                      className={`${inputClass} pl-11`}
+                    />
+                  </div>
+                </FormField>
+              </RevealItem>
+
+              <RevealItem
+                direction="up"
+                distance={15}
+              >
+                <FormField
+                  label="Last Name"
+                  required
+                >
+                  <div className="relative">
+                    <UserRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                    <input
+                      value={
+                        form.lastName
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateField(
+                          "lastName",
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                      autoComplete="family-name"
+                      placeholder="Last name"
+                      className={`${inputClass} pl-11`}
+                    />
+                  </div>
+                </FormField>
+              </RevealItem>
+
+              <RevealItem
+                direction="up"
+                distance={15}
+                className="sm:col-span-2"
+              >
+                <FormField
+                  label="Email Address"
+                  required
+                >
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                    <input
+                      type="email"
+                      value={
+                        form.email
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateField(
+                          "email",
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      className={`${inputClass} pl-11`}
+                    />
+                  </div>
+                </FormField>
+              </RevealItem>
+
+              <RevealItem
+                direction="up"
+                distance={15}
+                className="sm:col-span-2"
+              >
+                <FormField
+                  label="Mobile Number"
+                  required
+                >
+                  <div className="flex h-12 overflow-hidden rounded-xl border border-border bg-background transition-colors focus-within:border-primary">
+                    <span className="flex shrink-0 items-center gap-2 border-r border-border bg-surface-subtle px-3 text-sm font-semibold text-foreground">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+
+                      +971
+                    </span>
+
+                    <input
+                      value={
+                        form.phone
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateField(
+                          "phone",
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder="50 123 4567"
+                      className="min-w-0 flex-1 bg-transparent px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
+                </FormField>
+              </RevealItem>
+            </RevealGroup>
+
+            {error && (
+              <Reveal
+                direction="up"
+                distance={15}
+                duration={0.35}
+              >
+                <div className="mt-5 rounded-xl border border-error/20 bg-error/5 px-4 py-3 text-xs font-semibold text-error">
+                  {error}
                 </div>
-              </FormField>
-            </div>
+              </Reveal>
+            )}
 
-            <div className="sm:col-span-2">
-              <FormField
-                label="Mobile Number"
-                required
-              >
-                <div className="flex h-12 overflow-hidden rounded-xl border border-border bg-background transition-colors focus-within:border-primary">
-                  <span className="flex shrink-0 items-center gap-2 border-r border-border bg-surface-subtle px-3 text-sm font-semibold text-foreground">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    +971
+            <Reveal
+              direction="scale"
+              scaleFrom={0.97}
+              className="mt-6"
+            >
+              <div className="rounded-2xl bg-surface-subtle p-4">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Mail className="h-4 w-4" />
                   </span>
 
-                  <input
-                    value={form.phone}
-                    onChange={(event) =>
-                      updateField(
-                        "phone",
-                        event.target.value
-                      )
-                    }
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    placeholder="50 123 4567"
-                    className="min-w-0 flex-1 bg-transparent px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
-                  />
+                  <div>
+                    <p className="text-xs font-bold text-foreground">
+                      Keep your
+                      contact
+                      details
+                      current
+                    </p>
+
+                    <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                      Your email
+                      and mobile
+                      number may
+                      be used for
+                      important
+                      order and
+                      delivery
+                      updates.
+                    </p>
+                  </div>
                 </div>
-              </FormField>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mt-5 rounded-xl border border-error/20 bg-error/5 px-4 py-3 text-xs font-semibold text-error">
-              {error}
-            </div>
-          )}
-
-          <div className="mt-6 rounded-2xl bg-surface-subtle p-4">
-            <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Mail className="h-4 w-4" />
-              </span>
-
-              <div>
-                <p className="text-xs font-bold text-foreground">
-                  Keep your contact details
-                  current
-                </p>
-
-                <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                  Your email and mobile number
-                  may be used for important
-                  order and delivery updates.
-                </p>
               </div>
-            </div>
-          </div>
+            </Reveal>
 
-          <div className="mt-6 flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <Link
-              href="/account/change-password"
-              className="flex h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-primary transition-colors hover:bg-primary/5 sm:justify-start"
+            <Reveal
+              direction="up"
+              distance={20}
+              className="mt-6"
             >
-              Change Password
-            </Link>
-
-            <div className="flex flex-col-reverse gap-2 sm:flex-row">
-              {hasChanges && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCancelChanges}
-                  className="h-11 rounded-xl px-5"
+              <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <Link
+                  href="/account/change-password"
+                  className="flex h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-primary transition-colors hover:bg-primary/5 sm:justify-start"
                 >
-                  Cancel Changes
-                </Button>
-              )}
+                  Change Password
+                </Link>
 
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!hasChanges}
-                className="h-11 rounded-xl px-6 font-bold disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </form>
-      </section>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                  {hasChanges && (
+                    <Reveal
+                      direction="scale"
+                      scaleFrom={0.95}
+                      duration={0.3}
+                    >
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={
+                          handleCancelChanges
+                        }
+                        className="h-11 rounded-xl px-5"
+                      >
+                        Cancel Changes
+                      </Button>
+                    </Reveal>
+                  )}
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={
+                      !hasChanges
+                    }
+                    className="h-11 rounded-xl px-6 font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                      <Save className="h-4 w-4 shrink-0" />
+
+                      <span>
+                        Save Changes
+                      </span>
+                    </span>
+                  </Button>
+                </div>
+              </div>
+            </Reveal>
+          </form>
+        </section>
+      </Reveal>
     </div>
   );
 }
@@ -351,7 +664,9 @@ function ProfileHeader({
   email: string;
 }) {
   const initials =
-    `${firstName.charAt(0)}${lastName.charAt(
+    `${firstName.charAt(
+      0
+    )}${lastName.charAt(
       0
     )}`.toUpperCase();
 
@@ -364,7 +679,8 @@ function ProfileHeader({
 
         <div className="min-w-0">
           <h2 className="truncate text-lg font-bold text-foreground sm:text-xl">
-            {firstName} {lastName}
+            {firstName}{" "}
+            {lastName}
           </h2>
 
           <p className="mt-1 truncate text-xs text-muted-foreground sm:text-sm">
@@ -387,7 +703,8 @@ function FormField({
 }: {
   label: string;
   required?: boolean;
-  children: React.ReactNode;
+  children:
+    React.ReactNode;
 }) {
   return (
     <label className="block">
@@ -408,14 +725,20 @@ function FormField({
   );
 }
 
-function isValidEmail(email: string) {
+function isValidEmail(
+  email: string
+) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     email
   );
 }
 
-function formatPhone(value: string) {
-  if (value.length !== 9) {
+function formatPhone(
+  value: string
+) {
+  if (
+    value.length !== 9
+  ) {
     return value;
   }
 
@@ -430,4 +753,3 @@ function formatPhone(value: string) {
 
 const inputClass =
   "h-12 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary";
-  

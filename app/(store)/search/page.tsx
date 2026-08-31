@@ -1,17 +1,31 @@
 import Image from "next/image";
 import Link from "next/link";
+
 import {
   PackageOpen,
   PawPrint,
   Search,
 } from "lucide-react";
 
-import { listStoreProducts } from "@/lib/products/product-store";
+import {
+  FadeIn,
+  FromLeft,
+  FromRight,
+  ScaleIn,
+  StaggerGrid,
+  StaggerItem,
+} from "@/components/store/search/search-motion";
+
+import {
+  listStoreProducts,
+} from "@/lib/products/product-store";
 
 type SearchPageProps = {
   searchParams: Promise<{
     q?: string;
-    type?: "Animal" | "Accessory";
+    type?:
+      | "Animal"
+      | "Accessory";
   }>;
 };
 
@@ -20,7 +34,9 @@ type Product = {
   slug: string;
   name: string;
   image: string;
-  type: "Animal" | "Accessory";
+  type:
+    | "Animal"
+    | "Accessory";
   category: string;
   price: number;
   shortMeta?: string;
@@ -35,7 +51,8 @@ const legacyProducts: Product[] = [
     type: "Animal",
     category: "Chinchillas",
     price: 1400,
-    shortMeta: "Male • 8 months",
+    shortMeta:
+      "Male • 8 months",
   },
   {
     id: "grey-chinchilla",
@@ -45,67 +62,93 @@ const legacyProducts: Product[] = [
     type: "Animal",
     category: "Chinchillas",
     price: 1350,
-    shortMeta: "Female • 7 months",
+    shortMeta:
+      "Female • 7 months",
   },
   {
-    id: "black-velvet-chinchilla",
-    slug: "black-velvet-chinchilla",
-    name: "Black Velvet Chinchilla",
+    id:
+      "black-velvet-chinchilla",
+    slug:
+      "black-velvet-chinchilla",
+    name:
+      "Black Velvet Chinchilla",
     image: "/animals/2.png",
     type: "Animal",
     category: "Chinchillas",
     price: 1550,
-    shortMeta: "Male • 9 months",
+    shortMeta:
+      "Male • 9 months",
   },
   {
-    id: "american-guinea-pig",
-    slug: "american-guinea-pig",
-    name: "American Guinea Pig",
+    id:
+      "american-guinea-pig",
+    slug:
+      "american-guinea-pig",
+    name:
+      "American Guinea Pig",
     image: "/animals/6.png",
     type: "Animal",
     category: "Guinea Pigs",
     price: 450,
-    shortMeta: "Friendly companion",
+    shortMeta:
+      "Friendly companion",
   },
   {
-    id: "abyssinian-guinea-pig",
-    slug: "abyssinian-guinea-pig",
-    name: "Abyssinian Guinea Pig",
+    id:
+      "abyssinian-guinea-pig",
+    slug:
+      "abyssinian-guinea-pig",
+    name:
+      "Abyssinian Guinea Pig",
     image: "/animals/7.png",
     type: "Animal",
     category: "Guinea Pigs",
     price: 500,
-    shortMeta: "Playful companion",
+    shortMeta:
+      "Playful companion",
   },
   {
-    id: "brown-micro-squirrel",
-    slug: "brown-micro-squirrel",
-    name: "Brown Micro Squirrel",
+    id:
+      "brown-micro-squirrel",
+    slug:
+      "brown-micro-squirrel",
+    name:
+      "Brown Micro Squirrel",
     image: "/animals/8.png",
     type: "Animal",
-    category: "Micro Squirrels",
+    category:
+      "Micro Squirrels",
     price: 950,
-    shortMeta: "Small active companion",
+    shortMeta:
+      "Small active companion",
   },
   {
-    id: "premium-chinchilla-cage",
-    slug: "premium-chinchilla-cage",
-    name: "Premium Chinchilla Cage",
+    id:
+      "premium-chinchilla-cage",
+    slug:
+      "premium-chinchilla-cage",
+    name:
+      "Premium Chinchilla Cage",
     image: "/animals/3.png",
     type: "Accessory",
     category: "Cages",
     price: 650,
-    shortMeta: "Large premium habitat",
+    shortMeta:
+      "Large premium habitat",
   },
   {
-    id: "wooden-hideout",
-    slug: "wooden-hideout",
-    name: "Wooden Hideout",
+    id:
+      "wooden-hideout",
+    slug:
+      "wooden-hideout",
+    name:
+      "Wooden Hideout",
     image: "/animals/5.png",
     type: "Accessory",
     category: "Habitats",
     price: 75,
-    shortMeta: "Natural wood shelter",
+    shortMeta:
+      "Natural wood shelter",
   },
 ];
 
@@ -117,37 +160,75 @@ export default async function SearchPage({
 
   const query =
     params.q?.trim() ?? "";
-  const type = params.type;
+
+  const type =
+    params.type;
 
   const normalizedQuery =
     query.toLowerCase();
 
-  const products: Product[] = (await listStoreProducts()).map((product) => ({
-    id: product.id,
-    slug: product.slug,
-    name: product.name,
-    image: product.images[0]?.url ?? "/logo.png",
-    type: product.type,
-    category: product.category.name,
-    price: Number(product.salePrice ?? product.regularPrice),
-    shortMeta: product.type === "Animal"
-      ? [product.gender, product.age].filter(Boolean).join(" • ")
-      : product.shortDescription,
-  }));
+  const products: Product[] =
+    (
+      await listStoreProducts()
+    ).map((product) => ({
+      id: product.id,
+
+      slug:
+        product.slug,
+
+      name:
+        product.name,
+
+      image:
+        product.images[0]
+          ?.url ??
+        "/logo.png",
+
+      type:
+        product.type,
+
+      category:
+        product.category.name,
+
+      price: Number(
+        product.salePrice ??
+          product.regularPrice
+      ),
+
+      shortMeta:
+        product.type ===
+        "Animal"
+          ? [
+              product.gender,
+              product.age,
+            ]
+              .filter(Boolean)
+              .join(" • ")
+          : product.shortDescription,
+    }));
 
   const results =
     normalizedQuery || type
       ? products.filter(
           (product) => {
-            if (type && product.type !== type) return false;
-            const searchableText = [
-              product.name,
-              product.type,
-              product.category,
-              product.shortMeta ?? "",
-            ]
-              .join(" ")
-              .toLowerCase();
+            if (
+              type &&
+              product.type !==
+                type
+            ) {
+              return false;
+            }
+
+            const searchableText =
+              [
+                product.name,
+                product.type,
+                product.category,
+                product.shortMeta ??
+                  "",
+              ]
+                .join(" ")
+                .toLowerCase();
 
             return searchableText.includes(
               normalizedQuery
@@ -158,60 +239,90 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <div className="max-w-3xl">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-          Search
-        </p>
-
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-          Search results
-        </h1>
-
-        {(query || type) && (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Showing results for{" "}
-            <span className="font-semibold text-foreground">
-              {query ? `“${query}”` : type === "Animal" ? "Animals" : "Accessories"}
-            </span>
+      <FromLeft>
+        <div className="max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            Search
           </p>
-        )}
-      </div>
+
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+            Search results
+          </h1>
+
+          {(query || type) && (
+            <FadeIn delay={0.2}>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Showing results
+                for{" "}
+                <span className="font-semibold text-foreground">
+                  {query
+                    ? `“${query}”`
+                    : type ===
+                        "Animal"
+                      ? "Animals"
+                      : "Accessories"}
+                </span>
+              </p>
+            </FadeIn>
+          )}
+        </div>
+      </FromLeft>
 
       {!query && !type ? (
-        <EmptySearch />
-      ) : results.length === 0 ? (
-        <NoResults
-          query={query}
-        />
+        <ScaleIn delay={0.15}>
+          <EmptySearch />
+        </ScaleIn>
+      ) : results.length ===
+        0 ? (
+        <ScaleIn delay={0.15}>
+          <NoResults
+            query={query}
+          />
+        </ScaleIn>
       ) : (
         <>
-          <div className="mt-7 flex items-center justify-between gap-4 border-b border-border pb-4">
-            <p className="text-sm font-semibold text-foreground">
-              {results.length}{" "}
-              {results.length === 1
-                ? "result"
-                : "results"}{" "}
-              found
-            </p>
+          <FromRight
+            delay={0.15}
+          >
+            <div className="mt-7 flex items-center justify-between gap-4 border-b border-border pb-4">
+              <p className="text-sm font-semibold text-foreground">
+                {
+                  results.length
+                }{" "}
+                {results.length ===
+                1
+                  ? "result"
+                  : "results"}{" "}
+                found
+              </p>
 
-            <Link
-              href="/"
-              className="text-sm font-semibold text-primary transition-opacity hover:opacity-80"
-            >
-              Browse All
-            </Link>
-          </div>
+              <Link
+                href="/"
+                className="text-sm font-semibold text-primary transition-opacity hover:opacity-80"
+              >
+                Browse All
+              </Link>
+            </div>
+          </FromRight>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <StaggerGrid className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
             {results.map(
               (product) => (
-                <SearchProductCard
-                  key={product.id}
-                  product={product}
-                />
+                <StaggerItem
+                  key={
+                    product.id
+                  }
+                  className="h-full"
+                >
+                  <SearchProductCard
+                    product={
+                      product
+                    }
+                  />
+                </StaggerItem>
               )
             )}
-          </div>
+          </StaggerGrid>
         </>
       )}
     </div>
@@ -231,12 +342,16 @@ function SearchProductCard({
   return (
     <Link
       href={`/product/${product.slug}`}
-      className="group overflow-hidden rounded-2xl border border-border bg-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+      className="group block h-full overflow-hidden rounded-2xl border border-border bg-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-subtle">
         <Image
-          src={product.image}
-          alt={product.name}
+          src={
+            product.image
+          }
+          alt={
+            product.name
+          }
           fill
           unoptimized
           sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
@@ -255,7 +370,9 @@ function SearchProductCard({
 
       <div className="p-3 sm:p-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          {product.category}
+          {
+            product.category
+          }
         </p>
 
         <h2 className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-foreground sm:text-base">
@@ -264,7 +381,9 @@ function SearchProductCard({
 
         {product.shortMeta && (
           <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground sm:text-xs">
-            {product.shortMeta}
+            {
+              product.shortMeta
+            }
           </p>
         )}
 
@@ -291,8 +410,9 @@ function EmptySearch() {
 
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Search for animals,
-          accessories, categories,
-          colors or product names.
+          accessories,
+          categories, colors or
+          product names.
         </p>
       </div>
     </div>

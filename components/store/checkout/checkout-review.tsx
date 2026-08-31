@@ -23,6 +23,11 @@ import {
   useState,
 } from "react";
 
+import {
+  Reveal,
+  RevealGroup,
+  RevealItem,
+} from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
 import {
   type CheckoutOrderItem,
@@ -54,16 +59,32 @@ export function CheckoutReview() {
   const [
     checkoutItems,
     setCheckoutItems,
-  ] = useState<
-    CheckoutOrderItem[]
-  >([]);
+  ] =
+    useState<
+      CheckoutOrderItem[]
+    >([]);
 
   const [
     checkoutLoaded,
     setCheckoutLoaded,
-  ] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState(fallbackDeliveryAddress);
-  const [deliveryFee, setDeliveryFee] = useState(fallbackDeliveryFee);
+  ] =
+    useState(false);
+
+  const [
+    deliveryAddress,
+    setDeliveryAddress,
+  ] =
+    useState(
+      fallbackDeliveryAddress
+    );
+
+  const [
+    deliveryFee,
+    setDeliveryFee,
+  ] =
+    useState(
+      fallbackDeliveryFee
+    );
 
   useEffect(() => {
     const checkout =
@@ -71,9 +92,12 @@ export function CheckoutReview() {
 
     if (
       !checkout ||
-      checkout.items.length === 0
+      checkout.items.length ===
+        0
     ) {
-      setCheckoutLoaded(true);
+      setCheckoutLoaded(
+        true
+      );
       return;
     }
 
@@ -94,31 +118,131 @@ export function CheckoutReview() {
       )
     );
 
-    if (!checkout.addressId) {
-      router.replace("/checkout/delivery");
-      setCheckoutLoaded(true);
+    if (
+      !checkout.addressId
+    ) {
+      router.replace(
+        "/checkout/delivery"
+      );
+
+      setCheckoutLoaded(
+        true
+      );
+
       return;
     }
 
-    fetch("/api/store/auth/session")
-      .then(async (response) => ({ response, data: await response.json() }))
-      .then(({ response, data }) => {
-        if (!response.ok) { router.replace("/checkout/auth"); return; }
-        const address = data.customer?.addresses?.find((candidate: { id: string }) => candidate.id === checkout.addressId);
-        if (!address) { router.replace("/checkout/delivery"); return; }
-        setDeliveryAddress({ label: address.label, fullName: address.recipientName, phone: address.phone, email: data.customer.email, unit: address.unit ?? "", building: address.building, street: address.street, area: address.area, emirate: address.emirate, landmark: address.landmark ?? "", notes: address.notes ?? "" });
-        setDeliveryFee(checkout.deliveryFee ?? fallbackDeliveryFee);
-      })
-      .catch(() => router.replace("/checkout/auth"))
-      .finally(() => setCheckoutLoaded(true));
+    fetch(
+      "/api/store/auth/session"
+    )
+      .then(
+        async (
+          response
+        ) => ({
+          response,
+          data:
+            await response.json(),
+        })
+      )
+      .then(
+        ({
+          response,
+          data,
+        }) => {
+          if (
+            !response.ok
+          ) {
+            router.replace(
+              "/checkout/auth"
+            );
+            return;
+          }
+
+          const address =
+            data.customer
+              ?.addresses?.find(
+                (
+                  candidate: {
+                    id: string;
+                  }
+                ) =>
+                  candidate.id ===
+                  checkout.addressId
+              );
+
+          if (!address) {
+            router.replace(
+              "/checkout/delivery"
+            );
+            return;
+          }
+
+          setDeliveryAddress({
+            label:
+              address.label,
+
+            fullName:
+              address.recipientName,
+
+            phone:
+              address.phone,
+
+            email:
+              data.customer
+                .email,
+
+            unit:
+              address.unit ??
+              "",
+
+            building:
+              address.building,
+
+            street:
+              address.street,
+
+            area:
+              address.area,
+
+            emirate:
+              address.emirate,
+
+            landmark:
+              address.landmark ??
+              "",
+
+            notes:
+              address.notes ??
+              "",
+          });
+
+          setDeliveryFee(
+            checkout.deliveryFee ??
+              fallbackDeliveryFee
+          );
+        }
+      )
+      .catch(() =>
+        router.replace(
+          "/checkout/auth"
+        )
+      )
+      .finally(() =>
+        setCheckoutLoaded(
+          true
+        )
+      );
   }, [router]);
 
   if (!checkoutLoaded) {
-    return <ReviewLoading />;
+    return (
+      <ReviewLoading />
+    );
   }
 
   if (
-    checkoutItems.length === 0
+    checkoutItems.length ===
+    0
   ) {
     return (
       <EmptyCheckout
@@ -132,76 +256,258 @@ export function CheckoutReview() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="min-w-0 space-y-4 sm:space-y-5">
-        <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                Review Order
-              </p>
+        <Reveal
+          direction="left"
+          distance={40}
+        >
+          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  Review Order
+                </p>
 
-              <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                Check everything
-                before payment
-              </h1>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  Check everything
+                  before payment
+                </h1>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                Review your
-                selected products
-                and delivery
-                information before
-                continuing to
-                payment.
-              </p>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Review your
+                  selected products
+                  and delivery
+                  information before
+                  continuing to
+                  payment.
+                </p>
+              </div>
+
+              <Reveal
+                direction="scale"
+                scaleFrom={0.9}
+                delay={0.08}
+              >
+                <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="h-4 w-4"
+                  />
+
+                  Ready to Pay
+                </span>
+              </Reveal>
             </div>
+          </section>
+        </Reveal>
 
-            <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
-              <CheckCircle2
-                aria-hidden="true"
-                className="h-4 w-4"
-              />
+        <Reveal
+          direction="up"
+          distance={35}
+        >
+          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6">
+            <SectionHeader
+              title="Your Items"
+              description={`${checkoutItems.length} ${
+                checkoutItems.length ===
+                1
+                  ? "product"
+                  : "products"
+              } in this order`}
+              actionLabel="Edit Items"
+              actionHref="/cart"
+            />
 
-              Ready to Pay
-            </span>
-          </div>
-        </section>
+            <RevealGroup
+              stagger={0.07}
+              delay={0.05}
+              className="mt-5 divide-y divide-border"
+            >
+              {checkoutItems.map(
+                (item) => (
+                  <RevealItem
+                    key={
+                      item.id
+                    }
+                    direction="scale"
+                    scaleFrom={0.96}
+                    duration={
+                      0.5
+                    }
+                  >
+                    <ReviewProduct
+                      item={item}
+                    />
+                  </RevealItem>
+                )
+              )}
+            </RevealGroup>
+          </section>
+        </Reveal>
 
-        <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6">
-          <SectionHeader
-            title="Your Items"
-            description={`${checkoutItems.length} ${
-              checkoutItems.length ===
-              1
-                ? "product"
-                : "products"
-            } in this order`}
-            actionLabel="Edit Items"
-            actionHref="/cart"
-          />
+        <Reveal
+          direction="left"
+          distance={35}
+        >
+          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6">
+            <SectionHeader
+              title="Delivery Address"
+              description="Your order will be delivered here"
+              actionLabel="Edit Delivery"
+              actionHref="/checkout/delivery"
+            />
 
-          <div className="mt-5 divide-y divide-border">
-            {checkoutItems.map(
-              (item) => (
-                <ReviewProduct
-                  key={item.id}
-                  item={item}
-                />
-              )
+            <Reveal
+              direction="scale"
+              scaleFrom={0.96}
+            >
+              <div className="mt-5 rounded-2xl bg-surface-subtle p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <Home
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                      strokeWidth={
+                        2
+                      }
+                    />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold text-foreground">
+                        {
+                          deliveryAddress.label
+                        }
+                      </p>
+
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                        Selected
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {
+                        deliveryAddress.fullName
+                      }
+                    </p>
+
+                    <div className="mt-2 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+                      <MapPin
+                        aria-hidden="true"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
+                      />
+
+                      <p>
+                        {
+                          deliveryAddress.unit
+                        }
+                        ,{" "}
+                        {
+                          deliveryAddress.building
+                        }
+                        <br />
+
+                        {
+                          deliveryAddress.street
+                        }
+                        ,{" "}
+                        {
+                          deliveryAddress.area
+                        }
+                        <br />
+
+                        {
+                          deliveryAddress.emirate
+                        }
+                        , UAE
+                      </p>
+                    </div>
+
+                    {deliveryAddress.landmark && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Landmark:{" "}
+                        {
+                          deliveryAddress.landmark
+                        }
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+
+            {deliveryAddress.notes && (
+              <Reveal
+                direction="up"
+                distance={20}
+              >
+                <div className="mt-3 rounded-xl border border-border px-4 py-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                    Delivery Note
+                  </p>
+
+                  <p className="mt-1 text-sm text-foreground">
+                    {
+                      deliveryAddress.notes
+                    }
+                  </p>
+                </div>
+              </Reveal>
             )}
-          </div>
-        </section>
+          </section>
+        </Reveal>
 
-        <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6">
-          <SectionHeader
-            title="Delivery Address"
-            description="Your order will be delivered here"
-            actionLabel="Edit Delivery"
-            actionHref="/checkout/delivery"
-          />
+        <Reveal
+          direction="right"
+          distance={35}
+        >
+          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6">
+            <SectionHeader
+              title="Contact Information"
+              description="We'll use these details for your order"
+            />
 
-          <div className="mt-5 rounded-2xl bg-surface-subtle p-4 sm:p-5">
+            <RevealGroup
+              stagger={0.08}
+              className="mt-5 grid gap-3 sm:grid-cols-2"
+            >
+              <RevealItem
+                direction="scale"
+                scaleFrom={0.94}
+              >
+                <ContactCard
+                  icon={Phone}
+                  label="Mobile Number"
+                  value={
+                    deliveryAddress.phone
+                  }
+                />
+              </RevealItem>
+
+              <RevealItem
+                direction="scale"
+                scaleFrom={0.94}
+              >
+                <ContactCard
+                  icon={Mail}
+                  label="Email Address"
+                  value={
+                    deliveryAddress.email
+                  }
+                />
+              </RevealItem>
+            </RevealGroup>
+          </section>
+        </Reveal>
+
+        <Reveal
+          direction="scale"
+          scaleFrom={0.95}
+        >
+          <section className="rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:p-5">
             <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Home
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Truck
                   aria-hidden="true"
                   className="h-4 w-4"
                   strokeWidth={2}
@@ -209,144 +515,131 @@ export function CheckoutReview() {
               </span>
 
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-bold text-foreground">
-                    {
-                      deliveryAddress.label
-                    }
+                    UAE Delivery
                   </p>
 
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                    Selected
-                  </span>
+                  <p className="text-sm font-bold text-primary">
+                    AED{" "}
+                    {deliveryFee.toLocaleString()}
+                  </p>
                 </div>
 
-                <p className="mt-2 text-sm font-semibold text-foreground">
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Your order will be
+                  carefully prepared
+                  for delivery to{" "}
                   {
-                    deliveryAddress.fullName
+                    deliveryAddress.emirate
                   }
-                </p>
-
-                <div className="mt-2 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-                  <MapPin
-                    aria-hidden="true"
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
-                  />
-
-                  <p>
-                    {
-                      deliveryAddress.unit
-                    }
-                    ,{" "}
-                    {
-                      deliveryAddress.building
-                    }
-                    <br />
-
-                    {
-                      deliveryAddress.street
-                    }
-                    ,{" "}
-                    {
-                      deliveryAddress.area
-                    }
-                    <br />
-
-                    {
-                      deliveryAddress.emirate
-                    }
-                    , UAE
-                  </p>
-                </div>
-
-                {deliveryAddress.landmark && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Landmark:{" "}
-                    {
-                      deliveryAddress.landmark
-                    }
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {deliveryAddress.notes && (
-            <div className="mt-3 rounded-xl border border-border px-4 py-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                Delivery Note
-              </p>
-
-              <p className="mt-1 text-sm text-foreground">
-                {
-                  deliveryAddress.notes
-                }
-              </p>
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6">
-          <SectionHeader
-            title="Contact Information"
-            description="We'll use these details for your order"
-          />
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <ContactCard
-              icon={Phone}
-              label="Mobile Number"
-              value={
-                deliveryAddress.phone
-              }
-            />
-
-            <ContactCard
-              icon={Mail}
-              label="Email Address"
-              value={
-                deliveryAddress.email
-              }
-            />
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:p-5">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Truck
-                aria-hidden="true"
-                className="h-4 w-4"
-                strokeWidth={2}
-              />
-            </span>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-bold text-foreground">
-                  UAE Delivery
-                </p>
-
-                <p className="text-sm font-bold text-primary">
-                  AED{" "}
-                  {deliveryFee.toLocaleString()}
+                  .
                 </p>
               </div>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Your order will be
-                carefully prepared
-                for delivery to{" "}
-                {
-                  deliveryAddress.emirate
-                }
-                .
-              </p>
             </div>
-          </div>
-        </section>
+          </section>
+        </Reveal>
 
         <div className="lg:hidden">
+          <Reveal
+            direction="up"
+            distance={30}
+          >
+            <OrderSummary
+              items={
+                checkoutItems
+              }
+              deliveryFee={
+                deliveryFee
+              }
+            />
+          </Reveal>
+        </div>
+
+        <Reveal
+          direction="up"
+          distance={30}
+        >
+          <div className="flex flex-col-reverse gap-3 rounded-2xl border border-border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:rounded-3xl sm:p-5">
+            <Button
+              asChild
+              variant="secondary"
+              className="h-12 rounded-xl px-5"
+            >
+              <Link
+                href="/checkout/delivery"
+                className="whitespace-nowrap"
+              >
+                <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                  <ArrowLeft
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0"
+                    strokeWidth={
+                      2
+                    }
+                  />
+
+                  <span>
+                    Back to Delivery
+                  </span>
+                </span>
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              variant="primary"
+              className="h-12 rounded-xl px-6 text-sm font-bold"
+            >
+              <Link
+                href="/checkout/payment"
+                className="whitespace-nowrap"
+              >
+                <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                  <span>
+                    Continue to
+                    Payment
+                  </span>
+
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="h-5 w-5 shrink-0"
+                    strokeWidth={
+                      2
+                    }
+                  />
+                </span>
+              </Link>
+            </Button>
+          </div>
+        </Reveal>
+
+        <Reveal
+          direction="fade"
+        >
+          <div className="flex items-start gap-3 px-1">
+            <ShieldCheck
+              aria-hidden="true"
+              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+            />
+
+            <p className="text-xs leading-5 text-muted-foreground">
+              You can still go
+              back and update your
+              order or delivery
+              information before
+              making payment.
+            </p>
+          </div>
+        </Reveal>
+      </div>
+
+      <div className="hidden lg:block">
+        <Reveal
+          direction="right"
+          distance={40}
+          delay={0.08}
+        >
           <OrderSummary
             items={
               checkoutItems
@@ -355,82 +648,7 @@ export function CheckoutReview() {
               deliveryFee
             }
           />
-        </div>
-
-        <div className="flex flex-col-reverse gap-3 rounded-2xl border border-border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:rounded-3xl sm:p-5">
-          <Button
-            asChild
-            variant="secondary"
-            className="h-12 rounded-xl px-5"
-          >
-            <Link
-              href="/checkout/delivery"
-              className="whitespace-nowrap"
-            >
-              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-                <ArrowLeft
-                  aria-hidden="true"
-                  className="h-4 w-4 shrink-0"
-                  strokeWidth={2}
-                />
-
-                <span>
-                  Back to Delivery
-                </span>
-              </span>
-            </Link>
-          </Button>
-
-          <Button
-            asChild
-            variant="primary"
-            className="h-12 rounded-xl px-6 text-sm font-bold"
-          >
-            <Link
-              href="/checkout/payment"
-              className="whitespace-nowrap"
-            >
-              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-                <span>
-                  Continue to
-                  Payment
-                </span>
-
-                <ArrowRight
-                  aria-hidden="true"
-                  className="h-5 w-5 shrink-0"
-                  strokeWidth={2}
-                />
-              </span>
-            </Link>
-          </Button>
-        </div>
-
-        <div className="flex items-start gap-3 px-1">
-          <ShieldCheck
-            aria-hidden="true"
-            className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-          />
-
-          <p className="text-xs leading-5 text-muted-foreground">
-            You can still go
-            back and update your
-            order or delivery
-            information before
-            making payment.
-          </p>
-        </div>
-      </div>
-
-      <div className="hidden lg:block">
-        <OrderSummary
-          items={
-            checkoutItems
-          }
-          deliveryFee={
-            deliveryFee
-          }
-        />
+        </Reveal>
       </div>
     </div>
   );
@@ -442,7 +660,8 @@ function ReviewProduct({
   item: CheckoutOrderItem;
 }) {
   const TypeIcon =
-    item.type === "Animal"
+    item.type ===
+    "Animal"
       ? PawPrint
       : PackageOpen;
 
@@ -471,9 +690,7 @@ function ReviewProduct({
                 className="h-3 w-3"
               />
 
-              {
-                item.type
-              }
+              {item.type}
             </span>
 
             <Link
@@ -481,9 +698,7 @@ function ReviewProduct({
               className="mt-1.5 block"
             >
               <h3 className="line-clamp-2 text-sm font-bold leading-5 text-foreground transition-colors hover:text-primary sm:text-base">
-                {
-                  item.name
-                }
+                {item.name}
               </h3>
             </Link>
 
@@ -624,34 +839,43 @@ function EmptyCheckout({
 }) {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <div className="w-full max-w-lg rounded-3xl border border-border bg-background p-7 text-center shadow-sm sm:p-10">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <ShoppingBag
-            aria-hidden="true"
-            className="h-6 w-6"
-          />
-        </span>
+      <Reveal
+        direction="scale"
+        scaleFrom={0.9}
+        className="w-full max-w-lg"
+      >
+        <div className="w-full rounded-3xl border border-border bg-background p-7 text-center shadow-sm sm:p-10">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <ShoppingBag
+              aria-hidden="true"
+              className="h-6 w-6"
+            />
+          </span>
 
-        <h1 className="mt-5 text-xl font-bold text-foreground sm:text-2xl">
-          No active checkout
-        </h1>
+          <h1 className="mt-5 text-xl font-bold text-foreground sm:text-2xl">
+            No active checkout
+          </h1>
 
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-          Your checkout does not
-          contain any products.
-          Choose an animal or
-          accessory to continue.
-        </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+            Your checkout does
+            not contain any
+            products. Choose an
+            animal or accessory
+            to continue.
+          </p>
 
-        <Button
-          type="button"
-          variant="primary"
-          onClick={onBrowse}
-          className="mt-6 h-12 rounded-xl px-6 font-bold"
-        >
-          Browse Products
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={
+              onBrowse
+            }
+            className="mt-6 h-12 rounded-xl px-6 font-bold"
+          >
+            Browse Products
+          </Button>
+        </div>
+      </Reveal>
     </div>
   );
 }
