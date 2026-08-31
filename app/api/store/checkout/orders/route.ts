@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       const products = await tx.product.findMany({ where: { id: { in: ids }, status: "Active" } });
       if (products.length !== ids.length) throw new Error("PRODUCT_UNAVAILABLE");
       const lines = input.items.map((item) => {
-        const product = products.find((candidate) => candidate.id === item.productId)!;
+        const product = products.find((candidate: (typeof products)[number]) => candidate.id === item.productId)!;
         if (product.type === "Animal" && item.quantity !== 1) throw new Error("ANIMAL_LIMIT");
         if (product.quantity < item.quantity) throw new Error(`OUT_OF_STOCK:${product.name}`);
         return { product, quantity: item.quantity, unitPrice: Number(product.salePrice ?? product.regularPrice) };

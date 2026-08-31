@@ -59,7 +59,7 @@ export async function findProduct(id: string) { return prisma.product.findUnique
 export async function createProduct(input: ProductApiValues) {
   const category = await categoryFor(input);
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const product = await tx.product.create({ data: { ...productData(input, category.id), images: { create: input.images.map((url, sortOrder) => ({ url, sortOrder })) } }, include: includeProduct });
       await tx.category.update({ where: { id: category.id }, data: { items: { increment: 1 } } });
       return product;
@@ -71,7 +71,7 @@ export async function updateProduct(id: string, input: ProductApiValues) {
   const existing = await findProduct(id); if (!existing) return null;
   const category = await categoryFor(input);
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const product = await tx.product.update({ where: { id }, data: { ...productData(input, category.id), images: { deleteMany: {}, create: input.images.map((url, sortOrder) => ({ url, sortOrder })) } }, include: includeProduct });
       if (existing.categoryId !== category.id) { await tx.category.update({ where: { id: existing.categoryId }, data: { items: { decrement: 1 } } }); await tx.category.update({ where: { id: category.id }, data: { items: { increment: 1 } } }); }
       return product;
