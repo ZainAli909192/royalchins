@@ -75,6 +75,7 @@ export default function CreateProductPage() {
       salePrice: undefined,
       quantity: 0,
       status: "Draft",
+      isFeatured: false,
       shortDescription: "",
       description: "",
       gender: undefined,
@@ -95,7 +96,7 @@ export default function CreateProductPage() {
     Promise.all([getCategories(), getProduct(params.id)]).then(([categoryItems, product]) => {
       setCategories(categoryItems.filter((category) => category.isActive));
       setExistingImageUrls(product.images.map((image) => image.url));
-      reset({ type: product.type, name: product.name, mainCategory: product.type === "Animal" ? "Animals" : "Accessories", subCategory: product.category.name, sku: product.sku, slug: product.slug, regularPrice: Number(product.regularPrice), salePrice: product.salePrice === null ? undefined : Number(product.salePrice), quantity: product.quantity, status: product.status, shortDescription: product.shortDescription, description: product.description, gender: product.gender as ProductFormValues["gender"], age: product.age ?? "", color: product.color ?? "", brand: product.brand ?? "", size: product.size ?? "", compatibility: product.compatibility ?? "" });
+      reset({ type: product.type, name: product.name, mainCategory: product.type === "Animal" ? "Animals" : "Accessories", subCategory: product.category.name, sku: product.sku, slug: product.slug, regularPrice: Number(product.regularPrice), salePrice: product.salePrice === null ? undefined : Number(product.salePrice), quantity: product.quantity, status: product.status, isFeatured: product.isFeatured, shortDescription: product.shortDescription, description: product.description, gender: product.gender as ProductFormValues["gender"], age: product.age ?? "", color: product.color ?? "", brand: product.brand ?? "", size: product.size ?? "", compatibility: product.compatibility ?? "" });
     }).catch((error) => setFormError(getErrorMessage(error, "Unable to load this product.")));
   }, [params.id, reset]);
 
@@ -421,6 +422,19 @@ export default function CreateProductPage() {
                 Generate from product name
               </button>
             </div>
+
+            <label className="flex min-h-12 items-center gap-3 rounded-lg border border-border bg-surface-subtle px-4 text-sm font-medium text-foreground">
+              <input
+                {...register("isFeatured")}
+                type="checkbox"
+                disabled={isSubmitting}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span>
+                <span className="block font-semibold">Featured product</span>
+                <span className="block text-xs font-normal text-muted-foreground">Show this product in the storefront featured section.</span>
+              </span>
+            </label>
 
           </div>
         </section>

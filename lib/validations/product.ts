@@ -50,6 +50,8 @@ export const productSchema = z
 
     status: z.enum(["Draft", "Active", "Inactive"]),
 
+    isFeatured: z.boolean(),
+
     shortDescription: z
       .string()
       .trim()

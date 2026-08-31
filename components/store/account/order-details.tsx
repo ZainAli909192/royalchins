@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
@@ -17,6 +20,7 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -56,7 +60,7 @@ type Order = {
   items: OrderItem[];
 };
 
-const order: Order = {
+const fallbackOrder: Order = {
   id: "RC-2026-00124",
   date: "31 Aug 2026",
   status: "Confirmed",
@@ -99,13 +103,13 @@ const order: Order = {
   ],
 };
 
-const customer = {
+const fallbackCustomer = {
   name: "Ahmed Daniyal",
   email: "ahmed@example.com",
   phone: "+971 50 780 1110",
 };
 
-const address = {
+const fallbackAddress = {
   label: "Home",
   unit: "Apartment 1204",
   building: "Marina Residence",
@@ -144,9 +148,25 @@ const statusIndex = {
   Processing: 2,
   Delivered: 3,
   Cancelled: -1,
-}[order.status];
+}[fallbackOrder.status];
 
 export function OrderDetails() {
+  const params = useParams<{ orderId: string }>();
+  const [orderData, setOrderData] = useState<Order>(fallbackOrder);
+  const [customerData, setCustomerData] = useState(fallbackCustomer);
+  const [addressData, setAddressData] = useState(fallbackAddress);
+  useEffect(() => {
+    fetch(`/api/store/checkout/orders/${encodeURIComponent(params.orderId)}`).then(async response => ({ response, data: await response.json() })).then(({ response, data }) => {
+      if (!response.ok) return;
+      setOrderData({ id: data.orderNumber, date: new Date(data.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" }), status: data.orderStatus, paymentStatus: data.paymentStatus, paymentMethod: data.paymentMethod, subtotal: Number(data.subtotal), deliveryFee: Number(data.deliveryFee), total: Number(data.total), items: data.items.map((item: { id: string; productName: string; quantity: number; unitPrice: string | number; product: { slug: string; type: "Animal" | "Accessory"; images: { url: string }[] } | null }) => ({ id: item.id, slug: item.product?.slug ?? "", name: item.productName, image: item.product?.images[0]?.url ?? "/placeholder.png", type: item.product?.type ?? "Accessory", price: Number(item.unitPrice), quantity: item.quantity })) });
+      setCustomerData({ name: data.customerName, email: data.email, phone: data.phone });
+      if (data.shippingAddress) setAddressData({ label: data.shippingAddress.label, unit: data.shippingAddress.unit ?? "", building: data.shippingAddress.building, street: data.shippingAddress.street, area: data.shippingAddress.area, emirate: data.shippingAddress.emirate, notes: data.shippingAddress.notes ?? "" });
+    }).catch(() => undefined);
+  }, [params.orderId]);
+  const order = orderData;
+  const customer = customerData;
+  const address = addressData;
+  const statusIndex = { Pending: 0, Confirmed: 1, Processing: 2, Delivered: 3, Cancelled: -1 }[order.status];
   return (
     <div className="mx-auto max-w-[1150px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <Link

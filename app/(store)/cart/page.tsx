@@ -96,15 +96,16 @@ export default function CartPage() {
   }, []);
 
   const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (total, item) =>
-          total +
-          item.price * item.quantity,
-        0
-      ),
-    [items]
-  );
+  () =>
+    items.reduce(
+      (total, item) =>
+        total +
+        Number(item.price ?? 0) *
+          Number(item.quantity ?? 1),
+      0
+    ),
+  [items]
+);
 
   const totalItems = useMemo(
     () =>
@@ -268,7 +269,7 @@ export default function CartPage() {
 
           {items.map((item) => (
             <CartItemCard
-              key={item.id}
+              key={`${item.id}-${item.slug}`}
               item={item}
               onIncrease={() =>
                 updateQuantity(
@@ -447,6 +448,8 @@ function CartItemCard({
   const isAnimal =
     item.type === "Animal";
 
+    const safePrice =
+  Number(item.price ?? 0);
   const productHref =
     `/products/${item.slug}`;
 
@@ -519,16 +522,16 @@ function CartItemCard({
             <div>
               <p className="text-lg font-bold tracking-tight text-foreground sm:text-xl">
                 AED{" "}
-                {(
-                  item.price *
-                  item.quantity
-                ).toLocaleString()}
+            {(
+  safePrice *
+  item.quantity
+).toLocaleString()}
               </p>
 
               {item.quantity > 1 && (
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
                   AED{" "}
-                  {item.price.toLocaleString()}{" "}
+                  {safePrice.toLocaleString()}{" "}
                   each
                 </p>
               )}

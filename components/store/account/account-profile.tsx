@@ -9,7 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -37,6 +37,15 @@ export function AccountProfile() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/store/auth/session").then(async (response) => ({ response, data: await response.json() })).then(({ response, data }) => {
+      if (!response.ok) return;
+      const names = data.customer.name.trim().split(/\s+/);
+      const profile = { firstName: names[0] ?? "", lastName: names.slice(1).join(" "), email: data.customer.email, phone: data.customer.phone.replace(/^\+971\s?/, "") };
+      setForm(profile); setSavedProfile(profile);
+    }).catch(() => undefined);
+  }, []);
+
   const hasChanges =
     JSON.stringify(form) !==
     JSON.stringify(savedProfile);
@@ -54,7 +63,7 @@ export function AccountProfile() {
     setSaved(false);
   }
 
-  function handleSubmit(
+  async function handleSubmit(
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
@@ -96,10 +105,12 @@ export function AccountProfile() {
       phone: formatPhone(cleanPhone),
     };
 
-    setForm(updatedProfile);
-    setSavedProfile(updatedProfile);
-    setError("");
-    setSaved(true);
+    try {
+      const response = await fetch("/api/store/account/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: `${firstName} ${lastName}`.trim(), email, phone: `+971 ${formatPhone(cleanPhone)}` }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
+      setForm(updatedProfile); setSavedProfile(updatedProfile); setError(""); setSaved(true);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "We couldn't update your profile."); return; }
 
     window.setTimeout(() => {
       setSaved(false);

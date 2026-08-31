@@ -32,7 +32,7 @@ import {
   getCheckout,
 } from "@/lib/store/checkout-storage";
 
-const deliveryAddress = {
+const fallbackDeliveryAddress = {
   label: "Home",
   fullName: "Ahmed Daniyal",
   phone: "+971 50 780 1110",
@@ -46,7 +46,7 @@ const deliveryAddress = {
   notes: "Please call before arrival.",
 };
 
-const deliveryFee = 35;
+const fallbackDeliveryFee = 35;
 
 export function CheckoutReview() {
   const router = useRouter();
@@ -62,6 +62,8 @@ export function CheckoutReview() {
     checkoutLoaded,
     setCheckoutLoaded,
   ] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState(fallbackDeliveryAddress);
+  const [deliveryFee, setDeliveryFee] = useState(fallbackDeliveryFee);
 
   useEffect(() => {
     const checkout =
@@ -92,8 +94,24 @@ export function CheckoutReview() {
       )
     );
 
-    setCheckoutLoaded(true);
-  }, []);
+    if (!checkout.addressId) {
+      router.replace("/checkout/delivery");
+      setCheckoutLoaded(true);
+      return;
+    }
+
+    fetch("/api/store/auth/session")
+      .then(async (response) => ({ response, data: await response.json() }))
+      .then(({ response, data }) => {
+        if (!response.ok) { router.replace("/checkout/auth"); return; }
+        const address = data.customer?.addresses?.find((candidate: { id: string }) => candidate.id === checkout.addressId);
+        if (!address) { router.replace("/checkout/delivery"); return; }
+        setDeliveryAddress({ label: address.label, fullName: address.recipientName, phone: address.phone, email: data.customer.email, unit: address.unit ?? "", building: address.building, street: address.street, area: address.area, emirate: address.emirate, landmark: address.landmark ?? "", notes: address.notes ?? "" });
+        setDeliveryFee(checkout.deliveryFee ?? fallbackDeliveryFee);
+      })
+      .catch(() => router.replace("/checkout/auth"))
+      .finally(() => setCheckoutLoaded(true));
+  }, [router]);
 
   if (!checkoutLoaded) {
     return <ReviewLoading />;

@@ -123,17 +123,13 @@ export function ChangePassword() {
     setError("");
 
     try {
-      // Replace with change-password API call.
-      await new Promise((resolve) =>
-        window.setTimeout(resolve, 700)
-      );
-
+      const response = await fetch("/api/store/account/password", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentPassword: form.currentPassword, newPassword: form.newPassword }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
       setForm(initialForm);
       setSuccess(true);
-    } catch {
-      setError(
-        "We couldn't update your password. Please try again."
-      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "We couldn't update your password. Please try again.");
     } finally {
       setSubmitting(false);
     }

@@ -12,7 +12,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -97,7 +97,7 @@ const emptyForm: AddressFormData = {
 
 export function AccountAddresses() {
   const [addresses, setAddresses] =
-    useState<Address[]>(initialAddresses);
+    useState<Address[]>([]);
 
   const [editingAddress, setEditingAddress] =
     useState<Address | null>(null);
@@ -107,6 +107,13 @@ export function AccountAddresses() {
 
   const [deleteAddress, setDeleteAddress] =
     useState<Address | null>(null);
+
+  const loadAddresses = () => fetch("/api/store/checkout/addresses").then(async response => ({ response, data: await response.json() })).then(({ response, data }) => {
+    if (!response.ok) return;
+    setAddresses(data.map((address: { id: string; label: string; recipientName: string; phone: string; emirate: Emirate; area: string; street: string; building: string; unit?: string; landmark?: string; isDefault: boolean }) => ({ id: address.id, label: address.label, fullName: address.recipientName, phone: address.phone.replace(/^\+971\s?/, ""), emirate: address.emirate, area: address.area, street: address.street, building: address.building, unit: address.unit ?? "", landmark: address.landmark ?? "", isDefault: address.isDefault })));
+  });
+
+  useEffect(() => { loadAddresses().catch(() => undefined); }, []);
 
   function openAddAddress() {
     setEditingAddress(null);
@@ -118,70 +125,26 @@ export function AccountAddresses() {
     setFormOpen(true);
   }
 
-  function handleSaveAddress(
+  async function handleSaveAddress(
     formData: AddressFormData
   ) {
-    if (editingAddress) {
-      setAddresses((current) =>
-        current.map((address) =>
-          address.id === editingAddress.id
-            ? {
-                ...address,
-                ...formData,
-              }
-            : address
-        )
-      );
-    } else {
-      const newAddress: Address = {
-        id: `address-${Date.now()}`,
-        ...formData,
-        isDefault: addresses.length === 0,
-      };
-
-      setAddresses((current) => [
-        ...current,
-        newAddress,
-      ]);
-    }
-
-    setFormOpen(false);
-    setEditingAddress(null);
+    const body = { label: formData.label, recipientName: formData.fullName, phone: `+971 ${formData.phone}`, emirate: formData.emirate, area: formData.area, street: formData.street, building: formData.building, unit: formData.unit, landmark: formData.landmark };
+    const response = await fetch(editingAddress ? `/api/store/checkout/addresses/${editingAddress.id}` : "/api/store/checkout/addresses", { method: editingAddress ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, isDefault: editingAddress?.isDefault ?? addresses.length === 0 }) });
+    if (!response.ok) return;
+    await loadAddresses(); setFormOpen(false); setEditingAddress(null);
   }
 
-  function handleSetDefault(id: string) {
-    setAddresses((current) =>
-      current.map((address) => ({
-        ...address,
-        isDefault: address.id === id,
-      }))
-    );
+  async function handleSetDefault(id: string) {
+    const address = addresses.find(item => item.id === id); if (!address) return;
+    await fetch(`/api/store/checkout/addresses/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label: address.label, recipientName: address.fullName, phone: `+971 ${address.phone}`, emirate: address.emirate, area: address.area, street: address.street, building: address.building, unit: address.unit, landmark: address.landmark, isDefault: true }) });
+    await loadAddresses();
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteAddress) return;
 
-    setAddresses((current) => {
-      const remaining = current.filter(
-        (address) =>
-          address.id !== deleteAddress.id
-      );
-
-      if (
-        deleteAddress.isDefault &&
-        remaining.length > 0
-      ) {
-        return remaining.map(
-          (address, index) => ({
-            ...address,
-            isDefault: index === 0,
-          })
-        );
-      }
-
-      return remaining;
-    });
-
+    await fetch(`/api/store/checkout/addresses/${deleteAddress.id}`, { method: "DELETE" });
+    await loadAddresses();
     setDeleteAddress(null);
   }
 

@@ -72,6 +72,7 @@ export default function CreateProductPage() {
       salePrice: undefined,
       quantity: 0,
       status: "Draft",
+      isFeatured: false,
       shortDescription: "",
       description: "",
       gender: undefined,
@@ -400,6 +401,19 @@ export default function CreateProductPage() {
                 Generate from product name
               </button>
             </div>
+
+            <label className="flex min-h-12 items-center gap-3 rounded-lg border border-border bg-surface-subtle px-4 text-sm font-medium text-foreground">
+              <input
+                {...register("isFeatured")}
+                type="checkbox"
+                disabled={isSubmitting}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span>
+                <span className="block font-semibold">Featured product</span>
+                <span className="block text-xs font-normal text-muted-foreground">Show this product in the storefront featured section.</span>
+              </span>
+            </label>
 
            
           </div>

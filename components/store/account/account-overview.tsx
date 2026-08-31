@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,6 +16,7 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -75,6 +78,16 @@ const accountLinks = [
 ];
 
 export function AccountOverview() {
+  const [customerData, setCustomerData] = useState(customer);
+  const [statsData, setStatsData] = useState(stats);
+  const [recentOrderData, setRecentOrderData] = useState(recentOrder);
+  useEffect(() => {
+    Promise.all([fetch("/api/store/auth/session"), fetch("/api/store/account/orders"), fetch("/api/store/account/reviews")]).then(async ([sessionResponse, ordersResponse, reviewsResponse]) => {
+      const session = await sessionResponse.json(); const orders = await ordersResponse.json(); const reviews = await reviewsResponse.json();
+      if (sessionResponse.ok) { const parts = session.customer.name.split(/\s+/); setCustomerData({ firstName: parts[0] ?? "Customer", fullName: session.customer.name, email: session.customer.email, phone: session.customer.phone }); }
+      if (ordersResponse.ok) { setStatsData({ orders: orders.length, pendingReviews: reviewsResponse.ok ? reviews.reviewable?.length ?? 0 : 0 }); const order = orders[0]; if (order) setRecentOrderData({ id: order.orderNumber, date: new Date(order.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" }), status: order.orderStatus, total: Number(order.total), items: order.items.map((item: { id: string; productName: string; product: { images: { url: string }[] } | null }) => ({ id: item.id, name: item.productName, image: item.product?.images[0]?.url ?? "/placeholder.png" })) }); }
+    }).catch(() => undefined);
+  }, []);
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <header>
@@ -83,7 +96,7 @@ export function AccountOverview() {
         </p>
 
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Hello, {customer.firstName}
+          Hello, {customerData.firstName}
         </h1>
 
         <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
@@ -94,7 +107,7 @@ export function AccountOverview() {
       <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
         <OverviewCard
           title="Orders"
-          value={stats.orders.toString()}
+          value={statsData.orders.toString()}
           description="Total orders"
           href="/account/orders"
           icon={ShoppingBag}
@@ -102,9 +115,9 @@ export function AccountOverview() {
 
         <OverviewCard
           title="Reviews"
-          value={stats.pendingReviews.toString()}
+          value={statsData.pendingReviews.toString()}
           description={
-            stats.pendingReviews === 1
+            statsData.pendingReviews === 1
               ? "Pending review"
               : "Pending reviews"
           }
@@ -141,25 +154,25 @@ export function AccountOverview() {
               </p>
 
               <Link
-                href={`/account/orders/${recentOrder.id}`}
+                href={`/account/orders/${recentOrderData.id}`}
                 className="mt-1 block text-base font-bold text-foreground transition-colors hover:text-primary"
               >
-                #{recentOrder.id}
+                #{recentOrderData.id}
               </Link>
 
               <p className="mt-1 text-xs text-muted-foreground">
-                {recentOrder.date}
+                {recentOrderData.date}
               </p>
             </div>
 
-            <OrderStatus status={recentOrder.status} />
+            <OrderStatus status={recentOrderData.status} />
           </div>
 
           <div className="my-5 border-t border-border" />
 
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center">
-              {recentOrder.items.map((item, index) => (
+              {recentOrderData.items.map((item, index) => (
                 <div
                   key={item.id}
                   title={item.name}
@@ -186,7 +199,7 @@ export function AccountOverview() {
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-primary">
-                  AED {recentOrder.total.toLocaleString()}
+                  AED {recentOrderData.total.toLocaleString()}
                 </p>
               </div>
 
@@ -195,7 +208,7 @@ export function AccountOverview() {
                 variant="primary"
                 className="h-10 rounded-xl px-4 text-xs font-bold"
               >
-                <Link href={`/account/orders/${recentOrder.id}`}>
+                <Link href={`/account/orders/${recentOrderData.id}`}>
                   View Order
                   <ArrowRight className="ml-2 h-3.5 w-3.5" />
                 </Link>

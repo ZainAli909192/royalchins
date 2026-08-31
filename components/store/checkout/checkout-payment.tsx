@@ -10,47 +10,13 @@ import {
   ShieldCheck,
   WalletCards,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { CheckoutOrderItem } from "@/components/store/checkout/order-summary";
+import { clearCheckout, getCheckout } from "@/lib/store/checkout-storage";
 
 type PaymentMethod = "card" | "tamara" | "tabby";
-
-const checkoutItems: CheckoutOrderItem[] = [
-  {
-    id: "white-chinchilla",
-    slug: "white-chinchilla",
-    name: "White Chinchilla",
-    image: "/animals/1.png",
-    type: "Animal",
-    price: 1400,
-    quantity: 1,
-    shortMeta: "Male • 8 months",
-  },
-  {
-    id: "premium-chinchilla-cage",
-    slug: "premium-chinchilla-cage",
-    name: "Premium Chinchilla Cage",
-    image: "/animals/3.png",
-    type: "Accessory",
-    price: 650,
-    quantity: 1,
-    shortMeta: "Large premium habitat",
-  },
-  {
-    id: "wooden-hideout",
-    slug: "wooden-hideout",
-    name: "Wooden Hideout",
-    image: "/animals/5.png",
-    type: "Accessory",
-    price: 75,
-    quantity: 1,
-    shortMeta: "Natural wood shelter",
-  },
-];
-
-const deliveryFee = 35;
 
 export function CheckoutPayment() {
   const router = useRouter();
@@ -60,6 +26,18 @@ export function CheckoutPayment() {
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+  const [checkoutItems, setCheckoutItems] = useState<CheckoutOrderItem[]>([]);
+  const [addressId, setAddressId] = useState<string | null>(null);
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const checkout = getCheckout();
+    if (!checkout?.items.length || !checkout.addressId) { router.replace("/checkout/delivery"); return; }
+    setCheckoutItems(checkout.items);
+    setAddressId(checkout.addressId);
+    setDeliveryFee(checkout.deliveryFee ?? 0);
+  }, [router]);
 
   const subtotal = checkoutItems.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -72,25 +50,18 @@ export function CheckoutPayment() {
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
-
+    if (!addressId || checkoutItems.length === 0) return;
+    setError("");
     setIsSubmitting(true);
-
-    /*
-      Replace this with your backend payment flow.
-
-      Card:
-      Create payment session -> redirect/open gateway.
-
-      Tamara:
-      Create Tamara checkout session -> redirect.
-
-      Tabby:
-      Create Tabby checkout session -> redirect.
-    */
-
-    router.push(
-      `/checkout/confirmation?payment=${paymentMethod}`
-    );
+    try {
+      const response = await fetch("/api/store/checkout/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addressId, paymentMethod: paymentMethod === "card" ? "Card" : paymentMethod === "tamara" ? "Tamara" : "Tabby", items: checkoutItems.map((item) => ({ productId: item.id, quantity: item.quantity })) }) });
+      const order = await response.json();
+      if (!response.ok) throw new Error(order.message);
+      clearCheckout();
+      router.push(`/checkout/confirmation?order=${encodeURIComponent(order.orderNumber)}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to place your order.");
+    } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -221,6 +192,7 @@ export function CheckoutPayment() {
   </Button>
 </div>
 
+          {error && <p className="rounded-xl bg-error/10 px-4 py-3 text-center text-sm font-semibold text-error">{error}</p>}
           <div className="mt-4 flex items-start justify-center gap-2 border-t border-border pt-4">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
 
@@ -424,18 +396,9 @@ function SecurityPoint({
 }
 
 function getPaymentButtonText(
-  method: PaymentMethod,
+  _method: PaymentMethod,
   total: number
 ) {
   const amount = `AED ${total.toLocaleString()}`;
-
-  if (method === "tamara") {
-    return `Continue with Tamara · ${amount}`;
-  }
-
-  if (method === "tabby") {
-    return `Continue with Tabby · ${amount}`;
-  }
-
-  return `Pay ${amount}`;
+  return `Place order · ${amount}`;
 }

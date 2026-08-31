@@ -31,6 +31,7 @@ import {
 } from "@/components/store/checkout/order-summary";
 import {
   getCheckout,
+  saveCheckout,
 } from "@/lib/store/checkout-storage";
 
 type AddressMode =
@@ -60,7 +61,7 @@ type DeliveryForm = {
   saveAddress: boolean;
 };
 
-const savedAddress = {
+const fallbackAddress = {
   id: "home",
   label: "Home",
   fullName: "Ahmed Daniyal",
@@ -96,6 +97,10 @@ export function CheckoutDelivery() {
 
   const [addressMode, setAddressMode] =
     useState<AddressMode>("saved");
+  const [savedAddress, setSavedAddress] = useState(fallbackAddress);
+  const [savedAddressId, setSavedAddressId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] =
     useState<DeliveryForm>({
@@ -135,6 +140,19 @@ export function CheckoutDelivery() {
     setCheckoutLoaded(true);
   }, []);
 
+  useEffect(() => {
+    fetch("/api/store/auth/session")
+      .then(async (response) => ({ response, data: await response.json() }))
+      .then(({ response, data }) => {
+        if (!response.ok) { router.replace("/checkout/auth"); return; }
+        const address = data.customer?.addresses?.[0];
+        if (!address) { setAddressMode("new"); return; }
+        setSavedAddress({ id: address.id, label: address.label, fullName: address.recipientName, phone: address.phone, emirate: address.emirate, area: address.area, street: address.street, building: address.building, unit: address.unit ?? "" });
+        setSavedAddressId(address.id);
+      })
+      .catch(() => router.replace("/checkout/auth"));
+  }, [router]);
+
   const selectedEmirate =
     addressMode === "saved"
       ? savedAddress.emirate
@@ -156,7 +174,7 @@ export function CheckoutDelivery() {
     [checkoutItems]
   );
 
-  const handleSubmit = (
+  const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
@@ -165,13 +183,22 @@ export function CheckoutDelivery() {
       return;
     }
 
-    /*
-     * Later, when the backend/account API is connected,
-     * the selected delivery address will be saved with
-     * the checkout/order here.
-     */
-
-    router.push("/checkout/review");
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      let addressId = savedAddressId;
+      if (addressMode === "new" || !addressId) {
+        const response = await fetch("/api/store/checkout/addresses", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label: "Home", recipientName: form.fullName, phone: form.phone, emirate: form.emirate, area: form.area, street: form.street, building: form.building, unit: form.unit, landmark: form.landmark, notes: form.notes, isDefault: form.saveAddress }) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message);
+        addressId = result.id;
+      }
+      const checkout = getCheckout();
+      if (checkout && addressId) saveCheckout({ ...checkout, addressId, deliveryFee: deliveryFee ?? 0 });
+      router.push("/checkout/review");
+    } catch (caught) {
+      setSubmitError(caught instanceof Error ? caught.message : "Unable to save this delivery address.");
+    } finally { setSubmitting(false); }
   };
 
   if (!checkoutLoaded) {
@@ -260,7 +287,7 @@ export function CheckoutDelivery() {
 
           {addressMode ===
           "saved" ? (
-            <SavedAddress />
+            <SavedAddress address={savedAddress} />
           ) : (
             <NewAddressForm
               form={form}
@@ -302,6 +329,7 @@ export function CheckoutDelivery() {
             </div>
           )}
 
+          {submitError && <p className="mt-5 rounded-xl bg-error/10 px-4 py-3 text-sm font-semibold text-error">{submitError}</p>}
           <div className="mt-7 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
             <Button
               asChild
@@ -325,11 +353,12 @@ export function CheckoutDelivery() {
             <Button
               type="submit"
               variant="primary"
+              disabled={submitting}
               className="h-12 rounded-xl px-6 text-sm font-bold"
             >
               <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
                 <span>
-                  Review
+                  {submitting ? "Saving..." : "Review"}
                 </span>
 
                 <ArrowRight
@@ -368,7 +397,7 @@ export function CheckoutDelivery() {
   );
 }
 
-function SavedAddress() {
+function SavedAddress({ address: savedAddress }: { address: typeof fallbackAddress }) {
   return (
     <div className="mt-6">
       <p className="mb-3 text-sm font-bold text-foreground">

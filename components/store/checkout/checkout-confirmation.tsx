@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Check,
   CheckCircle2,
@@ -15,6 +16,7 @@ import {
   ShoppingBag,
   Truck,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -29,23 +31,23 @@ type ConfirmationItem = {
   shortMeta?: string;
 };
 
-const order = {
+const fallbackOrder = {
   number: "RC-2026-00124",
   status: "Confirmed",
-  paymentStatus: "Paid",
+  paymentStatus: "Payment pending",
   paymentMethod: "Credit / Debit Card",
   subtotal: 2125,
   deliveryFee: 35,
   total: 2160,
 };
 
-const customer = {
+const fallbackCustomer = {
   name: "Ahmed Daniyal",
   phone: "+971 50 780 1110",
   email: "ahmed@example.com",
 };
 
-const deliveryAddress = {
+const fallbackDeliveryAddress = {
   label: "Home",
   unit: "Apartment 1204",
   building: "Marina Residence",
@@ -54,7 +56,7 @@ const deliveryAddress = {
   emirate: "Dubai",
 };
 
-const items: ConfirmationItem[] = [
+const fallbackItems: ConfirmationItem[] = [
   {
     id: "white-chinchilla",
     slug: "white-chinchilla",
@@ -88,6 +90,29 @@ const items: ConfirmationItem[] = [
 ];
 
 export function CheckoutConfirmation() {
+  const searchParams = useSearchParams();
+  const [order, setOrder] = useState(fallbackOrder);
+  const [customer, setCustomer] = useState(fallbackCustomer);
+  const [deliveryAddress, setDeliveryAddress] = useState(fallbackDeliveryAddress);
+  const [items, setItems] = useState<ConfirmationItem[]>(fallbackItems);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const number = searchParams.get("order");
+    if (!number) { setLoaded(true); return; }
+    fetch(`/api/store/checkout/orders/${encodeURIComponent(number)}`)
+      .then(async (response) => ({ response, data: await response.json() }))
+      .then(({ response, data }) => {
+        if (!response.ok) return;
+        setOrder({ number: data.orderNumber, status: data.orderStatus, paymentStatus: data.paymentStatus === "Pending" ? "Payment pending" : data.paymentStatus, paymentMethod: data.paymentMethod, subtotal: Number(data.subtotal), deliveryFee: Number(data.deliveryFee), total: Number(data.total) });
+        setCustomer({ name: data.customerName, phone: data.phone, email: data.email });
+        if (data.shippingAddress) setDeliveryAddress({ label: data.shippingAddress.label, unit: data.shippingAddress.unit ?? "", building: data.shippingAddress.building, street: data.shippingAddress.street, area: data.shippingAddress.area, emirate: data.shippingAddress.emirate });
+        setItems(data.items.map((item: { id: string; productName: string; quantity: number; unitPrice: string | number; product: { slug: string; type: "Animal" | "Accessory"; images: { url: string }[] } | null }) => ({ id: item.id, slug: item.product?.slug ?? "", name: item.productName, image: item.product?.images[0]?.url ?? "/placeholder.png", type: item.product?.type ?? "Accessory", price: Number(item.unitPrice), quantity: item.quantity })));
+      })
+      .finally(() => setLoaded(true));
+  }, [searchParams]);
+
+  if (!loaded) return <div className="mx-auto max-w-[1100px] px-4 py-16 text-center text-sm font-semibold text-muted-foreground">Loading your confirmed order…</div>;
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
       <section className="overflow-hidden rounded-3xl border border-border bg-background shadow-sm">
@@ -107,7 +132,7 @@ export function CheckoutConfirmation() {
             </span>
 
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-              Payment Successful
+              Order received
             </p>
 
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">

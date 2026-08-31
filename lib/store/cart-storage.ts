@@ -26,7 +26,12 @@ export function getCart(): CartItem[] {
       return [];
     }
 
-    return parsed as CartItem[];
+    return (parsed as CartItem[]).reduce<CartItem[]>((items, item) => {
+      const existing = items.find((candidate) => candidate.slug === item.slug);
+      if (!existing) return [...items, item];
+      existing.quantity = existing.type === "Animal" ? 1 : existing.quantity + item.quantity;
+      return items;
+    }, []);
   } catch {
     return [];
   }
@@ -101,6 +106,7 @@ export function addToCart(
   ];
 
   saveCart(updatedCart);
+  window.dispatchEvent(new Event("royalchins-cart-updated"));
 
   return updatedCart;
 }
@@ -134,6 +140,7 @@ export function updateCartQuantity(
     });
 
   saveCart(updatedCart);
+  window.dispatchEvent(new Event("royalchins-cart-updated"));
 
   return updatedCart;
 }
@@ -148,6 +155,7 @@ export function removeFromCart(
     );
 
   saveCart(updatedCart);
+  window.dispatchEvent(new Event("royalchins-cart-updated"));
 
   return updatedCart;
 }
@@ -160,6 +168,7 @@ export function clearCart() {
   localStorage.removeItem(
     CART_KEY
   );
+  window.dispatchEvent(new Event("royalchins-cart-updated"));
 }
 
 export function getCartCount() {

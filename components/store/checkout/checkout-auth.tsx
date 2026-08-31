@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   useRouter,
   useSearchParams,
@@ -54,6 +54,14 @@ export function CheckoutAuth() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] =
     useState(false);
+
+  useEffect(() => {
+    fetch("/api/store/auth/session")
+      .then((response) => { if (response.ok) goToDelivery(); })
+      .catch(() => undefined);
+  // Redirecting an already signed-in customer is intentional for checkout.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goToDelivery = () => {
     const params = new URLSearchParams();
@@ -111,16 +119,12 @@ export function CheckoutAuth() {
     setSubmitting(true);
 
     try {
-      // Replace with login API call.
-      await new Promise((resolve) =>
-        setTimeout(resolve, 500)
-      );
-
+      const response = await fetch("/api/store/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
       goToDelivery();
-    } catch {
-      setError(
-        "Unable to sign in. Please check your details and try again."
-      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to sign in. Please check your details and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -165,16 +169,12 @@ export function CheckoutAuth() {
     setSubmitting(true);
 
     try {
-      // Replace with create-account API call.
-      await new Promise((resolve) =>
-        setTimeout(resolve, 500)
-      );
-
+      const response = await fetch("/api/store/auth/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: fullName, email: signupEmail, password: signupPassword }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
       goToDelivery();
-    } catch {
-      setError(
-        "Unable to create your account. Please try again."
-      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to create your account. Please try again.");
     } finally {
       setSubmitting(false);
     }

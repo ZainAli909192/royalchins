@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -9,6 +11,7 @@ import {
   ShoppingBag,
   Truck,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -41,7 +44,7 @@ type Order = {
   items: OrderItem[];
 };
 
-const orders: Order[] = [
+const fallbackOrders: Order[] = [
   {
     id: "RC-2026-00124",
     date: "31 Aug 2026",
@@ -108,6 +111,19 @@ const orders: Order[] = [
 ];
 
 export function AccountOrders() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    fetch("/api/store/account/orders")
+      .then(async (response) => ({ response, data: await response.json() }))
+      .then(({ response, data }) => {
+        if (!response.ok) return;
+        setOrders(data.map((order: { orderNumber: string; createdAt: string; orderStatus: OrderStatus; paymentStatus: PaymentStatus; total: string | number; items: { id: string; productName: string; quantity: number; product: { images: { url: string }[] } | null }[] }) => ({ id: order.orderNumber, date: new Date(order.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" }), status: order.orderStatus, paymentStatus: order.paymentStatus, total: Number(order.total), items: order.items.map((item) => ({ id: item.id, name: item.productName, image: item.product?.images[0]?.url ?? "/placeholder.png", quantity: item.quantity })) })));
+      })
+      .finally(() => setLoaded(true));
+  }, []);
+
+  if (!loaded) return <div className="mx-auto max-w-[1100px] px-4 py-16 text-center text-sm font-semibold text-muted-foreground">Loading your orders…</div>;
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <div className="mb-6 sm:mb-8">

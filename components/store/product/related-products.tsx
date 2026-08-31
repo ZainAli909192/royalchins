@@ -59,7 +59,7 @@ function RelatedProductCard({
     useState(false);
 
   const productHref =
-    `/products/${product.slug}`;
+    `/product/${product.slug}`;
 
   const FallbackIcon =
     product.type === "Animal"

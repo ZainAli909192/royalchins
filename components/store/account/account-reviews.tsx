@@ -12,7 +12,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -122,16 +122,23 @@ export function AccountReviews() {
     useState<Tab>("to-review");
 
   const [reviewableProducts, setReviewableProducts] =
-    useState(initialReviewableProducts);
+    useState<ReviewableProduct[]>([]);
 
   const [reviews, setReviews] =
-    useState(initialReviews);
+    useState<CustomerReview[]>([]);
 
   const [selectedProduct, setSelectedProduct] =
     useState<ReviewableProduct | null>(null);
 
   const [submitted, setSubmitted] =
     useState(false);
+
+  const loadReviews = () => fetch("/api/store/account/reviews").then(async response => ({ response, data: await response.json() })).then(({ response, data }) => {
+    if (!response.ok) return;
+    setReviews(data.reviews.map((review: { id: string; productId: string; rating: number; title?: string; comment: string; status: ReviewStatus; createdAt: string; order?: { orderNumber: string } | null; product: { slug: string; name: string; type: "Animal" | "Accessory"; images: { url: string }[] } }) => ({ id: review.id, productId: review.productId, slug: review.product.slug, productName: review.product.name, productImage: review.product.images[0]?.url ?? "/placeholder.png", type: review.product.type, orderId: review.order?.orderNumber ?? "", rating: review.rating, title: review.title ?? "Review", review: review.comment, status: review.status, submittedDate: new Date(review.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" }) })));
+    setReviewableProducts(data.reviewable.filter((entry: { product: unknown }) => entry.product).map((entry: { orderNumber: string; deliveredAt: string; product: { id: string; slug: string; name: string; type: "Animal" | "Accessory"; shortDescription: string; images: { url: string }[] } }) => ({ id: entry.product.id, slug: entry.product.slug, name: entry.product.name, image: entry.product.images[0]?.url ?? "/placeholder.png", type: entry.product.type, orderId: entry.orderNumber, deliveredDate: new Date(entry.deliveredAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" }), shortMeta: entry.product.shortDescription })));
+  });
+  useEffect(() => { loadReviews().catch(() => undefined); }, []);
 
   const pendingCount = useMemo(
     () =>
@@ -141,13 +148,12 @@ export function AccountReviews() {
     [reviews]
   );
 
-  function handleReviewSubmitted(
+  async function handleReviewSubmitted(
     review: CustomerReview
   ) {
-    setReviews((current) => [
-      review,
-      ...current,
-    ]);
+    const response = await fetch("/api/store/account/reviews", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: review.productId, orderNumber: review.orderId, rating: review.rating, title: review.title, comment: review.review }) });
+    if (!response.ok) return;
+    await loadReviews();
 
     setReviewableProducts((current) =>
       current.filter(

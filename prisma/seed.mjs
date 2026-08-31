@@ -23,12 +23,12 @@ const seededProducts = [
   ["Wooden Hideout", "wooden-hideout", "RC-ACC-000002", "Accessory", "Housing & Cages", 120, 4, "/animals/5.png", "Natural wooden shelter.", "A natural wooden shelter that gives small pets a comfortable retreat.", null, null, null, "Royal Chins", "Medium", "Chinchillas, Guinea Pigs"],
 ];
 
-for (const [name, slug, sku, type, categoryName, regularPrice, quantity, image, shortDescription, description, gender, age, color, brand = null, size = null, compatibility = null] of seededProducts) {
+for (const [index, [name, slug, sku, type, categoryName, regularPrice, quantity, image, shortDescription, description, gender, age, color, brand = null, size = null, compatibility = null]] of seededProducts.entries()) {
   const category = await prisma.category.findFirstOrThrow({ where: { name: categoryName, type } });
   await prisma.product.upsert({
     where: { slug },
-    update: { name, sku, type, status: "Active", regularPrice, quantity, shortDescription, description, gender, age, color, brand, size, compatibility, categoryId: category.id, images: { deleteMany: {}, create: [{ url: image, sortOrder: 0 }] } },
-    create: { name, slug, sku, type, status: "Active", regularPrice, quantity, shortDescription, description, gender, age, color, brand, size, compatibility, categoryId: category.id, images: { create: [{ url: image, sortOrder: 0 }] } },
+    update: { name, sku, type, status: "Active", isFeatured: index < 4, regularPrice, quantity, shortDescription, description, gender, age, color, brand, size, compatibility, categoryId: category.id, images: { deleteMany: {}, create: [{ url: image, sortOrder: 0 }] } },
+    create: { name, slug, sku, type, status: "Active", isFeatured: index < 4, regularPrice, quantity, shortDescription, description, gender, age, color, brand, size, compatibility, categoryId: category.id, images: { create: [{ url: image, sortOrder: 0 }] } },
   });
 }
 

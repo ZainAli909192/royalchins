@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ProductReviews } from "@/components/store/product/product-reviews";
 import { addToCart } from "@/lib/store/cart-storage";
 import { saveCheckout } from "@/lib/store/checkout-storage";
 
@@ -22,6 +23,8 @@ type PurchasePanelProps = {
   price: number;
   stock: number;
   shortMeta?: string;
+  averageRating?: number;
+  reviewCount?: number;
 };
 
 export function PurchasePanel({
@@ -33,6 +36,8 @@ export function PurchasePanel({
   price,
   stock,
   shortMeta,
+  averageRating = 0,
+  reviewCount = 0,
 }: PurchasePanelProps) {
   const router = useRouter();
 
@@ -98,7 +103,19 @@ export function PurchasePanel({
 
   return (
     <div className="mt-5 border-t border-border pt-5 sm:mt-6 sm:pt-6">
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          {reviewCount > 0 ? (
+            <div className="flex items-center gap-2">
+              <ProductReviews averageRating={averageRating} />
+              <span className="text-xs text-muted-foreground">({reviewCount})</span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">No reviews yet</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
         <span className="text-sm font-semibold text-foreground">
           Quantity
         </span>
@@ -141,6 +158,7 @@ export function PurchasePanel({
               strokeWidth={2}
             />
           </button>
+        </div>
         </div>
       </div>
 

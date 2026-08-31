@@ -16,6 +16,8 @@ export type CheckoutItem = {
 export type CheckoutData = {
   source: CheckoutSource;
   items: CheckoutItem[];
+  addressId?: string;
+  deliveryFee?: number;
 };
 
 const CHECKOUT_KEY =

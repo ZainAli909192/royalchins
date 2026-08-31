@@ -1,6 +1,6 @@
 import "server-only";
 
-import { CategoryType, Prisma, ProductStatus } from "@prisma/client";
+import { CategoryType, Prisma, ProductStatus, ReviewStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import type { ProductApiValues } from "@/lib/validations/product";
@@ -22,7 +22,7 @@ async function categoryFor(input: Pick<ProductApiValues, "subCategory" | "type">
 function productData(input: ProductApiValues, categoryId: string): Prisma.ProductUncheckedCreateInput {
   return {
     name: input.name.trim(), slug: input.slug.trim(), sku: input.sku.trim(), type: input.type as CategoryType,
-    status: input.status as ProductStatus, regularPrice: input.regularPrice, salePrice: input.salePrice,
+    status: input.status as ProductStatus, isFeatured: input.isFeatured, regularPrice: input.regularPrice, salePrice: input.salePrice,
     quantity: input.quantity, shortDescription: input.shortDescription.trim(), description: input.description.trim(),
     gender: input.gender || null, age: input.age || null, color: input.color || null, brand: input.brand || null,
     size: input.size || null, compatibility: input.compatibility || null, categoryId,
@@ -30,6 +30,30 @@ function productData(input: ProductApiValues, categoryId: string): Prisma.Produc
 }
 
 export async function listProducts() { return prisma.product.findMany({ include: includeProduct, orderBy: { createdAt: "desc" } }); }
+export async function listStoreProducts() {
+  return prisma.product.findMany({
+    where: { status: ProductStatus.Active },
+    include: includeProduct,
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+  });
+}
+export async function findStoreProductBySlug(slug: string) {
+  return prisma.product.findFirst({
+    where: { slug, status: ProductStatus.Active },
+    include: {
+      ...includeProduct,
+      reviews: { where: { status: ReviewStatus.Approved }, select: { rating: true } },
+    },
+  });
+}
+export async function listRelatedStoreProducts(productId: string, type: CategoryType, categoryId: string) {
+  return prisma.product.findMany({
+    where: { id: { not: productId }, status: ProductStatus.Active, OR: [{ categoryId }, { type }] },
+    include: includeProduct,
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+    take: 4,
+  });
+}
 export async function findProduct(id: string) { return prisma.product.findUnique({ where: { id }, include: includeProduct }); }
 
 export async function createProduct(input: ProductApiValues) {

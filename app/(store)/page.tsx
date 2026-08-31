@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CategoryCards } from "@/components/store/browse/category-cards";
 
@@ -14,7 +14,20 @@ import { BrowseHeader } from "@/components/store/browse/browse-header";
 import { FeaturedProducts } from "@/components/store/browse/featured-products";
 import  FinalCTA  from "@/components/store/layout/finalcta";
 
-const products = [
+type StoreProduct = {
+  slug: string;
+  name: string;
+  image: string;
+  type: "Animal" | "Accessory";
+  category: string;
+  filterCategory: string;
+  price: number;
+  stock: number;
+  shortMeta?: string;
+  isFeatured: boolean;
+};
+
+const legacyProducts = [
   {
     slug: "white-chinchilla",
     name: "White Chinchilla",
@@ -31,6 +44,11 @@ const products = [
   {
     slug: "grey-chinchilla",
     name: " Chinchilla",
+     
+     
+     
+     
+    
     image:
       "/animals/4.png",
     type: "Animal" as const,
@@ -135,6 +153,7 @@ const products = [
 ];
 
 export default function BrowsePage() {
+  const [products, setProducts] = useState<StoreProduct[]>([]);
   const [
     filter,
     setFilter,
@@ -147,6 +166,29 @@ export default function BrowsePage() {
     animalMenuOpen,
     setAnimalMenuOpen,
   ] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load products.");
+        return response.json();
+      })
+      .then((items) => setProducts(items.map((product: {
+        slug: string; name: string; type: "Animal" | "Accessory"; category: { name: string; slug: string }; regularPrice: string | number; salePrice: string | number | null; quantity: number; isFeatured: boolean; images: { url: string }[];
+      }) => ({
+        slug: product.slug,
+        name: product.name,
+        image: product.images[0]?.url ?? "/logo.png",
+        type: product.type,
+        category: product.category.name,
+        filterCategory: product.category.slug,
+        price: Number(product.salePrice ?? product.regularPrice),
+        stock: product.quantity,
+        shortMeta: product.type === "Animal" ? [product.name, product.category.name].filter(Boolean).join(" • ") : product.category.name,
+        isFeatured: product.isFeatured,
+      }))))
+      .catch(() => setProducts([]));
+  }, []);
 
   const filteredProducts =
     useMemo(() => {
@@ -179,7 +221,7 @@ export default function BrowsePage() {
           product.filterCategory ===
           filter
       );
-    }, [filter]);
+    }, [filter, products]);
 
   const handleFilterChange = (
     value: ProductFilter
@@ -192,7 +234,7 @@ export default function BrowsePage() {
     <div className="mx-auto max-w-[1440px] space-y-10 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <BrowseHeader />
     <FeaturedProducts
-  products={products}
+  products={products.filter((product) => product.isFeatured !== false)}
 />
       <CategoryCards />
 

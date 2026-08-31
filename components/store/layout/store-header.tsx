@@ -5,17 +5,36 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   MessageCircleMore,
+  PackageOpen,
+  PawPrint,
   Search,
   ShoppingCart,
   UserRound,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { getCartCount } from "@/lib/store/cart-storage";
 
 export function StoreHeader() {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [cartCount, setCartCount] = useState(0);
+  const [customerName, setCustomerName] = useState<string | null>(null);
 
-  const cartCount = 2;
+  useEffect(() => {
+    const refreshCart = () => setCartCount(getCartCount());
+    refreshCart();
+    window.addEventListener("storage", refreshCart);
+    window.addEventListener("royalchins-cart-updated", refreshCart);
+    fetch("/api/store/auth/session").then(async (response) => ({ response, data: await response.json() })).then(({ response, data }) => { if (response.ok) setCustomerName(data.customer.name); }).catch(() => undefined);
+    return () => { window.removeEventListener("storage", refreshCart); window.removeEventListener("royalchins-cart-updated", refreshCart); };
+  }, []);
+
+  useEffect(() => {
+    const value = search.trim();
+    if (!value) return;
+    const timer = window.setTimeout(() => router.push(`/search?q=${encodeURIComponent(value)}`), 280);
+    return () => window.clearTimeout(timer);
+  }, [router, search]);
 
   const handleSearch = (
     event: FormEvent<HTMLFormElement>
@@ -26,8 +45,8 @@ export function StoreHeader() {
 
     router.push(
       value
-        ? `/?search=${encodeURIComponent(value)}`
-        : "/"
+        ? `/search?q=${encodeURIComponent(value)}`
+        : "/search"
     );
   };
 
@@ -85,11 +104,20 @@ export function StoreHeader() {
               className="hidden lg:flex"
             />
 
+            <Link href="/account" aria-label="My account" className="flex h-11 w-11 items-center justify-center rounded-xl bg-background/10 text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground lg:hidden">
+              <UserRound className="h-5 w-5" strokeWidth={2} />
+            </Link>
+
+            <Link href="/cart" aria-label={`Cart with ${cartCount} items`} className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-background/10 text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground lg:hidden">
+              <ShoppingCart className="h-5 w-5" strokeWidth={2} />
+              {cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-2 ring-secondary">{cartCount > 99 ? "99+" : cartCount}</span>}
+            </Link>
+
             <HeaderAction
               href="/account"
               ariaLabel="My account"
               icon={UserRound}
-              eyebrow="Hello, sign in"
+              eyebrow={customerName ? `Hello, ${customerName.split(" ")[0]}` : "Hello, sign in"}
               label="Account"
               className="hidden lg:flex"
             />
@@ -137,6 +165,14 @@ export function StoreHeader() {
             />
 
             <SearchButton compact />
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <Link href="/search?type=Animal" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-background/15 bg-background/10 px-3 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <PawPrint className="h-4 w-4" /> Animals
+            </Link>
+            <Link href="/search?type=Accessory" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-background/15 bg-background/10 px-3 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <PackageOpen className="h-4 w-4" /> Accessories
+            </Link>
           </div>
         </form>
       </div>

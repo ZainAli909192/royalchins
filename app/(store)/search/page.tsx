@@ -6,9 +6,12 @@ import {
   Search,
 } from "lucide-react";
 
+import { listStoreProducts } from "@/lib/products/product-store";
+
 type SearchPageProps = {
   searchParams: Promise<{
     q?: string;
+    type?: "Animal" | "Accessory";
   }>;
 };
 
@@ -23,7 +26,7 @@ type Product = {
   shortMeta?: string;
 };
 
-const products: Product[] = [
+const legacyProducts: Product[] = [
   {
     id: "white-chinchilla",
     slug: "white-chinchilla",
@@ -114,14 +117,29 @@ export default async function SearchPage({
 
   const query =
     params.q?.trim() ?? "";
+  const type = params.type;
 
   const normalizedQuery =
     query.toLowerCase();
 
+  const products: Product[] = (await listStoreProducts()).map((product) => ({
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    image: product.images[0]?.url ?? "/logo.png",
+    type: product.type,
+    category: product.category.name,
+    price: Number(product.salePrice ?? product.regularPrice),
+    shortMeta: product.type === "Animal"
+      ? [product.gender, product.age].filter(Boolean).join(" • ")
+      : product.shortDescription,
+  }));
+
   const results =
-    normalizedQuery
+    normalizedQuery || type
       ? products.filter(
           (product) => {
+            if (type && product.type !== type) return false;
             const searchableText = [
               product.name,
               product.type,
@@ -149,17 +167,17 @@ export default async function SearchPage({
           Search results
         </h1>
 
-        {query && (
+        {(query || type) && (
           <p className="mt-3 text-sm text-muted-foreground">
             Showing results for{" "}
             <span className="font-semibold text-foreground">
-              “{query}”
+              {query ? `“${query}”` : type === "Animal" ? "Animals" : "Accessories"}
             </span>
           </p>
         )}
       </div>
 
-      {!query ? (
+      {!query && !type ? (
         <EmptySearch />
       ) : results.length === 0 ? (
         <NoResults
@@ -212,7 +230,7 @@ function SearchProductCard({
 
   return (
     <Link
-      href={`/products/${product.slug}`}
+      href={`/product/${product.slug}`}
       className="group overflow-hidden rounded-2xl border border-border bg-background transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-subtle">
