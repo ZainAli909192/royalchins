@@ -11,6 +11,7 @@ import {
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
 import { AdminEmptyState } from "@/components/admin/shared/admin-empty-state";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import { ConfirmDialog } from "@/components/admin/shared/confirm-dialog";
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export default function CategoriesPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [formError, setFormError] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -60,6 +62,8 @@ export default function CategoriesPage() {
         })));
       } catch (error) {
         setFormError(getErrorMessage(error, "Unable to load categories."));
+      } finally {
+        setIsLoading(false);
       }
     };
     loadCategories();
@@ -208,7 +212,9 @@ export default function CategoriesPage() {
         </div>
       </section>
 
-      {filteredCategories.length === 0 ? (
+      {isLoading ? (
+        <AdminPageLoader label="Loading categories..." />
+      ) : filteredCategories.length === 0 ? (
         <AdminEmptyState
           type="search"
           title="No categories found"

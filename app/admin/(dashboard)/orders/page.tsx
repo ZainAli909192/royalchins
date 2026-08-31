@@ -21,6 +21,7 @@ import {
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
 import { AdminEmptyState } from "@/components/admin/shared/admin-empty-state";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -187,6 +188,7 @@ export default function OrdersPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [formError, setFormError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const [cancelOrder, setCancelOrder] =
     useState<Order | null>(null);
@@ -206,7 +208,8 @@ export default function OrdersPage() {
         }));
         setOrders(mapped);
       })
-      .catch((error) => setFormError(getErrorMessage(error, "Unable to load orders.")));
+      .catch((error) => setFormError(getErrorMessage(error, "Unable to load orders.")))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const filteredOrders = useMemo(() => {
@@ -572,7 +575,9 @@ export default function OrdersPage() {
   </div>
 </section>
 
-      {filteredOrders.length === 0 ? (
+      {isLoading ? (
+        <AdminPageLoader label="Loading orders..." />
+      ) : filteredOrders.length === 0 ? (
         <AdminEmptyState
           type="search"
           title="No orders found"

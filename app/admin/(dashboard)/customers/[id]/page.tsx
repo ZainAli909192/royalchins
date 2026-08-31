@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import {
@@ -27,6 +27,11 @@ import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  getCustomer,
+  updateCustomer,
+  type CustomerDetailResponse,
+} from "@/lib/api/customers";
 
 type CustomerStatus = "Active" | "Inactive";
 
@@ -57,7 +62,7 @@ type RefundStatus =
   | "Declined";
 
 type CustomerOrder = {
-  id: number;
+  id: string;
   orderNumber: string;
   date: string;
   total: number;
@@ -66,7 +71,7 @@ type CustomerOrder = {
 };
 
 type Review = {
-  id: number;
+  id: string;
   product: string;
   rating: number;
   status: ReviewStatus;
@@ -74,9 +79,9 @@ type Review = {
 };
 
 type Refund = {
-  id: number;
+  id: string;
   refundNumber: string;
-  orderId: number;
+  orderId: string;
   orderNumber: string;
   amount: number;
   status: RefundStatus;
@@ -84,7 +89,7 @@ type Refund = {
 };
 
 type Address = {
-  id: number;
+  id: string;
   label: string;
   emirate: string;
   area: string;
@@ -94,7 +99,7 @@ type Address = {
 };
 
 type Customer = {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -117,141 +122,94 @@ type Customer = {
   adminNotes: string;
 };
 
-const customers: Customer[] = [
-  {
-    id: 101,
-    name: "Ahmed Daniyal",
-    email: "ahmed@example.com",
-    phone: "+971 50 123 4567",
-    memberSince: "12 Jan 2026",
-    lastLogin: "24 Aug 2026 02:45 PM",
-    status: "Active",
+const dateFormatter = new Intl.DateTimeFormat("en-AE", {
+  dateStyle: "medium",
+});
 
-    totalOrders: 6,
-    deliveredOrders: 4,
-    cancelledOrders: 1,
-    totalSpent: 8450,
-    totalReviews: 2,
+function toDetailCustomer(data: CustomerDetailResponse): Customer {
+  const orders = data.orders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    date: dateFormatter.format(new Date(order.createdAt)),
+    total: Number(order.total),
+    paymentStatus: order.paymentStatus,
+    orderStatus: order.orderStatus,
+  }));
 
-    addresses: [
-      {
-        id: 1,
-        label: "Home",
-        emirate: "Dubai",
-        area: "Jumeirah",
-        address: "Villa 25, Street 14",
-        building: "Villa 25",
-        isDefault: true,
-      },
-      {
-        id: 2,
-        label: "Office",
-        emirate: "Dubai",
-        area: "Business Bay",
-        address: "Office 1804, Tower B",
-        building: "Business Tower",
-        isDefault: false,
-      },
-    ],
+  const reviews = data.reviews.map((review) => ({
+    id: review.id,
+    product: review.product.name,
+    rating: review.rating,
+    status: review.status,
+    date: dateFormatter.format(new Date(review.createdAt)),
+  }));
 
-    orders: [
-      {
-        id: 1,
-        orderNumber: "RC-1028",
-        date: "24 Aug 2026",
-        total: 2850,
-        paymentStatus: "Paid",
-        orderStatus: "Processing",
-      },
-      {
-        id: 10,
-        orderNumber: "RC-0998",
-        date: "10 Jul 2026",
-        total: 1450,
-        paymentStatus: "Paid",
-        orderStatus: "Delivered",
-      },
-      {
-        id: 11,
-        orderNumber: "RC-0955",
-        date: "14 Jun 2026",
-        total: 2100,
-        paymentStatus: "Paid",
-        orderStatus: "Delivered",
-      },
-      {
-        id: 12,
-        orderNumber: "RC-0914",
-        date: "20 May 2026",
-        total: 850,
-        paymentStatus: "Refunded",
-        orderStatus: "Cancelled",
-      },
-    ],
+  const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
 
-    reviews: [
-      {
-        id: 1,
-        product: "White Chinchilla",
-        rating: 5,
-        status: "Approved",
-        date: "15 Jul 2026",
-      },
-      {
-        id: 2,
-        product: "Premium Chinchilla Cage",
-        rating: 4,
-        status: "Pending",
-        date: "20 Aug 2026",
-      },
-    ],
-
-    refunds: [
-      {
-        id: 1,
-        refundNumber: "RF-0051",
-        orderId: 12,
-        orderNumber: "RC-0914",
-        amount: 850,
-        status: "Completed",
-        date: "25 May 2026",
-      },
-    ],
-
-    adminNotes:
-      "Customer prefers evening delivery. Call before dispatch.",
-  },
-];
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    memberSince: dateFormatter.format(new Date(data.createdAt)),
+    lastLogin: "—",
+    status: data.isActive ? "Active" : "Inactive",
+    totalOrders: orders.length,
+    deliveredOrders: orders.filter((order) => order.orderStatus === "Delivered")
+      .length,
+    cancelledOrders: orders.filter((order) => order.orderStatus === "Cancelled")
+      .length,
+    totalSpent,
+    totalReviews: reviews.length,
+    addresses: [],
+    orders,
+    reviews,
+    refunds: [],
+    adminNotes: data.adminNotes,
+  };
+}
 
 export default function CustomerDetailsPage() {
   const router = useRouter();
   const params = useParams();
 
-  const customerId = Number(params.id);
+  const customerId = String(params.id);
 
-  const customer = useMemo(
-    () =>
-      customers.find(
-        (item) => item.id === customerId
-      ),
-    [customerId]
-  );
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [accountStatus, setAccountStatus] =
-    useState<CustomerStatus>(
-      customer?.status ?? "Active"
-    );
+    useState<CustomerStatus>("Active");
 
-  const [adminNotes, setAdminNotes] =
-    useState(
-      customer?.adminNotes ?? ""
-    );
+  const [adminNotes, setAdminNotes] = useState("");
 
   const [successMessage, setSuccessMessage] =
     useState("");
 
   const [errorMessage, setErrorMessage] =
     useState("");
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    getCustomer(customerId)
+      .then((data) => {
+        const mapped = toDetailCustomer(data);
+        setCustomer(mapped);
+        setAccountStatus(mapped.status);
+        setAdminNotes(mapped.adminNotes);
+      })
+      .catch(() => setCustomer(null))
+      .finally(() => setIsLoading(false));
+  }, [customerId]);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border bg-white p-8 text-center text-sm text-muted-foreground shadow-sm">
+        Loading customer…
+      </div>
+    );
+  }
 
   if (!customer) {
     return (
@@ -407,13 +365,7 @@ export default function CustomerDetailsPage() {
     setErrorMessage("");
 
     try {
-      console.log(
-        "Save customer notes:",
-        {
-          customerId,
-          adminNotes,
-        }
-      );
+      await updateCustomer(customerId, { adminNotes });
 
       setSuccessMessage(
         "Customer notes saved successfully."
@@ -436,13 +388,9 @@ export default function CustomerDetailsPage() {
             ? "Inactive"
             : "Active";
 
-        console.log(
-          "Update customer status:",
-          {
-            customerId,
-            status: nextStatus,
-          }
-        );
+        await updateCustomer(customerId, {
+          isActive: nextStatus === "Active",
+        });
 
         setAccountStatus(
           nextStatus

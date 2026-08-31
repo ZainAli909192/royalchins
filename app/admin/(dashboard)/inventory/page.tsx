@@ -18,12 +18,15 @@ import {
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
 import { AdminEmptyState } from "@/components/admin/shared/admin-empty-state";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Pagination } from "@/components/ui/pagination";
-import { getInventory, updateInventory } from "@/lib/api/inventory";
+import {
+  getInventory,
+  updateInventory,
+} from "@/lib/api/inventory";
 import { getErrorMessage } from "@/lib/api/error-message";
 
 type ProductType = "Animal" | "Accessory";
@@ -45,108 +48,27 @@ type InventoryItem = {
   updatedAt: string;
 };
 
-const legacyInventoryItems = [
-  {
-    id: 1,
-    name: "White Chinchilla",
-    sku: "RC-ANI-000001",
-    type: "Animal",
-    category: "Chinchillas",
-    quantity: 8,
-    lowStockThreshold: 2,
-    updatedAt: "24 Aug 2026 10:30 AM",
-  },
-  {
-    id: 2,
-    name: "Grey Chinchilla",
-    sku: "RC-ANI-000002",
-    type: "Animal",
-    category: "Chinchillas",
-    quantity: 2,
-    lowStockThreshold: 2,
-    updatedAt: "24 Aug 2026 09:15 AM",
-  },
-  {
-    id: 3,
-    name: "American Guinea Pig",
-    sku: "RC-ANI-000003",
-    type: "Animal",
-    category: "Guinea Pigs",
-    quantity: 6,
-    lowStockThreshold: 2,
-    updatedAt: "23 Aug 2026 04:45 PM",
-  },
-  {
-    id: 4,
-    name: "Micro Squirrel",
-    sku: "RC-ANI-000004",
-    type: "Animal",
-    category: "Micro Squirrels",
-    quantity: 0,
-    lowStockThreshold: 2,
-    updatedAt: "22 Aug 2026 11:20 AM",
-  },
-  {
-    id: 5,
-    name: "Premium Chinchilla Cage",
-    sku: "RC-ACC-000005",
-    type: "Accessory",
-    category: "Housing & Cages",
-    quantity: 12,
-    lowStockThreshold: 3,
-    updatedAt: "24 Aug 2026 08:50 AM",
-  },
-  {
-    id: 6,
-    name: "Wooden Hideout",
-    sku: "RC-ACC-000006",
-    type: "Accessory",
-    category: "Housing & Cages",
-    quantity: 3,
-    lowStockThreshold: 3,
-    updatedAt: "24 Aug 2026 08:20 AM",
-  },
-  {
-    id: 7,
-    name: "Premium Animal Bedding",
-    sku: "RC-ACC-000007",
-    type: "Accessory",
-    category: "Bedding",
-    quantity: 15,
-    lowStockThreshold: 4,
-    updatedAt: "21 Aug 2026 02:10 PM",
-  },
-  {
-    id: 8,
-    name: "Water Bottle",
-    sku: "RC-ACC-000008",
-    type: "Accessory",
-    category: "Water Bottles",
-    quantity: 1,
-    lowStockThreshold: 3,
-    updatedAt: "24 Aug 2026 07:55 AM",
-  },
-  {
-    id: 9,
-    name: "Nutrition Mix",
-    sku: "RC-ACC-000009",
-    type: "Accessory",
-    category: "Food & Nutrition",
-    quantity: 10,
-    lowStockThreshold: 3,
-    updatedAt: "23 Aug 2026 03:15 PM",
-  },
-];
-
 const pageSize = 6;
 
 export default function InventoryPage() {
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [formError, setFormError] = useState("");
+  const [inventoryItems, setInventoryItems] =
+    useState<InventoryItem[]>([]);
 
-  const [search, setSearch] = useState("");
-  const [type, setType] = useState("all");
-  const [category, setCategory] = useState("all");
+  const [formError, setFormError] =
+    useState("");
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [type, setType] =
+    useState("all");
+
+  const [category, setCategory] =
+    useState("all");
+
   const [stockStatus, setStockStatus] =
     useState("all");
 
@@ -186,7 +108,44 @@ export default function InventoryPage() {
   const [successMessage, setSuccessMessage] =
     useState("");
 
-  useEffect(() => { getInventory().then((items) => setInventoryItems(items.map((item) => ({ id: item.id, name: item.name, sku: item.sku, type: item.type, category: item.category.name, quantity: item.quantity, lowStockThreshold: item.lowStockThreshold, updatedAt: new Intl.DateTimeFormat("en-AE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.updatedAt)) })))).catch((error) => setFormError(getErrorMessage(error, "Unable to load inventory."))); }, []);
+  useEffect(() => {
+    getInventory()
+      .then((items) => {
+        setInventoryItems(
+          items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            sku: item.sku,
+            type: item.type,
+            category: item.category.name,
+            quantity: item.quantity,
+            lowStockThreshold:
+              item.lowStockThreshold,
+            updatedAt:
+              new Intl.DateTimeFormat(
+                "en-AE",
+                {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }
+              ).format(
+                new Date(item.updatedAt)
+              ),
+          }))
+        );
+      })
+      .catch((error) => {
+        setFormError(
+          getErrorMessage(
+            error,
+            "Unable to load inventory."
+          )
+        );
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   const categories = useMemo(() => {
     const items =
@@ -427,90 +386,140 @@ export default function InventoryPage() {
     resetDialog();
   };
 
-  const handleUpdateStock = async () => {
-    setDialogError("");
+  const handleUpdateStock =
+    async () => {
+      setDialogError("");
 
-    const value = Number(quantity);
+      const value = Number(quantity);
 
-    if (
-      quantity.trim() === "" ||
-      Number.isNaN(value)
-    ) {
-      setDialogError(
-        "Please enter a quantity."
-      );
-      return;
-    }
+      if (
+        quantity.trim() === "" ||
+        Number.isNaN(value)
+      ) {
+        setDialogError(
+          "Please enter a quantity."
+        );
+        return;
+      }
 
-    if (!Number.isInteger(value)) {
-      setDialogError(
-        "Quantity must be a whole number."
-      );
-      return;
-    }
+      if (!Number.isInteger(value)) {
+        setDialogError(
+          "Quantity must be a whole number."
+        );
+        return;
+      }
 
-    if (value < 0) {
-      setDialogError(
-        "Quantity cannot be negative."
-      );
-      return;
-    }
+      if (value < 0) {
+        setDialogError(
+          "Quantity cannot be negative."
+        );
+        return;
+      }
 
-    if (
-      (dialogAction === "add" ||
-        dialogAction === "remove") &&
-      value === 0
-    ) {
-      setDialogError(
-        "Quantity must be greater than 0."
-      );
-      return;
-    }
+      if (
+        (dialogAction === "add" ||
+          dialogAction === "remove") &&
+        value === 0
+      ) {
+        setDialogError(
+          "Quantity must be greater than 0."
+        );
+        return;
+      }
 
-    const ids = selectedProduct
-      ? [selectedProduct.id]
-      : selectedIds;
+      const ids = selectedProduct
+        ? [selectedProduct.id]
+        : selectedIds;
 
-    if (!ids.length) return;
+      if (!ids.length) return;
 
-    try {
-      setUpdating(true);
+      try {
+        setUpdating(true);
 
-      const action = dialogAction === "threshold" ? "Threshold" : dialogAction[0].toUpperCase() + dialogAction.slice(1) as "Add" | "Remove" | "Set";
-      const updated = await Promise.all(ids.map((productId) => updateInventory({ productId, action, quantity: value, reason, notes })));
-      setInventoryItems((current) => current.map((item) => { const record = updated.find((entry) => entry.id === item.id); return record ? { ...item, quantity: record.quantity, lowStockThreshold: record.lowStockThreshold, updatedAt: "Just now" } : item; }));
+        const action =
+          dialogAction === "threshold"
+            ? "Threshold"
+            : (dialogAction[0].toUpperCase() +
+                dialogAction.slice(
+                  1
+                )) as
+                | "Add"
+                | "Remove"
+                | "Set";
 
-      setSuccessMessage(
-        selectedProduct
-          ? `${selectedProduct.name} stock updated successfully.`
-          : `${ids.length} products updated successfully.`
-      );
+        const updated =
+          await Promise.all(
+            ids.map((productId) =>
+              updateInventory({
+                productId,
+                action,
+                quantity: value,
+                reason,
+                notes,
+              })
+            )
+          );
 
-      setSelectedIds([]);
-      setBulkAction("");
-      setSelectedProduct(null);
-      setDialogOpen(false);
-      resetDialog();
-    } catch (error) {
-      setDialogError(getErrorMessage(error, "Unable to update stock. Please try again."));
-    } finally {
-      setUpdating(false);
-    }
-  };
+        setInventoryItems(
+          (current) =>
+            current.map((item) => {
+              const record =
+                updated.find(
+                  (entry) =>
+                    entry.id === item.id
+                );
 
-  const getDialogQuantityLabel = () => {
-    if (
-      dialogAction === "threshold"
-    ) {
-      return "Low Stock Threshold";
-    }
+              return record
+                ? {
+                    ...item,
+                    quantity:
+                      record.quantity,
+                    lowStockThreshold:
+                      record.lowStockThreshold,
+                    updatedAt:
+                      "Just now",
+                  }
+                : item;
+            })
+        );
 
-    if (dialogAction === "set") {
-      return "New Quantity";
-    }
+        setSuccessMessage(
+          selectedProduct
+            ? `${selectedProduct.name} stock updated successfully.`
+            : `${ids.length} products updated successfully.`
+        );
 
-    return "Quantity";
-  };
+        setSelectedIds([]);
+        setBulkAction("");
+        setSelectedProduct(null);
+        setDialogOpen(false);
+        resetDialog();
+      } catch (error) {
+        setDialogError(
+          getErrorMessage(
+            error,
+            "Unable to update stock. Please try again."
+          )
+        );
+      } finally {
+        setUpdating(false);
+      }
+    };
+
+  const getDialogQuantityLabel =
+    () => {
+      if (
+        dialogAction === "threshold"
+      ) {
+        return "Low Stock Threshold";
+      }
+
+      if (dialogAction === "set") {
+        return "New Quantity";
+      }
+
+      return "Quantity";
+    };
 
   return (
     <div className="space-y-6">
@@ -519,7 +528,15 @@ export default function InventoryPage() {
         description="Manage product stock levels and inventory."
       />
 
-      {formError && <FormAlert variant="error" message={formError} onClose={() => setFormError("")} />}
+      {formError && (
+        <FormAlert
+          variant="error"
+          message={formError}
+          onClose={() =>
+            setFormError("")
+          }
+        />
+      )}
 
       {successMessage && (
         <FormAlert
@@ -531,448 +548,225 @@ export default function InventoryPage() {
         />
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-subtle text-primary">
-              <Boxes className="h-6 w-6" />
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Total Products
-              </p>
-
-              <p className="mt-1 text-2xl font-bold text-foreground">
-                {totalProducts}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--success-background)] text-success">
-              <CheckCircle2 className="h-6 w-6" />
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                In Stock
-              </p>
-
-              <p className="mt-1 text-2xl font-bold text-success">
-                {inStockCount}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--warning-background)] text-warning">
-              <AlertTriangle className="h-6 w-6" />
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Low Stock
-              </p>
-
-              <p className="mt-1 text-2xl font-bold text-warning">
-                {lowStockCount}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--error-background)] text-error">
-              <PackageX className="h-6 w-6" />
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Out of Stock
-              </p>
-
-              <p className="mt-1 text-2xl font-bold text-error">
-                {outOfStockCount}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_160px_190px_180px_auto]">
-          <Input
-            type="search"
-            placeholder="Search by product name, SKU..."
-            value={search}
-            onChange={(event) =>
-              setSearch(
-                event.target.value
-              )
-            }
-            leftIcon={
-              <Search className="h-5 w-5" />
-            }
-          />
-
-          <select
-            value={type}
-            onChange={(event) =>
-              setType(
-                event.target.value
-              )
-            }
-            className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-          >
-            <option value="all">
-              All Types
-            </option>
-
-            <option value="animal">
-              Animals
-            </option>
-
-            <option value="accessory">
-              Accessories
-            </option>
-          </select>
-
-          <select
-            value={category}
-            onChange={(event) =>
-              setCategory(
-                event.target.value
-              )
-            }
-            className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-          >
-            <option value="all">
-              All Categories
-            </option>
-
-            {categories.map(
-              (item) => (
-                <option
-                  key={item}
-                  value={item}
-                >
-                  {item}
-                </option>
-              )
-            )}
-          </select>
-
-          <select
-            value={stockStatus}
-            onChange={(event) =>
-              setStockStatus(
-                event.target.value
-              )
-            }
-            className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-          >
-            <option value="all">
-              All Stock Status
-            </option>
-
-            <option value="in-stock">
-              In Stock
-            </option>
-
-            <option value="low-stock">
-              Low Stock
-            </option>
-
-            <option value="out-of-stock">
-              Out of Stock
-            </option>
-          </select>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={resetFilters}
-            className="w-full xl:w-auto"
-          >
-            Reset
-          </Button>
-        </div>
-      </section>
-
-      {filteredItems.length === 0 ? (
-        <AdminEmptyState
-          type="search"
-          title="No inventory items found"
-          description="Try changing your search or filters."
-        />
+      {isLoading ? (
+        <AdminPageLoader label="Loading inventory..." />
       ) : (
         <>
-          <section className="hidden overflow-hidden rounded-xl border border-border bg-white shadow-sm md:block">
-            <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={
-                    allCurrentPageSelected
-                  }
-                  onChange={
-                    toggleCurrentPage
-                  }
-                  className="h-4 w-4 accent-[var(--primary)]"
-                />
+          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-subtle text-primary">
+                  <Boxes className="h-6 w-6" />
+                </div>
 
-                <span className="text-sm font-medium text-foreground">
-                  {selectedIds.length} selected
-                </span>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Total Products
+                  </p>
+
+                  <p className="mt-1 text-2xl font-bold text-foreground">
+                    {totalProducts}
+                  </p>
+                </div>
               </div>
+            </div>
 
-              <select
-                value={bulkAction}
+            <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--success-background)] text-success">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    In Stock
+                  </p>
+
+                  <p className="mt-1 text-2xl font-bold text-success">
+                    {inStockCount}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--warning-background)] text-warning">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Low Stock
+                  </p>
+
+                  <p className="mt-1 text-2xl font-bold text-warning">
+                    {lowStockCount}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--error-background)] text-error">
+                  <PackageX className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Out of Stock
+                  </p>
+
+                  <p className="mt-1 text-2xl font-bold text-error">
+                    {outOfStockCount}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_160px_190px_180px_auto]">
+              <Input
+                type="search"
+                placeholder="Search by product name, SKU..."
+                value={search}
                 onChange={(event) =>
-                  setBulkAction(
-                    event.target
-                      .value as
-                      | StockAction
-                      | ""
+                  setSearch(
+                    event.target.value
                   )
                 }
-                disabled={
-                  selectedIds.length === 0
+                leftIcon={
+                  <Search className="h-5 w-5" />
                 }
-                className="h-10 rounded-lg border border-border bg-white px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              />
+
+              <select
+                value={type}
+                onChange={(event) =>
+                  setType(
+                    event.target.value
+                  )
+                }
+                className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               >
-                <option value="">
-                  Bulk Actions
+                <option value="all">
+                  All Types
                 </option>
 
-                <option value="add">
-                  Add Stock
+                <option value="animal">
+                  Animals
                 </option>
 
-                <option value="remove">
-                  Remove Stock
+                <option value="accessory">
+                  Accessories
+                </option>
+              </select>
+
+              <select
+                value={category}
+                onChange={(event) =>
+                  setCategory(
+                    event.target.value
+                  )
+                }
+                className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              >
+                <option value="all">
+                  All Categories
                 </option>
 
-                <option value="set">
-                  Set Exact Quantity
+                {categories.map(
+                  (item) => (
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </option>
+                  )
+                )}
+              </select>
+
+              <select
+                value={stockStatus}
+                onChange={(event) =>
+                  setStockStatus(
+                    event.target.value
+                  )
+                }
+                className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              >
+                <option value="all">
+                  All Stock Status
                 </option>
 
-                <option value="threshold">
-                  Update Low Stock Threshold
+                <option value="in-stock">
+                  In Stock
+                </option>
+
+                <option value="low-stock">
+                  Low Stock
+                </option>
+
+                <option value="out-of-stock">
+                  Out of Stock
                 </option>
               </select>
 
               <Button
                 type="button"
-                variant="primary"
-                size="sm"
-                disabled={
-                  !bulkAction ||
-                  selectedIds.length === 0
-                }
-                onClick={
-                  openBulkUpdate
-                }
+                variant="outline"
+                onClick={resetFilters}
+                className="w-full xl:w-auto"
               >
-                Apply
+                Reset
               </Button>
             </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1100px]">
-                <thead className="bg-surface-subtle">
-                  <tr>
-                    <th className="w-14 px-5 py-3 text-left">
-                      <input
-                        type="checkbox"
-                        checked={
-                          allCurrentPageSelected
-                        }
-                        onChange={
-                          toggleCurrentPage
-                        }
-                        className="h-4 w-4 accent-[var(--primary)]"
-                      />
-                    </th>
-
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Product
-                    </th>
-
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Type
-                    </th>
-
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Category
-                    </th>
-
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Stock
-                    </th>
-
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Low Stock Threshold
-                    </th>
-
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Status
-                    </th>
-
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Last Updated
-                    </th>
-
-                    <th className="px-5 py-3 text-right text-xs font-semibold text-muted-foreground">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {paginatedItems.map(
-                    (item) => {
-                      const stock =
-                        getStockStatus(
-                          item
-                        );
-
-                      const selected =
-                        selectedIds.includes(
-                          item.id
-                        );
-
-                      return (
-                        <tr
-                          key={item.id}
-                          className={`border-t border-border ${
-                            selected
-                              ? "bg-surface-subtle/50"
-                              : ""
-                          }`}
-                        >
-                          <td className="px-5 py-4">
-                            <input
-                              type="checkbox"
-                              checked={
-                                selected
-                              }
-                              onChange={() =>
-                                toggleItem(
-                                  item.id
-                                )
-                              }
-                              className="h-4 w-4 accent-[var(--primary)]"
-                            />
-                          </td>
-
-                          <td className="px-5 py-4">
-                            <p className="text-sm font-semibold text-foreground">
-                              {item.name}
-                            </p>
-
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {item.sku}
-                            </p>
-                          </td>
-
-                          <td className="px-5 py-4">
-                            <span className="rounded-full bg-surface-subtle px-3 py-1 text-xs font-medium text-primary">
-                              {item.type}
-                            </span>
-                          </td>
-
-                          <td className="px-5 py-4 text-sm text-foreground">
-                            {item.category}
-                          </td>
-
-                          <td className="px-5 py-4 text-sm font-bold text-foreground">
-                            {item.quantity}
-                          </td>
-
-                          <td className="px-5 py-4 text-sm text-foreground">
-                            {item.lowStockThreshold}
-                          </td>
-
-                          <td className="px-5 py-4">
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${stock.className}`}
-                            >
-                              {stock.label}
-                            </span>
-                          </td>
-
-                          <td className="px-5 py-4 text-sm text-muted-foreground">
-                            {item.updatedAt}
-                          </td>
-
-                          <td className="px-5 py-4">
-                            <div className="flex justify-end">
-                              <Button
-                                variant="outline"
-                                title="Update Stock"
-                                aria-label={`Update stock for ${item.name}`}
-                                onClick={() =>
-                                  openSingleUpdate(
-                                    item
-                                  )
-                                }
-                              >
-                                <span className="flex items-center gap-2 whitespace-nowrap">
-                                  <SlidersHorizontal className="h-4 w-4" />
-                                  Update Stock
-                                </span>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    }
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <Pagination
-              currentPage={
-                currentPage
-              }
-              totalPages={totalPages}
-              totalItems={
-                filteredItems.length
-              }
-              pageSize={pageSize}
-              onPageChange={
-                setCurrentPage
-              }
-            />
           </section>
 
-          <div className="space-y-3 md:hidden">
-            {selectedIds.length > 0 && (
-              <div className="sticky top-[84px] z-20 rounded-xl border border-border bg-white p-3 shadow-sm">
-                <p className="mb-3 text-sm font-semibold text-foreground">
-                  {selectedIds.length} selected
-                </p>
+          {filteredItems.length === 0 ? (
+            <AdminEmptyState
+              type="search"
+              title="No inventory items found"
+              description="Try changing your search or filters."
+            />
+          ) : (
+            <>
+              <section className="hidden overflow-hidden rounded-xl border border-border bg-white shadow-sm md:block">
+                <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={
+                        allCurrentPageSelected
+                      }
+                      onChange={
+                        toggleCurrentPage
+                      }
+                      className="h-4 w-4 accent-[var(--primary)]"
+                    />
 
-                <div className="grid gap-2">
+                    <span className="text-sm font-medium text-foreground">
+                      {selectedIds.length} selected
+                    </span>
+                  </div>
+
                   <select
                     value={bulkAction}
                     onChange={(event) =>
                       setBulkAction(
-                        event.target
-                          .value as
+                        event.target.value as
                           | StockAction
                           | ""
                       )
                     }
-                    className="h-11 rounded-lg border border-border bg-white px-3 text-sm"
+                    disabled={
+                      selectedIds.length ===
+                      0
+                    }
+                    className="h-10 rounded-lg border border-border bg-white px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <option value="">
                       Bulk Actions
@@ -996,9 +790,13 @@ export default function InventoryPage() {
                   </select>
 
                   <Button
+                    type="button"
                     variant="primary"
+                    size="sm"
                     disabled={
-                      !bulkAction
+                      !bulkAction ||
+                      selectedIds.length ===
+                        0
                     }
                     onClick={
                       openBulkUpdate
@@ -1007,145 +805,397 @@ export default function InventoryPage() {
                     Apply
                   </Button>
                 </div>
-              </div>
-            )}
 
-            {paginatedItems.map(
-              (item) => {
-                const stock =
-                  getStockStatus(
-                    item
-                  );
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1100px]">
+                    <thead className="bg-surface-subtle">
+                      <tr>
+                        <th className="w-14 px-5 py-3 text-left">
+                          <input
+                            type="checkbox"
+                            checked={
+                              allCurrentPageSelected
+                            }
+                            onChange={
+                              toggleCurrentPage
+                            }
+                            className="h-4 w-4 accent-[var(--primary)]"
+                          />
+                        </th>
 
-                const selected =
-                  selectedIds.includes(
-                    item.id
-                  );
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Product
+                        </th>
 
-                return (
-                  <article
-                    key={item.id}
-                    className={`overflow-hidden rounded-xl border bg-white shadow-sm ${
-                      selected
-                        ? "border-primary"
-                        : "border-border"
-                    }`}
-                  >
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selected
-                          }
-                          onChange={() =>
-                            toggleItem(
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Type
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Category
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Stock
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Low Stock Threshold
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Status
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Last Updated
+                        </th>
+
+                        <th className="px-5 py-3 text-right text-xs font-semibold text-muted-foreground">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {paginatedItems.map(
+                        (item) => {
+                          const stock =
+                            getStockStatus(
+                              item
+                            );
+
+                          const selected =
+                            selectedIds.includes(
                               item.id
-                            )
-                          }
-                          className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]"
-                        />
+                            );
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <h2 className="truncate text-base font-semibold text-foreground">
-                                {item.name}
-                              </h2>
-
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {item.sku}
-                              </p>
-                            </div>
-
-                            <span
-                              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${stock.className}`}
+                          return (
+                            <tr
+                              key={item.id}
+                              className={`border-t border-border ${
+                                selected
+                                  ? "bg-surface-subtle/50"
+                                  : ""
+                              }`}
                             >
-                              {stock.label}
-                            </span>
-                          </div>
+                              <td className="px-5 py-4">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    selected
+                                  }
+                                  onChange={() =>
+                                    toggleItem(
+                                      item.id
+                                    )
+                                  }
+                                  className="h-4 w-4 accent-[var(--primary)]"
+                                />
+                              </td>
 
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-primary">
-                              {item.type}
-                            </span>
+                              <td className="px-5 py-4">
+                                <p className="text-sm font-semibold text-foreground">
+                                  {item.name}
+                                </p>
 
-                            <span className="text-xs text-muted-foreground">
-                              {item.category}
-                            </span>
-                          </div>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {item.sku}
+                                </p>
+                              </td>
 
-                          <div className="mt-4 grid grid-cols-2 gap-3">
-                            <div className="rounded-lg bg-surface-subtle p-3">
-                              <p className="text-xs text-muted-foreground">
-                                Stock
-                              </p>
+                              <td className="px-5 py-4">
+                                <span className="rounded-full bg-surface-subtle px-3 py-1 text-xs font-medium text-primary">
+                                  {item.type}
+                                </span>
+                              </td>
 
-                              <p className="mt-1 text-lg font-bold text-foreground">
+                              <td className="px-5 py-4 text-sm text-foreground">
+                                {item.category}
+                              </td>
+
+                              <td className="px-5 py-4 text-sm font-bold text-foreground">
                                 {item.quantity}
-                              </p>
-                            </div>
+                              </td>
 
-                            <div className="rounded-lg bg-surface-subtle p-3">
-                              <p className="text-xs text-muted-foreground">
-                                Low Stock At
-                              </p>
+                              <td className="px-5 py-4 text-sm text-foreground">
+                                {
+                                  item.lowStockThreshold
+                                }
+                              </td>
 
-                              <p className="mt-1 text-lg font-bold text-foreground">
-                                {item.lowStockThreshold}
-                              </p>
-                            </div>
-                          </div>
+                              <td className="px-5 py-4">
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-medium ${stock.className}`}
+                                >
+                                  {
+                                    stock.label
+                                  }
+                                </span>
+                              </td>
 
-                          <p className="mt-3 text-xs text-muted-foreground">
-                            Updated:{" "}
-                            {item.updatedAt}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                              <td className="px-5 py-4 text-sm text-muted-foreground">
+                                {item.updatedAt}
+                              </td>
 
-                    <div className="border-t border-border bg-surface-subtle/40 px-4 py-3">
-                      <Button
-                        variant="primary"
-                        onClick={() =>
-                          openSingleUpdate(
-                            item
+                              <td className="px-5 py-4">
+                                <div className="flex justify-end">
+                                  <Button
+                                    variant="outline"
+                                    title="Update Stock"
+                                    aria-label={`Update stock for ${item.name}`}
+                                    onClick={() =>
+                                      openSingleUpdate(
+                                        item
+                                      )
+                                    }
+                                  >
+                                    <span className="flex items-center gap-2 whitespace-nowrap">
+                                      <SlidersHorizontal className="h-4 w-4" />
+                                      Update Stock
+                                    </span>
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <Pagination
+                  currentPage={
+                    currentPage
+                  }
+                  totalPages={
+                    totalPages
+                  }
+                  totalItems={
+                    filteredItems.length
+                  }
+                  pageSize={pageSize}
+                  onPageChange={
+                    setCurrentPage
+                  }
+                />
+              </section>
+
+              <div className="space-y-3 md:hidden">
+                {selectedIds.length >
+                  0 && (
+                  <div className="sticky top-[84px] z-20 rounded-xl border border-border bg-white p-3 shadow-sm">
+                    <p className="mb-3 text-sm font-semibold text-foreground">
+                      {
+                        selectedIds.length
+                      }{" "}
+                      selected
+                    </p>
+
+                    <div className="grid gap-2">
+                      <select
+                        value={bulkAction}
+                        onChange={(event) =>
+                          setBulkAction(
+                            event.target
+                              .value as
+                              | StockAction
+                              | ""
                           )
                         }
-                        className="w-full"
+                        className="h-11 rounded-lg border border-border bg-white px-3 text-sm"
                       >
-                        <span className="flex items-center justify-center gap-2">
-                          <SlidersHorizontal className="h-4 w-4" />
-                          Update Stock
-                        </span>
+                        <option value="">
+                          Bulk Actions
+                        </option>
+
+                        <option value="add">
+                          Add Stock
+                        </option>
+
+                        <option value="remove">
+                          Remove Stock
+                        </option>
+
+                        <option value="set">
+                          Set Exact Quantity
+                        </option>
+
+                        <option value="threshold">
+                          Update Low Stock Threshold
+                        </option>
+                      </select>
+
+                      <Button
+                        variant="primary"
+                        disabled={
+                          !bulkAction
+                        }
+                        onClick={
+                          openBulkUpdate
+                        }
+                      >
+                        Apply
                       </Button>
                     </div>
-                  </article>
-                );
-              }
-            )}
+                  </div>
+                )}
 
-            <div className="overflow-hidden rounded-xl border border-border bg-white">
-              <Pagination
-                currentPage={
-                  currentPage
-                }
-                totalPages={
-                  totalPages
-                }
-                totalItems={
-                  filteredItems.length
-                }
-                pageSize={
-                  pageSize
-                }
-                onPageChange={
-                  setCurrentPage
-                }
-              />
-            </div>
-          </div>
+                {paginatedItems.map(
+                  (item) => {
+                    const stock =
+                      getStockStatus(
+                        item
+                      );
+
+                    const selected =
+                      selectedIds.includes(
+                        item.id
+                      );
+
+                    return (
+                      <article
+                        key={item.id}
+                        className={`overflow-hidden rounded-xl border bg-white shadow-sm ${
+                          selected
+                            ? "border-primary"
+                            : "border-border"
+                        }`}
+                      >
+                        <div className="p-4">
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={
+                                selected
+                              }
+                              onChange={() =>
+                                toggleItem(
+                                  item.id
+                                )
+                              }
+                              className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]"
+                            />
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <h2 className="truncate text-base font-semibold text-foreground">
+                                    {
+                                      item.name
+                                    }
+                                  </h2>
+
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    {
+                                      item.sku
+                                    }
+                                  </p>
+                                </div>
+
+                                <span
+                                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${stock.className}`}
+                                >
+                                  {
+                                    stock.label
+                                  }
+                                </span>
+                              </div>
+
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-primary">
+                                  {
+                                    item.type
+                                  }
+                                </span>
+
+                                <span className="text-xs text-muted-foreground">
+                                  {
+                                    item.category
+                                  }
+                                </span>
+                              </div>
+
+                              <div className="mt-4 grid grid-cols-2 gap-3">
+                                <div className="rounded-lg bg-surface-subtle p-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    Stock
+                                  </p>
+
+                                  <p className="mt-1 text-lg font-bold text-foreground">
+                                    {
+                                      item.quantity
+                                    }
+                                  </p>
+                                </div>
+
+                                <div className="rounded-lg bg-surface-subtle p-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    Low Stock At
+                                  </p>
+
+                                  <p className="mt-1 text-lg font-bold text-foreground">
+                                    {
+                                      item.lowStockThreshold
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+
+                              <p className="mt-3 text-xs text-muted-foreground">
+                                Updated:{" "}
+                                {
+                                  item.updatedAt
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border bg-surface-subtle/40 px-4 py-3">
+                          <Button
+                            variant="primary"
+                            onClick={() =>
+                              openSingleUpdate(
+                                item
+                              )
+                            }
+                            className="w-full"
+                          >
+                            <span className="flex items-center justify-center gap-2">
+                              <SlidersHorizontal className="h-4 w-4" />
+                              Update Stock
+                            </span>
+                          </Button>
+                        </div>
+                      </article>
+                    );
+                  }
+                )}
+
+                <div className="overflow-hidden rounded-xl border border-border bg-white">
+                  <Pagination
+                    currentPage={
+                      currentPage
+                    }
+                    totalPages={
+                      totalPages
+                    }
+                    totalItems={
+                      filteredItems.length
+                    }
+                    pageSize={
+                      pageSize
+                    }
+                    onPageChange={
+                      setCurrentPage
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -1189,11 +1239,15 @@ export default function InventoryPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="font-semibold text-foreground">
-                        {selectedProduct.name}
+                        {
+                          selectedProduct.name
+                        }
                       </p>
 
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {selectedProduct.sku}
+                        {
+                          selectedProduct.sku
+                        }
                       </p>
                     </div>
 
@@ -1203,7 +1257,9 @@ export default function InventoryPage() {
                       </p>
 
                       <p className="mt-1 text-xl font-bold text-foreground">
-                        {selectedProduct.quantity}
+                        {
+                          selectedProduct.quantity
+                        }
                       </p>
                     </div>
                   </div>
@@ -1259,7 +1315,9 @@ export default function InventoryPage() {
               </div>
 
               <Input
-                label={getDialogQuantityLabel()}
+                label={
+                  getDialogQuantityLabel()
+                }
                 required
                 type="number"
                 min="0"
@@ -1274,8 +1332,6 @@ export default function InventoryPage() {
                 disabled={updating}
                 error={dialogError}
               />
-
-            
             </div>
 
             <div className="flex flex-col-reverse gap-3 border-t border-border px-5 py-4 sm:flex-row sm:justify-end sm:px-6">

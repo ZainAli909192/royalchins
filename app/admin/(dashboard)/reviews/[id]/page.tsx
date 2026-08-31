@@ -2,7 +2,6 @@
 
 import {
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import Image from "next/image";
@@ -32,6 +31,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   getAutoApproveReviews,
 } from "@/lib/reviews/review-settings";
+import {
+  getReview,
+  updateReview,
+  type ReviewResponse,
+} from "@/lib/api/reviews";
 
 type ReviewStatus =
   | "Pending"
@@ -43,18 +47,18 @@ type ProductType =
   | "Accessory";
 
 type Review = {
-  id: number;
+  id: string;
 
-  productId: number;
+  productId: string;
   productName: string;
   productType: ProductType;
   productImage: string;
 
-  customerId: number;
+  customerId: string;
   customerName: string;
   customerEmail: string;
 
-  orderId: number;
+  orderId: string;
   orderNumber: string;
 
   rating: number;
@@ -72,137 +76,45 @@ type Review = {
   rejectionNotes?: string;
 };
 
-const reviews: Review[] = [
-  {
-    id: 1,
+const dateTimeFormatter = new Intl.DateTimeFormat("en-AE", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 
-    productId: 1,
-    productName: "White Chinchilla",
-    productType: "Animal",
-    productImage:
-      "/products/white-chinchilla.jpg",
-
-    customerId: 101,
-    customerName: "Ahmed Daniyal",
-    customerEmail:
-      "ahmed@example.com",
-
-    orderId: 1,
-    orderNumber: "RC-1028",
-
-    rating: 5,
-
-    title:
-      "Beautiful and calm",
-
-    comment:
-      "Very calm and healthy chinchilla. The overall experience was excellent.",
-
-    status: "Pending",
-
-    submittedAt:
-      "24 Aug 2026 04:15 PM",
-  },
-
-  {
-    id: 2,
-
-    productId: 5,
-    productName:
-      "Premium Chinchilla Cage",
-    productType: "Accessory",
-    productImage:
-      "/products/chinchilla-cage.jpg",
-
-    customerId: 102,
-    customerName: "Sara Khan",
-    customerEmail:
-      "sara@example.com",
-
-    orderId: 2,
-    orderNumber: "RC-1027",
-
-    rating: 4,
-
-    title:
-      "Good quality",
-
-    comment:
-      "The cage is spacious and feels very sturdy. Assembly was straightforward.",
-
-    status: "Approved",
-
-    submittedAt:
-      "23 Aug 2026 03:10 PM",
-
-    moderatedAt:
-      "23 Aug 2026 03:30 PM",
-
-    moderatedBy:
-      "Admin",
-  },
-
-  {
-    id: 3,
-
-    productId: 6,
-    productName:
-      "Wooden Hideout",
-    productType: "Accessory",
-    productImage:
-      "/products/wooden-hideout.jpg",
-
-    customerId: 104,
-    customerName:
-      "Mariam Noor",
-    customerEmail:
-      "mariam@example.com",
-
-    orderId: 4,
-    orderNumber: "RC-1025",
-
-    rating: 2,
-
-    title:
-      "Not useful",
-
-    comment:
-      "This review contains unrelated promotional content.",
-
-    status: "Rejected",
-
-    submittedAt:
-      "21 Aug 2026 05:40 PM",
-
-    moderatedAt:
-      "21 Aug 2026 06:00 PM",
-
-    moderatedBy:
-      "Admin",
-
-    rejectionReason:
-      "Irrelevant content",
-
-    rejectionNotes:
-      "The content was unrelated to the purchased product.",
-  },
-];
+function toDetailReview(review: ReviewResponse): Review {
+  return {
+    id: review.id,
+    productId: review.product.id,
+    productName: review.product.name,
+    productType: review.product.type,
+    productImage: review.product.images[0]?.url ?? "/logo.png",
+    customerId: review.customer.id,
+    customerName: review.customer.name,
+    customerEmail: review.customer.email,
+    orderId: review.order?.id ?? "",
+    orderNumber: review.order?.orderNumber ?? "—",
+    rating: review.rating,
+    title: review.title ?? undefined,
+    comment: review.comment,
+    status: review.status,
+    submittedAt: dateTimeFormatter.format(new Date(review.createdAt)),
+    moderatedAt: review.moderatedAt
+      ? dateTimeFormatter.format(new Date(review.moderatedAt))
+      : undefined,
+    moderatedBy: review.moderatedBy ?? undefined,
+    rejectionReason: review.rejectionReason ?? undefined,
+    rejectionNotes: review.rejectionNotes ?? undefined,
+  };
+}
 
 export default function ReviewDetailsPage() {
   const router = useRouter();
   const params = useParams();
 
-  const reviewId =
-    Number(params.id);
+  const reviewId = String(params.id);
 
-  const review = useMemo(
-    () =>
-      reviews.find(
-        (item) =>
-          item.id === reviewId
-      ),
-    [reviewId]
-  );
+  const [review, setReview] = useState<Review | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [
     autoApprove,
@@ -217,41 +129,27 @@ export default function ReviewDetailsPage() {
   const [
     currentStatus,
     setCurrentStatus,
-  ] =
-    useState<ReviewStatus>(
-      review?.status ??
-        "Pending"
-    );
+  ] = useState<ReviewStatus>("Pending");
 
   const [
     moderatedBy,
     setModeratedBy,
-  ] = useState(
-    review?.moderatedBy ?? ""
-  );
+  ] = useState("");
 
   const [
     moderatedAt,
     setModeratedAt,
-  ] = useState(
-    review?.moderatedAt ?? ""
-  );
+  ] = useState("");
 
   const [
     savedRejectionReason,
     setSavedRejectionReason,
-  ] = useState(
-    review?.rejectionReason ??
-      ""
-  );
+  ] = useState("");
 
   const [
     savedRejectionNotes,
     setSavedRejectionNotes,
-  ] = useState(
-    review?.rejectionNotes ??
-      ""
-  );
+  ] = useState("");
 
   const [
     rejectDialogOpen,
@@ -290,6 +188,31 @@ export default function ReviewDetailsPage() {
     setAutoApprove(enabled);
     setSettingsLoaded(true);
   }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    getReview(reviewId)
+      .then((data) => {
+        const mapped = toDetailReview(data);
+        setReview(mapped);
+        setCurrentStatus(mapped.status);
+        setModeratedBy(mapped.moderatedBy ?? "");
+        setModeratedAt(mapped.moderatedAt ?? "");
+        setSavedRejectionReason(mapped.rejectionReason ?? "");
+        setSavedRejectionNotes(mapped.rejectionNotes ?? "");
+      })
+      .catch(() => setReview(null))
+      .finally(() => setIsLoading(false));
+  }, [reviewId]);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border bg-white p-8 text-center text-sm text-muted-foreground shadow-sm">
+        Loading review…
+      </div>
+    );
+  }
 
   if (!review) {
     return (
@@ -349,42 +272,20 @@ export default function ReviewDetailsPage() {
       try {
         setLoading(true);
 
-        console.log(
-          "Approve review:",
-          {
-            reviewId,
-            moderatedBy:
-              "Admin",
-          }
-        );
+        const updated = await updateReview(reviewId, {
+          status: "Approved",
+        });
 
-        /*
-         * BACKEND LATER:
-         *
-         * await approveReviewApi(
-         *   reviewId
-         * );
-         */
+        const mapped = toDetailReview(updated);
 
-        setCurrentStatus(
-          "Approved"
-        );
-
-        setModeratedBy(
-          "Admin"
-        );
-
+        setCurrentStatus("Approved");
+        setModeratedBy(mapped.moderatedBy ?? "Admin");
         setModeratedAt(
-          "Just now"
+          mapped.moderatedAt ??
+            dateTimeFormatter.format(new Date())
         );
-
-        setSavedRejectionReason(
-          ""
-        );
-
-        setSavedRejectionNotes(
-          ""
-        );
+        setSavedRejectionReason("");
+        setSavedRejectionNotes("");
 
         setSuccessMessage(
           "Review approved successfully."
@@ -440,54 +341,25 @@ export default function ReviewDetailsPage() {
       try {
         setLoading(true);
 
-        console.log(
-          "Reject review:",
-          {
-            reviewId,
+        const updated = await updateReview(reviewId, {
+          status: "Rejected",
+          rejectionReason,
+          rejectionNotes: rejectionNotes.trim() || null,
+        });
 
-            reason:
-              rejectionReason,
+        const mapped = toDetailReview(updated);
 
-            notes:
-              rejectionNotes,
-
-            moderatedBy:
-              "Admin",
-          }
-        );
-
-        /*
-         * BACKEND LATER:
-         *
-         * await rejectReviewApi(
-         *   reviewId,
-         *   {
-         *     reason:
-         *       rejectionReason,
-         *     notes:
-         *       rejectionNotes,
-         *   }
-         * );
-         */
-
-        setCurrentStatus(
-          "Rejected"
-        );
-
-        setModeratedBy(
-          "Admin"
-        );
-
+        setCurrentStatus("Rejected");
+        setModeratedBy(mapped.moderatedBy ?? "Admin");
         setModeratedAt(
-          "Just now"
+          mapped.moderatedAt ??
+            dateTimeFormatter.format(new Date())
         );
-
         setSavedRejectionReason(
-          rejectionReason
+          mapped.rejectionReason ?? rejectionReason
         );
-
         setSavedRejectionNotes(
-          rejectionNotes.trim()
+          mapped.rejectionNotes ?? rejectionNotes.trim()
         );
 
         setRejectDialogOpen(

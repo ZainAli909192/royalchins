@@ -12,6 +12,7 @@ import {
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
 import { AdminEmptyState } from "@/components/admin/shared/admin-empty-state";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import { ConfirmDialog } from "@/components/admin/shared/confirm-dialog";
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
@@ -55,9 +56,13 @@ export default function ProductsPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [formError, setFormError] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getProducts().then((result) => setProducts(result.map(toListProduct))).catch((error) => setFormError(getErrorMessage(error, "Unable to load products.")));
+    getProducts()
+      .then((result) => setProducts(result.map(toListProduct)))
+      .catch((error) => setFormError(getErrorMessage(error, "Unable to load products.")))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const subCategories = useMemo(() => {
@@ -295,7 +300,9 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      {filteredProducts.length === 0 ? (
+      {isLoading ? (
+        <AdminPageLoader label="Loading products..." />
+      ) : filteredProducts.length === 0 ? (
         <AdminEmptyState
           type="search"
           title="No products found"

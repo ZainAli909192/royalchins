@@ -18,15 +18,24 @@ import {
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
 import { AdminEmptyState } from "@/components/admin/shared/admin-empty-state";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
+
 import {
   getAutoApproveReviews,
   saveAutoApproveReviews,
 } from "@/lib/reviews/review-settings";
-import { getReviews, type ReviewResponse } from "@/lib/api/reviews";
+
+import {
+  getReviews,
+  type ReviewResponse,
+} from "@/lib/api/reviews";
+
+import { getErrorMessage } from "@/lib/api/error-message";
+
 type ReviewStatus =
   | "Pending"
   | "Approved"
@@ -65,172 +74,6 @@ type Review = {
   rejectionReason?: string;
 };
 
-const legacyReviews = [
-  {
-    id: 1,
-
-    productId: 1,
-    productName: "White Chinchilla",
-    productType: "Animal",
-    productImage: "/products/white-chinchilla.jpg",
-
-    customerId: 101,
-    customerName: "Ahmed Daniyal",
-    customerEmail: "ahmed@example.com",
-
-    orderId: 1,
-    orderNumber: "RC-1028",
-
-    rating: 5,
-    title: "Beautiful and calm",
-    comment:
-      "Very calm and healthy chinchilla. The overall experience was excellent.",
-
-    status: "Pending",
-
-    submittedAt: "24 Aug 2026 04:15 PM",
-  },
-
-  {
-    id: 2,
-
-    productId: 5,
-    productName: "Premium Chinchilla Cage",
-    productType: "Accessory",
-    productImage: "/products/chinchilla-cage.jpg",
-
-    customerId: 102,
-    customerName: "Sara Khan",
-    customerEmail: "sara@example.com",
-
-    orderId: 2,
-    orderNumber: "RC-1027",
-
-    rating: 4,
-    title: "Good quality",
-    comment:
-      "The cage is spacious and feels very sturdy. Assembly was straightforward.",
-
-    status: "Approved",
-
-    submittedAt: "23 Aug 2026 03:10 PM",
-
-    moderatedAt: "23 Aug 2026 03:30 PM",
-    moderatedBy: "Admin",
-  },
-
-  {
-    id: 3,
-
-    productId: 3,
-    productName: "American Guinea Pig",
-    productType: "Animal",
-    productImage: "/products/american-guinea-pig.jpg",
-
-    customerId: 103,
-    customerName: "Omar Ali",
-    customerEmail: "omar@example.com",
-
-    orderId: 3,
-    orderNumber: "RC-1026",
-
-    rating: 5,
-    title: "Very friendly",
-    comment:
-      "Healthy, friendly and exactly as described.",
-
-    status: "Approved",
-
-    submittedAt: "22 Aug 2026 01:20 PM",
-
-    moderatedAt: "22 Aug 2026 02:05 PM",
-    moderatedBy: "Admin",
-  },
-
-  {
-    id: 4,
-
-    productId: 6,
-    productName: "Wooden Hideout",
-    productType: "Accessory",
-    productImage: "/products/wooden-hideout.jpg",
-
-    customerId: 104,
-    customerName: "Mariam Noor",
-    customerEmail: "mariam@example.com",
-
-    orderId: 4,
-    orderNumber: "RC-1025",
-
-    rating: 2,
-    title: "Not useful",
-    comment:
-      "This review contains unrelated promotional content.",
-
-    status: "Rejected",
-
-    submittedAt: "21 Aug 2026 05:40 PM",
-
-    moderatedAt: "21 Aug 2026 06:00 PM",
-    moderatedBy: "Admin",
-
-    rejectionReason: "Irrelevant content",
-  },
-
-  {
-    id: 5,
-
-    productId: 2,
-    productName: "Grey Chinchilla",
-    productType: "Animal",
-    productImage: "/products/grey-chinchilla.jpg",
-
-    customerId: 106,
-    customerName: "Fatima Zahra",
-    customerEmail: "fatima@example.com",
-
-    orderId: 6,
-    orderNumber: "RC-1023",
-
-    rating: 5,
-    title: "Perfect",
-    comment:
-      "The animal arrived healthy and well cared for. Very happy with the purchase.",
-
-    status: "Pending",
-
-    submittedAt: "24 Aug 2026 12:25 PM",
-  },
-
-  {
-    id: 6,
-
-    productId: 7,
-    productName: "Premium Animal Bedding",
-    productType: "Accessory",
-    productImage: "/products/premium-bedding.jpg",
-
-    customerId: 107,
-    customerName: "Ali Rehman",
-    customerEmail: "ali@example.com",
-
-    orderId: 7,
-    orderNumber: "RC-1022",
-
-    rating: 4,
-    title: "Good bedding",
-    comment:
-      "Soft, clean and suitable for the enclosure.",
-
-    status: "Approved",
-
-    submittedAt: "20 Aug 2026 07:45 PM",
-
-    moderatedAt: "20 Aug 2026 08:10 PM",
-    moderatedBy: "Admin",
-  },
-];
-
 const pageSize = 6;
 
 export default function ReviewsPage() {
@@ -238,6 +81,12 @@ export default function ReviewsPage() {
 
   const [reviews, setReviews] =
     useState<Review[]>([]);
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [formError, setFormError] =
+    useState("");
 
   const [search, setSearch] =
     useState("");
@@ -264,31 +113,105 @@ export default function ReviewsPage() {
     setSuccessMessage,
   ] = useState("");
 
-
   const [
     autoApprove,
     setAutoApprove,
   ] = useState(false);
 
-useEffect(() => {
-  setAutoApprove(
-    getAutoApproveReviews()
-  );
-}, []);
   useEffect(() => {
-    getReviews().then((items) => {
-      const mapped = items.map((review: ReviewResponse): Review => ({
-        id: review.id, productId: review.product.id, productName: review.product.name,
-        productType: review.product.type, productImage: review.product.images[0]?.url ?? "/logo.png",
-        customerId: review.customer.id, customerName: review.customer.name, customerEmail: review.customer.email,
-        orderId: review.order?.id ?? "", orderNumber: review.order?.orderNumber ?? "—",
-        rating: review.rating, title: review.title ?? undefined, comment: review.comment, status: review.status,
-        submittedAt: new Intl.DateTimeFormat("en-AE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(review.createdAt)),
-        rejectionReason: review.rejectionReason ?? undefined,
-      }));
-      setReviews(mapped);
-    });
+    setAutoApprove(
+      getAutoApproveReviews()
+    );
   }, []);
+
+  useEffect(() => {
+    getReviews()
+      .then((items) => {
+        const mapped = items.map(
+          (
+            review: ReviewResponse
+          ): Review => ({
+            id: review.id,
+
+            productId:
+              review.product.id,
+
+            productName:
+              review.product.name,
+
+            productType:
+              review.product.type,
+
+            productImage:
+              review.product.images[0]
+                ?.url ??
+              "/logo.png",
+
+            customerId:
+              review.customer.id,
+
+            customerName:
+              review.customer.name,
+
+            customerEmail:
+              review.customer.email,
+
+            orderId:
+              review.order?.id ?? "",
+
+            orderNumber:
+              review.order
+                ?.orderNumber ?? "—",
+
+            rating:
+              review.rating,
+
+            title:
+              review.title ??
+              undefined,
+
+            comment:
+              review.comment,
+
+            status:
+              review.status,
+
+            submittedAt:
+              new Intl.DateTimeFormat(
+                "en-AE",
+                {
+                  dateStyle:
+                    "medium",
+                  timeStyle:
+                    "short",
+                }
+              ).format(
+                new Date(
+                  review.createdAt
+                )
+              ),
+
+            rejectionReason:
+              review.rejectionReason ??
+              undefined,
+          })
+        );
+
+        setReviews(mapped);
+      })
+      .catch((error) => {
+        setFormError(
+          getErrorMessage(
+            error,
+            "Unable to load reviews."
+          )
+        );
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
   const filteredReviews =
     useMemo(() => {
       return reviews.filter(
@@ -461,16 +384,12 @@ useEffect(() => {
           item.id === review.id
             ? {
                 ...item,
-
                 status:
                   "Approved",
-
                 moderatedAt:
                   "Just now",
-
                 moderatedBy:
                   "Admin",
-
                 rejectionReason:
                   undefined,
               }
@@ -492,20 +411,20 @@ useEffect(() => {
   };
 
   const handleAutoApproveChange = (
-  enabled: boolean
-) => {
-  setAutoApprove(enabled);
+    enabled: boolean
+  ) => {
+    setAutoApprove(enabled);
 
-  saveAutoApproveReviews(
-    enabled
-  );
+    saveAutoApproveReviews(
+      enabled
+    );
 
-  setSuccessMessage(
-    enabled
-      ? "Auto approval enabled. New verified reviews will be approved automatically."
-      : "Auto approval disabled. New reviews will require admin approval."
-  );
-};
+    setSuccessMessage(
+      enabled
+        ? "Auto approval enabled. New verified reviews will be approved automatically."
+        : "Auto approval disabled. New reviews will require admin approval."
+    );
+  };
 
   const renderStars = (
     value: number
@@ -529,10 +448,6 @@ useEffect(() => {
 
   return (
     <div className="space-y-6">
-      {/* =========================
-          PAGE HEADER
-      ========================= */}
-
       <AdminPageHeader
         title="Reviews"
         description={
@@ -542,9 +457,15 @@ useEffect(() => {
         }
       />
 
-      {/* =========================
-          SUCCESS MESSAGE
-      ========================= */}
+      {formError && (
+        <FormAlert
+          variant="error"
+          message={formError}
+          onClose={() =>
+            setFormError("")
+          }
+        />
+      )}
 
       {successMessage && (
         <FormAlert
@@ -558,419 +479,647 @@ useEffect(() => {
         />
       )}
 
-      {/* =========================
-          SUMMARY CARDS
-      ========================= */}
-
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <SummaryCard
-          label="Total Reviews"
-          value={reviews.length}
-          icon={
-            <Star className="h-5 w-5" />
-          }
-        />
-
-        <SummaryCard
-          label="Pending"
-          value={pendingCount}
-          icon={
-            <Star className="h-5 w-5" />
-          }
-          tone="warning"
-        />
-
-        <SummaryCard
-          label="Approved"
-          value={approvedCount}
-          icon={
-            <CheckCircle2 className="h-5 w-5" />
-          }
-          tone="success"
-        />
-
-        <SummaryCard
-          label="Rejected"
-          value={rejectedCount}
-          icon={
-            <XCircle className="h-5 w-5" />
-          }
-          tone="error"
-        />
-      </section>
-
-      {/* =========================
-          REVIEW MODERATION SETTING
-      ========================= */}
-
-      <section className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold text-foreground">
-                Review Moderation
-              </h2>
-
-              <span
-                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                  autoApprove
-                    ? "bg-[var(--success-background)] text-success"
-                    : "bg-[var(--warning-background)] text-warning"
-                }`}
-              >
-                {autoApprove
-                  ? "Auto Approve On"
-                  : "Manual Approval"}
-              </span>
-            </div>
-
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {autoApprove
-                ? "New verified customer reviews will be published automatically. Existing pending reviews are not changed."
-                : "New verified customer reviews will remain pending until an admin approves or rejects them."}
-            </p>
-          </div>
-
-          <label className="flex shrink-0 cursor-pointer items-center gap-3">
-            <span className="text-sm font-medium text-foreground">
-              Auto Approve
-            </span>
-
-        <input
-  type="checkbox"
-  checked={autoApprove}
-  onChange={(event) =>
-    handleAutoApproveChange(
-      event.target.checked
-    )
-  }
-  className="peer sr-only"
-/>
-
-            <span
-              className="
-                relative
-                h-6
-                w-11
-                rounded-full
-                bg-muted
-                transition-colors
-                peer-checked:bg-primary
-                peer-focus-visible:ring-2
-                peer-focus-visible:ring-primary/20
-              "
-            >
-              <span
-                className="
-                  absolute
-                  left-1
-                  top-1
-                  h-4
-                  w-4
-                  rounded-full
-                  bg-white
-                  shadow-sm
-                  transition-transform
-                  peer-checked:translate-x-5
-                "
-              />
-            </span>
-          </label>
-        </div>
-      </section>
-
-      {/* =========================
-          FILTERS
-      ========================= */}
-
-      <section className="rounded-xl border border-border bg-white p-3 shadow-sm sm:p-5">
-        <div className="grid gap-3 xl:grid-cols-[1fr_150px_140px_150px_170px_auto]">
-          <Input
-            type="search"
-            placeholder="Search reviews..."
-            value={search}
-            onChange={(event) =>
-              setSearch(
-                event.target.value
-              )
-            }
-            leftIcon={
-              <Search className="h-5 w-5" />
-            }
-            className="h-11 sm:h-12"
-          />
-
-          <div className="grid grid-cols-2 gap-2 xl:contents">
-            {/* Status */}
-            <select
-              value={status}
-              onChange={(event) =>
-                setStatus(
-                  event.target.value
-                )
-              }
-              className="h-11 min-w-0 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
-            >
-              <option value="all">
-                All Status
-              </option>
-
-              <option value="pending">
-                Pending
-              </option>
-
-              <option value="approved">
-                Approved
-              </option>
-
-              <option value="rejected">
-                Rejected
-              </option>
-            </select>
-
-            {/* Rating */}
-            <select
-              value={rating}
-              onChange={(event) =>
-                setRating(
-                  event.target.value
-                )
-              }
-              className="h-11 min-w-0 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
-            >
-              <option value="all">
-                All Ratings
-              </option>
-
-              <option value="5">
-                5 Stars
-              </option>
-
-              <option value="4">
-                4 Stars
-              </option>
-
-              <option value="3">
-                3 Stars
-              </option>
-
-              <option value="2">
-                2 Stars
-              </option>
-
-              <option value="1">
-                1 Star
-              </option>
-            </select>
-
-            {/* Product Type */}
-            <select
-              value={type}
-              onChange={(event) =>
-                setType(
-                  event.target.value
-                )
-              }
-              className="h-11 min-w-0 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
-            >
-              <option value="all">
-                All Products
-              </option>
-
-              <option value="animal">
-                Animals
-              </option>
-
-              <option value="accessory">
-                Accessories
-              </option>
-            </select>
-
-            {/* Date */}
-            <div className="relative">
-              <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-              <select
-                value={dateFilter}
-                onChange={(event) =>
-                  setDateFilter(
-                    event.target.value
-                  )
-                }
-                className="h-11 w-full rounded-lg border border-border bg-white pl-9 pr-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
-              >
-                <option value="all">
-                  All Dates
-                </option>
-
-                <option value="today">
-                  Today
-                </option>
-
-                <option value="yesterday">
-                  Yesterday
-                </option>
-              </select>
-            </div>
-
-            {/* Reset */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={
-                resetFilters
-              }
-              className="col-span-2 h-11 w-full sm:h-12 xl:col-span-1 xl:w-auto"
-            >
-              Reset
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================
-          EMPTY STATE
-      ========================= */}
-
-      {filteredReviews.length ===
-      0 ? (
-        <AdminEmptyState
-          type="search"
-          title="No reviews found"
-          description="Try changing your search or filters."
-        />
+      {isLoading ? (
+        <AdminPageLoader label="Loading reviews..." />
       ) : (
         <>
-          {/* =========================
-              DESKTOP TABLE
-          ========================= */}
+          <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <SummaryCard
+              label="Total Reviews"
+              value={reviews.length}
+              icon={
+                <Star className="h-5 w-5" />
+              }
+            />
 
-          <section className="hidden overflow-hidden rounded-xl border border-border bg-white shadow-sm md:block">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1250px]">
-                <thead className="bg-surface-subtle">
-                  <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Product
-                    </th>
+            <SummaryCard
+              label="Pending"
+              value={pendingCount}
+              icon={
+                <Star className="h-5 w-5" />
+              }
+              tone="warning"
+            />
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Customer
-                    </th>
+            <SummaryCard
+              label="Approved"
+              value={approvedCount}
+              icon={
+                <CheckCircle2 className="h-5 w-5" />
+              }
+              tone="success"
+            />
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Rating
-                    </th>
+            <SummaryCard
+              label="Rejected"
+              value={rejectedCount}
+              icon={
+                <XCircle className="h-5 w-5" />
+              }
+              tone="error"
+            />
+          </section>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Review
-                    </th>
+          <section className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-base font-semibold text-foreground">
+                    Review Moderation
+                  </h2>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Status
-                    </th>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      autoApprove
+                        ? "bg-[var(--success-background)] text-success"
+                        : "bg-[var(--warning-background)] text-warning"
+                    }`}
+                  >
+                    {autoApprove
+                      ? "Auto Approve On"
+                      : "Manual Approval"}
+                  </span>
+                </div>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
-                      Submitted
-                    </th>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {autoApprove
+                    ? "New verified customer reviews will be published automatically. Existing pending reviews are not changed."
+                    : "New verified customer reviews will remain pending until an admin approves or rejects them."}
+                </p>
+              </div>
 
-                    <th className="px-5 py-3 text-right text-xs font-semibold text-muted-foreground">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
+              <label className="flex shrink-0 cursor-pointer items-center gap-3">
+                <span className="text-sm font-medium text-foreground">
+                  Auto Approve
+                </span>
 
-                <tbody>
-                  {paginatedReviews.map(
-                    (review) => (
-                      <tr
-                        key={
-                          review.id
-                        }
-                        className="border-t border-border"
-                      >
-                        {/* Product */}
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-subtle">
-                              <Image
-                                src={
-                                  review.productImage
-                                }
-                                alt={
-                                  review.productName
-                                }
-                                fill
-                                sizes="48px"
-                                className="object-cover"
-                              />
-                            </div>
+                <input
+                  type="checkbox"
+                  checked={
+                    autoApprove
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    handleAutoApproveChange(
+                      event.target
+                        .checked
+                    )
+                  }
+                  className="peer sr-only"
+                />
 
-                            <div className="min-w-0">
+                <span className="relative h-6 w-11 rounded-full bg-muted transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/20">
+                  <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-border bg-white p-3 shadow-sm sm:p-5">
+            <div className="grid gap-3 xl:grid-cols-[1fr_150px_140px_150px_170px_auto]">
+              <Input
+                type="search"
+                placeholder="Search reviews..."
+                value={search}
+                onChange={(
+                  event
+                ) =>
+                  setSearch(
+                    event.target
+                      .value
+                  )
+                }
+                leftIcon={
+                  <Search className="h-5 w-5" />
+                }
+                className="h-11 sm:h-12"
+              />
+
+              <div className="grid grid-cols-2 gap-2 xl:contents">
+                <select
+                  value={status}
+                  onChange={(
+                    event
+                  ) =>
+                    setStatus(
+                      event.target
+                        .value
+                    )
+                  }
+                  className="h-11 min-w-0 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
+                >
+                  <option value="all">
+                    All Status
+                  </option>
+
+                  <option value="pending">
+                    Pending
+                  </option>
+
+                  <option value="approved">
+                    Approved
+                  </option>
+
+                  <option value="rejected">
+                    Rejected
+                  </option>
+                </select>
+
+                <select
+                  value={rating}
+                  onChange={(
+                    event
+                  ) =>
+                    setRating(
+                      event.target
+                        .value
+                    )
+                  }
+                  className="h-11 min-w-0 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
+                >
+                  <option value="all">
+                    All Ratings
+                  </option>
+
+                  <option value="5">
+                    5 Stars
+                  </option>
+
+                  <option value="4">
+                    4 Stars
+                  </option>
+
+                  <option value="3">
+                    3 Stars
+                  </option>
+
+                  <option value="2">
+                    2 Stars
+                  </option>
+
+                  <option value="1">
+                    1 Star
+                  </option>
+                </select>
+
+                <select
+                  value={type}
+                  onChange={(
+                    event
+                  ) =>
+                    setType(
+                      event.target
+                        .value
+                    )
+                  }
+                  className="h-11 min-w-0 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
+                >
+                  <option value="all">
+                    All Products
+                  </option>
+
+                  <option value="animal">
+                    Animals
+                  </option>
+
+                  <option value="accessory">
+                    Accessories
+                  </option>
+                </select>
+
+                <div className="relative">
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                  <select
+                    value={
+                      dateFilter
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setDateFilter(
+                        event.target
+                          .value
+                      )
+                    }
+                    className="h-11 w-full rounded-lg border border-border bg-white pl-9 pr-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-12"
+                  >
+                    <option value="all">
+                      All Dates
+                    </option>
+
+                    <option value="today">
+                      Today
+                    </option>
+
+                    <option value="yesterday">
+                      Yesterday
+                    </option>
+                  </select>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={
+                    resetFilters
+                  }
+                  className="col-span-2 h-11 w-full sm:h-12 xl:col-span-1 xl:w-auto"
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+          </section>
+
+          {filteredReviews.length ===
+          0 ? (
+            <AdminEmptyState
+              type="search"
+              title="No reviews found"
+              description="Try changing your search or filters."
+            />
+          ) : (
+            <>
+              <section className="hidden overflow-hidden rounded-xl border border-border bg-white shadow-sm md:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1250px]">
+                    <thead className="bg-surface-subtle">
+                      <tr>
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Product
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Customer
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Rating
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Review
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Status
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground">
+                          Submitted
+                        </th>
+
+                        <th className="px-5 py-3 text-right text-xs font-semibold text-muted-foreground">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {paginatedReviews.map(
+                        (
+                          review
+                        ) => (
+                          <tr
+                            key={
+                              review.id
+                            }
+                            className="border-t border-border"
+                          >
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-subtle">
+                                  <Image
+                                    src={
+                                      review.productImage
+                                    }
+                                    alt={
+                                      review.productName
+                                    }
+                                    fill
+                                    sizes="48px"
+                                    className="object-cover"
+                                  />
+                                </div>
+
+                                <div className="min-w-0">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      router.push(
+                                        `/admin/products/${review.productId}`
+                                      )
+                                    }
+                                    className="text-left text-sm font-semibold text-foreground hover:text-primary"
+                                  >
+                                    {
+                                      review.productName
+                                    }
+                                  </button>
+
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    {
+                                      review.productType
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-5 py-4">
                               <button
                                 type="button"
                                 onClick={() =>
                                   router.push(
-                                    `/admin/products/${review.productId}`
+                                    `/admin/customers/${review.customerId}`
                                   )
                                 }
-                                className="text-left text-sm font-semibold text-foreground hover:text-primary"
+                                className="text-left"
                               >
-                                {
-                                  review.productName
-                                }
-                              </button>
+                                <p className="text-sm font-medium text-foreground hover:text-primary">
+                                  {
+                                    review.customerName
+                                  }
+                                </p>
 
-                              <p className="mt-1 text-xs text-muted-foreground">
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {
+                                    review.customerEmail
+                                  }
+                                </p>
+                              </button>
+                            </td>
+
+                            <td className="px-5 py-4">
+                              {renderStars(
+                                review.rating
+                              )}
+
+                              <p className="mt-1 text-xs font-medium">
                                 {
-                                  review.productType
+                                  review.rating
+                                }
+                                /5
+                              </p>
+                            </td>
+
+                            <td className="max-w-[320px] px-5 py-4">
+                              {review.title && (
+                                <p className="text-sm font-semibold text-foreground">
+                                  {
+                                    review.title
+                                  }
+                                </p>
+                              )}
+
+                              <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+                                {
+                                  review.comment
                                 }
                               </p>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  router.push(
+                                    `/admin/orders/${review.orderId}`
+                                  )
+                                }
+                                className="mt-2 text-xs font-medium text-primary hover:underline"
+                              >
+                                Verified purchase · #
+                                {
+                                  review.orderNumber
+                                }
+                              </button>
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                                  review.status
+                                )}`}
+                              >
+                                {
+                                  review.status
+                                }
+                              </span>
+                            </td>
+
+                            <td className="px-5 py-4 text-sm text-muted-foreground">
+                              {
+                                review.submittedAt
+                              }
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <div className="flex items-center justify-end gap-2">
+                                {!autoApprove &&
+                                  review.status ===
+                                    "Pending" && (
+                                    <>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          rejectReview(
+                                            review
+                                          )
+                                        }
+                                        className="h-9 border-error/40 px-4 text-error hover:border-error hover:bg-[var(--error-background)] hover:text-error"
+                                      >
+                                        Reject
+                                      </Button>
+
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          approveReview(
+                                            review
+                                          )
+                                        }
+                                        className="h-9 border-success/40 px-4 text-success hover:border-success hover:bg-[var(--success-background)] hover:text-success"
+                                      >
+                                        Approve
+                                      </Button>
+                                    </>
+                                  )}
+
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    router.push(
+                                      `/admin/reviews/${review.id}`
+                                    )
+                                  }
+                                  className="h-9 border-primary/40 px-4 text-primary hover:border-primary hover:bg-primary/5 hover:text-primary"
+                                >
+                                  View
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <Pagination
+                  currentPage={
+                    currentPage
+                  }
+                  totalPages={
+                    totalPages
+                  }
+                  totalItems={
+                    filteredReviews.length
+                  }
+                  pageSize={
+                    pageSize
+                  }
+                  onPageChange={
+                    setCurrentPage
+                  }
+                />
+              </section>
+
+              <div className="space-y-3 md:hidden">
+                {paginatedReviews.map(
+                  (
+                    review
+                  ) => (
+                    <article
+                      key={
+                        review.id
+                      }
+                      className="overflow-hidden rounded-xl border border-border bg-white shadow-sm"
+                    >
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-surface-subtle">
+                            <Image
+                              src={
+                                review.productImage
+                              }
+                              alt={
+                                review.productName
+                              }
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                            />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    router.push(
+                                      `/admin/products/${review.productId}`
+                                    )
+                                  }
+                                  className="block max-w-[170px] truncate text-left text-sm font-semibold text-foreground hover:text-primary"
+                                >
+                                  {
+                                    review.productName
+                                  }
+                                </button>
+
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {
+                                    review.productType
+                                  }
+                                </p>
+                              </div>
+
+                              <span
+                                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusClass(
+                                  review.status
+                                )}`}
+                              >
+                                {
+                                  review.status
+                                }
+                              </span>
+                            </div>
+
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              {renderStars(
+                                review.rating
+                              )}
+
+                              <span className="text-xs font-medium text-muted-foreground">
+                                {
+                                  review.rating
+                                }
+                                /5
+                              </span>
                             </div>
                           </div>
-                        </td>
+                        </div>
 
-                        {/* Customer */}
-                        <td className="px-5 py-4">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              router.push(
-                                `/admin/customers/${review.customerId}`
-                              )
-                            }
-                            className="text-left"
-                          >
-                            <p className="text-sm font-medium text-foreground hover:text-primary">
-                              {
-                                review.customerName
-                              }
-                            </p>
-
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {
-                                review.customerEmail
-                              }
-                            </p>
-                          </button>
-                        </td>
-
-                        {/* Rating */}
-                        <td className="px-5 py-4">
-                          {renderStars(
-                            review.rating
-                          )}
-
-                          <p className="mt-1 text-xs font-medium">
-                            {
-                              review.rating
-                            }
-                            /5
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/admin/customers/${review.customerId}`
+                            )
+                          }
+                          className="mt-4 w-full rounded-xl bg-surface-subtle p-3 text-left transition-colors hover:bg-primary/5"
+                        >
+                          <p className="text-xs text-muted-foreground">
+                            Customer
                           </p>
-                        </td>
 
-                        {/* Review */}
-                        <td className="max-w-[320px] px-5 py-4">
+                          <p className="mt-1 text-sm font-semibold text-foreground">
+                            {
+                              review.customerName
+                            }
+                          </p>
+
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {
+                              review.customerEmail
+                            }
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/admin/orders/${review.orderId}`
+                            )
+                          }
+                          className="mt-3 flex w-full items-center justify-between rounded-xl border border-border p-3 text-left transition-colors hover:border-primary/30 hover:bg-primary/5"
+                        >
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              Verified Purchase
+                            </p>
+
+                            <p className="mt-1 text-sm font-semibold text-primary">
+                              #
+                              {
+                                review.orderNumber
+                              }
+                            </p>
+                          </div>
+
+                          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+                        </button>
+
+                        <div className="mt-4">
                           {review.title && (
                             <p className="text-sm font-semibold text-foreground">
                               {
@@ -979,419 +1128,115 @@ useEffect(() => {
                             </p>
                           )}
 
-                          <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+                          <p className="mt-1 line-clamp-3 text-sm leading-6 text-muted-foreground">
                             {
                               review.comment
                             }
                           </p>
+                        </div>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              router.push(
-                                `/admin/orders/${review.orderId}`
-                              )
-                            }
-                            className="mt-2 text-xs font-medium text-primary hover:underline"
-                          >
-                            Verified purchase · #
+                        <div className="mt-4 border-t border-border pt-3">
+                          <p className="text-xs text-muted-foreground">
+                            Submitted{" "}
                             {
-                              review.orderNumber
+                              review.submittedAt
                             }
-                          </button>
-                        </td>
+                          </p>
+                        </div>
+                      </div>
 
-                        {/* Status */}
-                        <td className="px-5 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                              review.status
-                            )}`}
-                          >
-                            {
-                              review.status
-                            }
-                          </span>
-                        </td>
+                      <div className="border-t border-border bg-surface-subtle/40 p-3">
+                        {!autoApprove &&
+                        review.status ===
+                          "Pending" ? (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() =>
+                                  rejectReview(
+                                    review
+                                  )
+                                }
+                                className="w-full border-error/40 text-error hover:border-error hover:bg-[var(--error-background)] hover:text-error"
+                              >
+                                Reject
+                              </Button>
 
-                        {/* Submitted */}
-                        <td className="px-5 py-4 text-sm text-muted-foreground">
-                          {
-                            review.submittedAt
-                          }
-                        </td>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() =>
+                                  approveReview(
+                                    review
+                                  )
+                                }
+                                className="w-full border-success/40 text-success hover:border-success hover:bg-[var(--success-background)] hover:text-success"
+                              >
+                                Approve
+                              </Button>
+                            </div>
 
-                        {/* Actions */}
-                        <td className="px-5 py-4">
-                          <div className="flex items-center justify-end gap-2">
-                            {/*
-                              IMPORTANT:
-
-                              Approve / Reject only show when:
-
-                              1. Auto Approve is OFF
-                              2. Review is Pending
-                            */}
-
-                            {!autoApprove &&
-                              review.status ===
-                                "Pending" && (
-                                <>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      rejectReview(
-                                        review
-                                      )
-                                    }
-                                    className="h-9 border-error/40 px-4 text-error hover:border-error hover:bg-[var(--error-background)] hover:text-error"
-                                  >
-                                    Reject
-                                  </Button>
-
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      approveReview(
-                                        review
-                                      )
-                                    }
-                                    className="h-9 border-success/40 px-4 text-success hover:border-success hover:bg-[var(--success-background)] hover:text-success"
-                                  >
-                                    Approve
-                                  </Button>
-                                </>
-                              )}
-
-                            {/* View always visible */}
                             <Button
                               type="button"
-                              variant="outline"
-                              size="sm"
+                              variant="primary"
                               onClick={() =>
                                 router.push(
                                   `/admin/reviews/${review.id}`
                                 )
                               }
-                              className="h-9 border-primary/40 px-4 text-primary hover:border-primary hover:bg-primary/5 hover:text-primary"
+                              className="w-full"
                             >
-                              View
+                              View Review
                             </Button>
                           </div>
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <Pagination
-              currentPage={
-                currentPage
-              }
-              totalPages={
-                totalPages
-              }
-              totalItems={
-                filteredReviews.length
-              }
-              pageSize={pageSize}
-              onPageChange={
-                setCurrentPage
-              }
-            />
-          </section>
-
-          {/* =========================
-              MOBILE REVIEWS
-          ========================= */}
-
-          <div className="space-y-3 md:hidden">
-            {paginatedReviews.map(
-              (review) => (
-                <article
-                  key={review.id}
-                  className="overflow-hidden rounded-xl border border-border bg-white shadow-sm"
-                >
-                  {/* Main Content */}
-                  <div className="p-4">
-                    {/* Product Header */}
-                    <div className="flex items-start gap-3">
-                      {/* Image */}
-                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-surface-subtle">
-                        <Image
-                          src={
-                            review.productImage
-                          }
-                          alt={
-                            review.productName
-                          }
-                          fill
-                          sizes="64px"
-                          className="object-cover"
-                        />
-                      </div>
-
-                      {/* Product Info */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                router.push(
-                                  `/admin/products/${review.productId}`
-                                )
-                              }
-                              className="block max-w-[170px] truncate text-left text-sm font-semibold text-foreground hover:text-primary"
-                            >
-                              {
-                                review.productName
-                              }
-                            </button>
-
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {
-                                review.productType
-                              }
-                            </p>
-                          </div>
-
-                          {/* Status */}
-                          <span
-                            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusClass(
-                              review.status
-                            )}`}
-                          >
-                            {
-                              review.status
-                            }
-                          </span>
-                        </div>
-
-                        {/* Rating */}
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          {renderStars(
-                            review.rating
-                          )}
-
-                          <span className="text-xs font-medium text-muted-foreground">
-                            {
-                              review.rating
-                            }
-                            /5
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Customer */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(
-                          `/admin/customers/${review.customerId}`
-                        )
-                      }
-                      className="mt-4 w-full rounded-xl bg-surface-subtle p-3 text-left transition-colors hover:bg-primary/5"
-                    >
-                      <p className="text-xs text-muted-foreground">
-                        Customer
-                      </p>
-
-                      <p className="mt-1 text-sm font-semibold text-foreground">
-                        {
-                          review.customerName
-                        }
-                      </p>
-
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {
-                          review.customerEmail
-                        }
-                      </p>
-                    </button>
-
-                    {/* Verified Purchase */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(
-                          `/admin/orders/${review.orderId}`
-                        )
-                      }
-                      className="mt-3 flex w-full items-center justify-between rounded-xl border border-border p-3 text-left transition-colors hover:border-primary/30 hover:bg-primary/5"
-                    >
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Verified Purchase
-                        </p>
-
-                        <p className="mt-1 text-sm font-semibold text-primary">
-                          #
-                          {
-                            review.orderNumber
-                          }
-                        </p>
-                      </div>
-
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-                    </button>
-
-                    {/* Review */}
-                    <div className="mt-4">
-                      {review.title && (
-                        <p className="text-sm font-semibold text-foreground">
-                          {
-                            review.title
-                          }
-                        </p>
-                      )}
-
-                      <p className="mt-1 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                        {
-                          review.comment
-                        }
-                      </p>
-                    </div>
-
-                    {/* Submitted */}
-                    <div className="mt-4 border-t border-border pt-3">
-                      <p className="text-xs text-muted-foreground">
-                        Submitted{" "}
-                        {
-                          review.submittedAt
-                        }
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* =====================
-                      MOBILE ACTIONS
-                  ===================== */}
-
-                  <div className="border-t border-border bg-surface-subtle/40 p-3">
-                    {/*
-                      MANUAL APPROVAL:
-
-                      Auto Approve OFF
-                      +
-                      Pending Review
-
-                      Show:
-                      Reject | Approve
-                      View Review
-                    */}
-
-                    {!autoApprove &&
-                    review.status ===
-                      "Pending" ? (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
+                        ) : (
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="primary"
                             onClick={() =>
-                              rejectReview(
-                                review
+                              router.push(
+                                `/admin/reviews/${review.id}`
                               )
                             }
-                            className="w-full border-error/40 text-error hover:border-error hover:bg-[var(--error-background)] hover:text-error"
+                            className="w-full"
                           >
-                            Reject
+                            View Review
                           </Button>
-
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() =>
-                              approveReview(
-                                review
-                              )
-                            }
-                            className="w-full border-success/40 text-success hover:border-success hover:bg-[var(--success-background)] hover:text-success"
-                          >
-                            Approve
-                          </Button>
-                        </div>
-
-                        <Button
-                          type="button"
-                          variant="primary"
-                          onClick={() =>
-                            router.push(
-                              `/admin/reviews/${review.id}`
-                            )
-                          }
-                          className="w-full"
-                        >
-                          View Review
-                        </Button>
+                        )}
                       </div>
-                    ) : (
-                      /*
-                       * AUTO APPROVE ON
-                       *
-                       * OR
-                       *
-                       * Review already Approved / Rejected
-                       *
-                       * Only View Review is shown.
-                       */
+                    </article>
+                  )
+                )}
 
-                      <Button
-                        type="button"
-                        variant="primary"
-                        onClick={() =>
-                          router.push(
-                            `/admin/reviews/${review.id}`
-                          )
-                        }
-                        className="w-full"
-                      >
-                        View Review
-                      </Button>
-                    )}
-                  </div>
-                </article>
-              )
-            )}
-
-            {/* Mobile Pagination */}
-            <div className="overflow-hidden rounded-xl border border-border bg-white">
-              <Pagination
-                currentPage={
-                  currentPage
-                }
-                totalPages={
-                  totalPages
-                }
-                totalItems={
-                  filteredReviews.length
-                }
-                pageSize={
-                  pageSize
-                }
-                onPageChange={
-                  setCurrentPage
-                }
-              />
-            </div>
-          </div>
+                <div className="overflow-hidden rounded-xl border border-border bg-white">
+                  <Pagination
+                    currentPage={
+                      currentPage
+                    }
+                    totalPages={
+                      totalPages
+                    }
+                    totalItems={
+                      filteredReviews.length
+                    }
+                    pageSize={
+                      pageSize
+                    }
+                    onPageChange={
+                      setCurrentPage
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
   );
 }
-
-/* ====================================
-   SUMMARY CARD
-==================================== */
 
 type SummaryCardProps = {
   label: string;
