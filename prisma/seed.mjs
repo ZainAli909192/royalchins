@@ -46,6 +46,24 @@ if (whiteChinchilla && cage) {
   await prisma.review.upsert({ where: { id: "seed-review-sara" }, update: { rating: 4, title: "Good quality", comment: "The cage is spacious and feels sturdy.", status: "Pending" }, create: { id: "seed-review-sara", customerId: sara.id, productId: cage.id, rating: 4, title: "Good quality", comment: "The cage is spacious and feels sturdy.", status: "Pending" } });
 }
 
+if (whiteChinchilla && ahmed) {
+  const refundOrder = await prisma.order.upsert({
+    where: { orderNumber: "RC-REFUND-DEMO" },
+    update: { customerId: ahmed.id, orderStatus: "Cancelled", paymentStatus: "Paid", total: 1450, subtotal: 1450, deliveryFee: 0 },
+    create: { orderNumber: "RC-REFUND-DEMO", customerId: ahmed.id, customerName: ahmed.name, email: ahmed.email, phone: ahmed.phone, paymentMethod: "Card", paymentStatus: "Paid", orderStatus: "Cancelled", total: 1450, subtotal: 1450, deliveryFee: 0, items: { create: [{ productId: whiteChinchilla.id, productName: whiteChinchilla.name, quantity: 1, unitPrice: 1450 }] } },
+  });
+  const refundPayment = await prisma.payment.upsert({
+    where: { orderId: refundOrder.id },
+    update: { provider: "Stripe", method: "Card", status: "Paid", amount: 1450, currency: "AED" },
+    create: { orderId: refundOrder.id, provider: "Stripe", method: "Card", status: "Paid", amount: 1450, currency: "AED" },
+  });
+  await prisma.refund.upsert({
+    where: { orderId: refundOrder.id },
+    update: { paymentId: refundPayment.id, amount: 1450, status: "Requested", reason: "Order cancelled before delivery", customerNote: "Seeded refund request for admin testing." },
+    create: { orderId: refundOrder.id, paymentId: refundPayment.id, amount: 1450, status: "Requested", reason: "Order cancelled before delivery", customerNote: "Seeded refund request for admin testing." },
+  });
+}
+
 for (const product of await prisma.product.findMany({ select: { id: true, quantity: true } })) {
   const existingEvent = await prisma.inventoryAdjustment.findFirst({ where: { productId: product.id } });
   if (!existingEvent) await prisma.inventoryAdjustment.create({ data: { productId: product.id, previous: 0, quantity: product.quantity, action: "Set", reason: "initial-seed", notes: "Initial inventory record" } });

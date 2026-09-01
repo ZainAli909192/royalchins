@@ -71,6 +71,9 @@ export function StoreFooter() {
                                     Instagram
                                 </span>
                             </a>
+                            <a href="/admin/login" >
+                                Admin
+                            </a>    
                         </div>
                     </div>
                 </div>

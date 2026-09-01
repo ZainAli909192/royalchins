@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
+import { getRefunds, updateRefundStatus } from "@/lib/api/refunds";
 
 type RefundStatus =
   | "Requested"
@@ -43,17 +45,17 @@ type PaymentMethod =
   | "Tabby";
 
 type Refund = {
-  id: number;
+  id: string | number;
 
   refundNumber: string;
 
-  orderId: number;
+  orderId: string | number;
   orderNumber: string;
 
-  paymentId: number;
+  paymentId: string | number;
   paymentNumber: string;
 
-  customerId: number;
+  customerId: string | number;
   customerName: string;
   customerEmail: string;
 
@@ -260,9 +262,37 @@ export default function RefundsPage() {
   const router = useRouter();
 
   const [refunds, setRefunds] =
-    useState<Refund[]>(
-      initialRefunds
-    );
+    useState<Refund[]>([]);
+  const [isLoadingRefunds, setIsLoadingRefunds] = useState(true);
+
+  const loadRefunds = async () => {
+    try {
+      const records = await getRefunds() as Array<any>;
+      setRefunds(records.map((record) => ({
+        id: record.id,
+        refundNumber: `RF-${record.id.slice(-6).toUpperCase()}`,
+        orderId: record.orderId,
+        orderNumber: record.order.orderNumber,
+        paymentId: record.paymentId ?? "",
+        paymentNumber: record.paymentId ? `PAY-${record.paymentId.slice(-6).toUpperCase()}` : "—",
+        customerId: record.order.customerId ?? "",
+        customerName: record.order.customer?.name ?? record.order.customerName,
+        customerEmail: record.order.customer?.email ?? record.order.email,
+        amount: Number(record.amount),
+        currency: record.order.payment?.currency ?? "AED",
+        paymentMethod: record.order.paymentMethod,
+        status: record.status,
+        reason: record.reason,
+        requestedAt: new Date(record.requestedAt).toLocaleString("en-AE"),
+        approvedAt: record.approvedAt ? new Date(record.approvedAt).toLocaleString("en-AE") : undefined,
+        declinedAt: record.declinedAt ? new Date(record.declinedAt).toLocaleString("en-AE") : undefined,
+        declineReason: record.declineReason ?? undefined,
+      })));
+    } catch { setRefunds([]); }
+    finally { setIsLoadingRefunds(false); }
+  };
+
+  useEffect(() => { void loadRefunds(); }, []);
 
   const [search, setSearch] =
     useState("");
@@ -287,6 +317,8 @@ export default function RefundsPage() {
   ] = useState<Refund | null>(
     null
   );
+
+  const [approvedAmount, setApprovedAmount] = useState(0);
 
   const [
     declineRefund,
@@ -487,6 +519,7 @@ export default function RefundsPage() {
     refund: Refund
   ) => {
     setDialogError("");
+    setApprovedAmount(refund.amount);
     setApproveRefund(refund);
   };
 
@@ -533,22 +566,7 @@ export default function RefundsPage() {
         const refundId =
           approveRefund.id;
 
-        /*
-          BACKEND LATER:
-
-          await approveRefundApi(
-            refundId
-          );
-        */
-
-        console.log(
-          "Approve refund:",
-          {
-            refundId,
-            approvedBy:
-              "Admin",
-          }
-        );
+        const updated = await updateRefundStatus(refundId, { status: "Approved", amount: approvedAmount }) as { status?: RefundStatus; amount?: number | string };
 
         setRefunds(
           (current) =>
@@ -558,8 +576,8 @@ export default function RefundsPage() {
                 refundId
                   ? {
                       ...refund,
-                      status:
-                        "Approved",
+                      status: updated.status ?? "Approved",
+                      amount: updated.amount === undefined ? approvedAmount : Number(updated.amount),
                       approvedAt:
                         "Just now",
                       approvedBy:
@@ -608,35 +626,7 @@ export default function RefundsPage() {
         const refundId =
           declineRefund.id;
 
-        /*
-          BACKEND LATER:
-
-          await declineRefundApi(
-            refundId,
-            {
-              reason:
-                declineReason,
-              notes:
-                declineNotes,
-            }
-          );
-        */
-
-        console.log(
-          "Decline refund:",
-          {
-            refundId,
-
-            reason:
-              declineReason,
-
-            notes:
-              declineNotes,
-
-            declinedBy:
-              "Admin",
-          }
-        );
+        await updateRefundStatus(refundId, { status: "Declined", declineReason, adminNote: declineNotes });
 
         setRefunds(
           (current) =>
@@ -917,8 +907,9 @@ export default function RefundsPage() {
         </div>
       </section>
 
-      {filteredRefunds.length ===
-      0 ? (
+      {isLoadingRefunds ? (
+        <AdminPageLoader label="Loading refund requests" />
+      ) : filteredRefunds.length === 0 ? (
         <AdminEmptyState
           type="search"
           title="No refunds found"
@@ -1426,13 +1417,16 @@ export default function RefundsPage() {
                     </p>
 
                     <p className="mt-1 text-lg font-bold">
-                      {
-                        approveRefund.currency
-                      }{" "}
-                      {approveRefund.amount.toLocaleString()}
+                      {approveRefund.currency}
                     </p>
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">Amount to approve</label>
+                <Input type="number" min="0.01" max={approveRefund.amount} step="0.01" value={approvedAmount} onChange={(event) => setApprovedAmount(Number(event.target.value))} className="mt-2" />
+                <p className="mt-1 text-xs text-muted-foreground">Maximum refundable amount: {approveRefund.currency} {approveRefund.amount.toLocaleString()}</p>
               </div>
 
               <div>
