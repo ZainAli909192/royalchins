@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import Stripe from "stripe";
 
 import { getAdminNotificationEmail } from "@/lib/auth/admin-auth-server";
 import { sendOrderConfirmationEmails } from "@/lib/email/order-confirmation";
@@ -19,11 +20,26 @@ export async function POST(request: Request) {
       signature,
       webhookSecret
     );
-    if (event.type !== "payment_intent.succeeded") return NextResponse.json({ received: true });
-
-    const intent = event.data.object;
+    const intent = event.data.object as Stripe.PaymentIntent;
     const { orderId, orderNumber, customerId } = intent.metadata;
     if (!orderId || !orderNumber || !customerId) return NextResponse.json({ received: true });
+
+    if (event.type === "payment_intent.payment_failed") {
+      await prisma.payment.updateMany({
+        where: { orderId },
+        data: {
+          status: "Failed",
+          providerPaymentId: intent.id,
+          failureCode: intent.last_payment_error?.code ?? null,
+          failureMessage: intent.last_payment_error?.message ?? "Stripe declined this payment.",
+          failedAt: new Date(),
+        },
+      });
+      await prisma.order.updateMany({ where: { id: orderId, customerId }, data: { paymentStatus: "Failed" } });
+      return NextResponse.json({ received: true });
+    }
+
+    if (event.type !== "payment_intent.succeeded") return NextResponse.json({ received: true });
 
     const completed = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const order = await tx.order.findFirst({
@@ -41,11 +57,26 @@ export async function POST(request: Request) {
         if (updated.count !== 1) throw new Error("OUT_OF_STOCK");
       }
 
-      return tx.order.update({
+      const paidOrder = await tx.order.update({
         where: { id: order.id },
         data: { paymentStatus: "Paid", orderStatus: "Confirmed" },
         include: { items: true, shippingAddress: true },
       });
+      await tx.payment.updateMany({
+        where: { orderId: order.id },
+        data: {
+          provider: "Stripe",
+          method: "Card",
+          status: "Paid",
+          providerPaymentId: intent.id,
+          providerChargeId: typeof intent.latest_charge === "string" ? intent.latest_charge : intent.latest_charge?.id ?? null,
+          paidAt: new Date(),
+          failureCode: null,
+          failureMessage: null,
+          failedAt: null,
+        },
+      });
+      return paidOrder;
     });
 
     if (completed) {

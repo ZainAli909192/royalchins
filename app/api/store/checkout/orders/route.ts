@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/payments/stripe";
+import { getDeliveryQuote } from "@/lib/delivery/delivery-store";
 
 const schema = z.object({
   addressId: z.string().min(1),
@@ -18,16 +19,6 @@ const schema = z.object({
     )
     .min(1),
 });
-
-const deliveryFees: Record<string, number> = {
-  Dubai: 35,
-  "Abu Dhabi": 50,
-  Sharjah: 40,
-  Ajman: 45,
-  "Umm Al Quwain": 55,
-  "Ras Al Khaimah": 60,
-  Fujairah: 60,
-};
 
 export async function POST(
   request: Request
@@ -202,10 +193,17 @@ export async function POST(
               0
             );
 
-          const deliveryFee =
-            deliveryFees[
-              address.emirate
-            ] ?? 60;
+          const deliveryQuote = await getDeliveryQuote(tx, {
+            emirate: address.emirate,
+            area: address.area,
+            subtotal,
+          });
+
+          if (!deliveryQuote) {
+            throw new Error("DELIVERY_UNAVAILABLE");
+          }
+
+          const deliveryFee = deliveryQuote.fee;
 
           const total =
             subtotal +
@@ -337,17 +335,26 @@ export async function POST(
       where: { orderId: result.order.id },
       create: {
         orderId: result.order.id,
+        provider: "Stripe",
+        method: "Card",
         amount: result.total,
-        currency: "aed",
+        currency: "AED",
         status: "Pending",
-        providerPaymentIntentId: paymentIntent.id,
+        providerPaymentId: paymentIntent.id,
       },
       update: {
+        provider: "Stripe",
+        method: "Card",
         amount: result.total,
-        currency: "aed",
+        currency: "AED",
         status: "Pending",
-        providerPaymentIntentId: paymentIntent.id,
+        providerPaymentId: paymentIntent.id,
+        providerChargeId: null,
+        cardBrand: null,
+        cardLast4: null,
+        failureCode: null,
         failureMessage: null,
+        failedAt: null,
       },
     });
 
@@ -410,6 +417,8 @@ export async function POST(
     ) {
       message =
         "One or more products are no longer available.";
+    } else if (reason === "DELIVERY_UNAVAILABLE") {
+      message = "Delivery is not available for this address yet. Please choose another address or contact us.";
     }
 
     return NextResponse.json(

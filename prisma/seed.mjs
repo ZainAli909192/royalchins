@@ -50,4 +50,22 @@ for (const product of await prisma.product.findMany({ select: { id: true, quanti
   const existingEvent = await prisma.inventoryAdjustment.findFirst({ where: { productId: product.id } });
   if (!existingEvent) await prisma.inventoryAdjustment.create({ data: { productId: product.id, previous: 0, quantity: product.quantity, action: "Set", reason: "initial-seed", notes: "Initial inventory record" } });
 }
+
+const deliveryZones = [
+  ["All areas", "Abu Dhabi", 0, "1 day", null, true],
+  ["All areas", "Dubai", 35, "Same day", 500, false],
+  ["All areas", "Sharjah", 40, "1 day", null, false],
+  ["All areas", "Ajman", 45, "1–2 days", null, false],
+  ["All areas", "Umm Al Quwain", 55, "1–2 days", null, false],
+  ["All areas", "Ras Al Khaimah", 60, "1–2 days", null, false],
+  ["All areas", "Fujairah", 60, "1–2 days", null, false],
+];
+
+for (const [area, emirate, fee, eta, freeDeliveryThreshold, isFreeDelivery] of deliveryZones) {
+  await prisma.deliveryZone.upsert({
+    where: { area_emirate: { area, emirate } },
+    update: { fee, eta, freeDeliveryThreshold, isFreeDelivery, isActive: true },
+    create: { area, emirate, fee, eta, freeDeliveryThreshold, isFreeDelivery, isActive: true },
+  });
+}
 await prisma.$disconnect();

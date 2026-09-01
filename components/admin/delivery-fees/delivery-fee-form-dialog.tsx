@@ -30,6 +30,8 @@ export type DeliveryFeeFormValues = {
     | number
     | "";
 
+  isFreeDelivery: boolean;
+
   status: DeliveryFeeStatus;
 };
 
@@ -60,6 +62,8 @@ const emptyValues: DeliveryFeeFormValues = {
 
   freeDeliveryThreshold:
     "",
+
+  isFreeDelivery: false,
 
   status: "Active",
 };
@@ -211,6 +215,8 @@ export function DeliveryFeeFormDialog({
             : Number(
                 form.freeDeliveryThreshold
               ),
+
+        isFreeDelivery: form.isFreeDelivery,
 
         status:
           form.status,
@@ -471,6 +477,19 @@ export function DeliveryFeeFormDialog({
                 Leave empty if free delivery does not apply to this area.
               </p>
             </div>
+
+            <label className="flex min-h-12 items-center gap-3 rounded-lg border border-border px-4 text-sm font-medium text-foreground">
+              <input
+                type="checkbox"
+                checked={form.isFreeDelivery}
+                onChange={(event) => updateField("isFreeDelivery", event.target.checked)}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <span>
+                <span className="block">Always free delivery</span>
+                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Use this for areas such as Abu Dhabi, regardless of order value.</span>
+              </span>
+            </label>
 
             {/* Status */}
             <div>

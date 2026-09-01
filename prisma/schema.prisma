@@ -99,24 +99,29 @@ model Order {
 }
 
 model Payment {
-  id                      String        @id @default(cuid())
-  orderId                 String        @unique
-  order                   Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  provider                String        @default("Stripe")
-  providerPaymentIntentId String?       @unique
-  amount                  Decimal       @db.Decimal(10, 2)
-  currency                String        @default("aed")
-  status                  PaymentStatus @default(Pending)
-  cardBrand               String?
-  cardLast4               String?
-  receiptUrl              String?
-  failureMessage          String?
-  paidAt                  DateTime?
-  refundedAt              DateTime?
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String        @default("Stripe")
+  method            PaymentMethod @default(Card)
+  status            PaymentStatus @default(Pending)
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("AED")
+  providerPaymentId String?       @unique @map("providerPaymentIntentId")
+  providerChargeId  String?
+  cardBrand         String?
+  cardLast4         String?
+  failureCode       String?
+  failureMessage    String?
+  receiptUrl        String?
+  paidAt            DateTime?
+  failedAt          DateTime?
+  refundedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([status, createdAt])
+  @@index([provider])
 }
 
 model Customer {
@@ -154,6 +159,22 @@ model StoreSetting {
   value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model DeliveryZone {
+  id                    String   @id @default(cuid())
+  area                  String
+  emirate               String
+  fee                   Decimal  @default(0) @db.Decimal(10, 2)
+  eta                   String
+  freeDeliveryThreshold Decimal? @db.Decimal(10, 2)
+  isFreeDelivery        Boolean  @default(false)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([area, emirate])
+  @@index([emirate, isActive])
 }
 
 model CustomerAddress {

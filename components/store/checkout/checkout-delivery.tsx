@@ -82,18 +82,25 @@ const fallbackAddress = {
   unit: "Apartment 1204",
 };
 
-const deliveryFees: Record<
-  Exclude<Emirate, "">,
-  number
-> = {
-  Dubai: 35,
-  "Abu Dhabi": 50,
-  Sharjah: 40,
-  Ajman: 45,
-  "Umm Al Quwain": 55,
-  "Ras Al Khaimah": 60,
-  Fujairah: 60,
+const emirates: Exclude<Emirate, "">[] = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"];
+
+type DeliveryQuote = {
+  fee: number;
+  eta: string;
+  area: string;
+  emirate: string;
+  isFreeDelivery: boolean;
 };
+
+async function readApiBody(response: Response): Promise<{ message?: string; customer?: { addresses?: Array<Record<string, string | null>> } } | DeliveryQuote | { id: string }> {
+  const body = await response.text();
+  if (!body) return {};
+  try {
+    return JSON.parse(body) as { message?: string; customer?: { addresses?: Array<Record<string, string | null>> } } | DeliveryQuote | { id: string };
+  } catch {
+    return { message: response.ok ? "The server returned an invalid response." : "The request could not be completed. Please try again." };
+  }
+}
 
 export function CheckoutDelivery() {
   const router = useRouter();
@@ -141,6 +148,9 @@ export function CheckoutDelivery() {
     setSubmitError,
   ] =
     useState("");
+
+  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
 
   const [
     submitting,
@@ -213,7 +223,7 @@ export function CheckoutDelivery() {
         ) => ({
           response,
           data:
-            await response.json(),
+            await readApiBody(response),
         })
       )
       .then(
@@ -232,7 +242,7 @@ export function CheckoutDelivery() {
           }
 
           const address =
-            data.customer
+            "customer" in data && data.customer
               ?.addresses?.[0];
 
           if (!address) {
@@ -245,28 +255,28 @@ export function CheckoutDelivery() {
 
           setSavedAddress({
             id:
-              address.id,
+              address.id ?? "",
 
             label:
-              address.label,
+              address.label ?? "Home",
 
             fullName:
-              address.recipientName,
+              address.recipientName ?? "",
 
             phone:
-              address.phone,
+              address.phone ?? "",
 
             emirate:
-              address.emirate,
+              (address.emirate ?? "") as Emirate,
 
             area:
-              address.area,
+              address.area ?? "",
 
             street:
-              address.street,
+              address.street ?? "",
 
             building:
-              address.building,
+              address.building ?? "",
 
             unit:
               address.unit ??
@@ -274,7 +284,7 @@ export function CheckoutDelivery() {
           });
 
           setSavedAddressId(
-            address.id
+            address.id ?? null
           );
         }
       )
@@ -290,13 +300,6 @@ export function CheckoutDelivery() {
     "saved"
       ? savedAddress.emirate
       : form.emirate;
-
-  const deliveryFee =
-    selectedEmirate
-      ? deliveryFees[
-          selectedEmirate
-        ]
-      : null;
 
   const subtotal =
     useMemo(
@@ -314,6 +317,34 @@ export function CheckoutDelivery() {
       [checkoutItems]
     );
 
+  const selectedArea = addressMode === "saved" ? savedAddress.area : form.area;
+  const deliveryFee = deliveryQuote?.fee ?? null;
+
+  useEffect(() => {
+    const emirate = selectedEmirate.trim();
+    const area = selectedArea.trim();
+    if (!emirate || checkoutItems.length === 0) {
+      setDeliveryQuote(null);
+      return;
+    }
+    const controller = new AbortController();
+    setQuoteLoading(true);
+    fetch(`/api/store/delivery-fees?emirate=${encodeURIComponent(emirate)}&area=${encodeURIComponent(area)}&subtotal=${encodeURIComponent(subtotal)}`, { signal: controller.signal })
+      .then(async (response) => ({ response, data: await readApiBody(response) }))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(("message" in data && data.message) || "Delivery is not available for this area yet.");
+        setDeliveryQuote(data as DeliveryQuote);
+        setSubmitError("");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setDeliveryQuote(null);
+        setSubmitError(error instanceof Error ? error.message : "Unable to calculate delivery.");
+      })
+      .finally(() => setQuoteLoading(false));
+    return () => controller.abort();
+  }, [selectedEmirate, subtotal, checkoutItems.length]);
+
   const handleSubmit =
     async (
       event: FormEvent<HTMLFormElement>
@@ -324,6 +355,11 @@ export function CheckoutDelivery() {
         checkoutItems.length ===
         0
       ) {
+        return;
+      }
+
+      if (deliveryFee === null) {
+        setSubmitError("Choose an address in an active delivery area before continuing.");
         return;
       }
 
@@ -391,19 +427,18 @@ export function CheckoutDelivery() {
               }
             );
 
-          const result =
-            await response.json();
+          const result = await readApiBody(response);
 
           if (
             !response.ok
           ) {
             throw new Error(
-              result.message
+              ("message" in result && result.message) || "Unable to save this delivery address."
             );
           }
 
           addressId =
-            result.id;
+            "id" in result ? result.id : null;
         }
 
         const checkout =
@@ -602,17 +637,16 @@ export function CheckoutDelivery() {
 
                     <div>
                       <p className="text-sm font-bold text-foreground">
-                        Delivery to{" "}
+                        Delivery in{" "}
                         {
                           selectedEmirate
                         }
                       </p>
 
                       <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        Delivery fee
-                        calculated for
-                        the selected
-                        emirate.
+                        {deliveryQuote?.isFreeDelivery
+                          ? "Free delivery applies to this address."
+                          : `Estimated delivery: ${deliveryQuote?.eta ?? ""}.`}
                       </p>
                     </div>
                   </div>
@@ -669,16 +703,12 @@ export function CheckoutDelivery() {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={
-                    submitting
-                  }
+                  disabled={submitting || quoteLoading || deliveryFee === null}
                   className="h-12 rounded-xl px-6 text-sm font-bold"
                 >
                   <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
                     <span>
-                      {submitting
-                        ? "Saving..."
-                        : "Review"}
+                      {submitting ? "Saving..." : quoteLoading ? "Calculating delivery..." : "Review"}
                     </span>
 
                     <ArrowRight
@@ -986,9 +1016,7 @@ function NewAddressForm({
                   Select emirate
                 </option>
 
-                {Object.keys(
-                  deliveryFees
-                ).map(
+                {emirates.map(
                   (
                     emirate
                   ) => (

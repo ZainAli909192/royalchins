@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -27,13 +28,14 @@ import { DeleteDeliveryFeeDialog } from "@/components/admin/delivery-fees/delete
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { apiRequest } from "@/lib/api/client";
 
 type DeliveryFeeStatus =
   | "Active"
   | "Inactive";
 
 type DeliveryFee = {
-  id: number;
+  id: string;
 
   area: string;
   emirate: string;
@@ -46,10 +48,12 @@ type DeliveryFee = {
     | number
     | null;
 
+  isFreeDelivery: boolean;
+
   status: DeliveryFeeStatus;
 };
 
-const initialDeliveryFees: DeliveryFee[] = [
+const initialDeliveryFees = [
   {
     id: 1,
 
@@ -129,16 +133,16 @@ const initialDeliveryFees: DeliveryFee[] = [
 
     status: "Inactive",
   },
-];
+] as unknown as DeliveryFee[];
 
 export default function DeliveryFeesPage() {
   const [
     deliveryFees,
     setDeliveryFees,
   ] =
-    useState<DeliveryFee[]>(
-      initialDeliveryFees
-    );
+    useState<DeliveryFee[]>([]);
+
+  const [loadError, setLoadError] = useState("");
 
   const [search, setSearch] =
     useState("");
@@ -170,6 +174,23 @@ export default function DeliveryFeesPage() {
     useState<DeliveryFee | null>(
       null
     );
+
+  const loadDeliveryFees = async () => {
+    try {
+      setLoadError("");
+      const zones = await apiRequest<Array<Omit<DeliveryFee, "status" | "fee" | "freeDeliveryThreshold"> & { fee: number | string; freeDeliveryThreshold: number | string | null; isActive: boolean }>>("/api/admin/delivery-fees");
+      setDeliveryFees(zones.map((zone) => ({
+        ...zone,
+        fee: Number(zone.fee),
+        freeDeliveryThreshold: zone.freeDeliveryThreshold === null ? null : Number(zone.freeDeliveryThreshold),
+        status: zone.isActive ? "Active" : "Inactive",
+      })));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to load delivery areas.");
+    }
+  };
+
+  useEffect(() => { void loadDeliveryFees(); }, []);
 
   const [
     feeToDelete,
@@ -283,145 +304,56 @@ export default function DeliveryFeesPage() {
       setFormDialogOpen(false);
     };
 
-  const saveDeliveryFee = (
+  const saveDeliveryFee = async (
     values: DeliveryFeeFormValues
   ) => {
-    if (editingFee) {
-      setDeliveryFees(
-        (current) =>
-          current.map(
-            (fee) =>
-              fee.id ===
-              editingFee.id
-                ? {
-                    ...fee,
-
-                    area:
-                      values.area,
-
-                    emirate:
-                      values.emirate,
-
-                    fee:
-                      values.fee,
-
-                    eta:
-                      values.eta,
-
-                    freeDeliveryThreshold:
-                      values.freeDeliveryThreshold ===
-                      ""
-                        ? null
-                        : values.freeDeliveryThreshold,
-
-                    status:
-                      values.status,
-                  }
-                : fee
-          )
-      );
-
-      setSuccessMessage(
-        "Delivery fee updated successfully."
-      );
-    } else {
-      const newFee: DeliveryFee =
-        {
-          id: Date.now(),
-
-          area:
-            values.area,
-
-          emirate:
-            values.emirate,
-
-          fee:
-            values.fee,
-
-          eta:
-            values.eta,
-
-          freeDeliveryThreshold:
-            values.freeDeliveryThreshold ===
-            ""
-              ? null
-              : values.freeDeliveryThreshold,
-
-          status:
-            values.status,
-        };
-
-      setDeliveryFees(
-        (current) => [
-          ...current,
-          newFee,
-        ]
-      );
-
-      setSuccessMessage(
-        "Delivery fee added successfully."
-      );
+    try {
+      const payload = { ...values, freeDeliveryThreshold: values.freeDeliveryThreshold === "" ? null : values.freeDeliveryThreshold };
+      await apiRequest(editingFee ? `/api/admin/delivery-fees/${editingFee.id}` : "/api/admin/delivery-fees", {
+        method: editingFee ? "PATCH" : "POST",
+        body: JSON.stringify(payload),
+      });
+      await loadDeliveryFees();
+      closeFormDialog();
+      setSuccessMessage(editingFee ? "Delivery fee updated successfully." : "Delivery fee added successfully.");
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to save delivery area.");
     }
-
-    closeFormDialog();
   };
 
   /* =========================
      DELETE
   ========================= */
 
-  const confirmDelete =
-    () => {
+  const confirmDelete = async () => {
       if (!feeToDelete) {
         return;
       }
 
-      setDeliveryFees(
-        (current) =>
-          current.filter(
-            (fee) =>
-              fee.id !==
-              feeToDelete.id
-          )
-      );
-
-      setFeeToDelete(null);
-
-      setSuccessMessage(
-        "Delivery fee deleted successfully."
-      );
+      try {
+        await apiRequest(`/api/admin/delivery-fees/${feeToDelete.id}`, { method: "DELETE" });
+        await loadDeliveryFees();
+        setFeeToDelete(null);
+        setSuccessMessage("Delivery fee deleted successfully.");
+      } catch (error) {
+        setLoadError(error instanceof Error ? error.message : "Unable to delete delivery area.");
+      }
     };
 
   /* =========================
      STATUS
   ========================= */
 
-  const toggleStatus = (
+  const toggleStatus = async (
     fee: DeliveryFee
   ) => {
-    setDeliveryFees(
-      (current) =>
-        current.map(
-          (item) =>
-            item.id === fee.id
-              ? {
-                  ...item,
-
-                  status:
-                    item.status ===
-                    "Active"
-                      ? "Inactive"
-                      : "Active",
-                }
-              : item
-        )
-    );
-
-    setSuccessMessage(
-      fee.status === "Active"
-        ? "Delivery fee set to inactive."
-        : "Delivery fee activated successfully."
-    );
+    try {
+      await apiRequest(`/api/admin/delivery-fees/${fee.id}`, { method: "PATCH", body: JSON.stringify({ status: fee.status === "Active" ? "Inactive" : "Active" }) });
+      await loadDeliveryFees();
+      setSuccessMessage(fee.status === "Active" ? "Delivery fee set to inactive." : "Delivery fee activated successfully.");
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to update delivery area.");
+    }
   };
 
   /* =========================
@@ -481,6 +413,14 @@ export default function DeliveryFeesPage() {
           onClose={() =>
             setSuccessMessage("")
           }
+        />
+      )}
+
+      {loadError && (
+        <FormAlert
+          variant="error"
+          message={loadError}
+          onClose={() => setLoadError("")}
         />
       )}
 
@@ -723,8 +663,11 @@ export default function DeliveryFeesPage() {
 
                         {/* Free Delivery */}
                         <td className="px-5 py-4 text-sm text-foreground">
-                          {fee.freeDeliveryThreshold !==
-                          null ? (
+                          {fee.isFreeDelivery ? (
+                            <span className="rounded-full bg-[var(--success-background)] px-3 py-1 text-xs font-medium text-success">
+                              Free delivery
+                            </span>
+                          ) : fee.freeDeliveryThreshold !== null ? (
                             <span className="rounded-full bg-[var(--success-background)] px-3 py-1 text-xs font-medium text-success">
                               Above AED{" "}
                               {fee.freeDeliveryThreshold.toLocaleString()}
@@ -864,8 +807,7 @@ export default function DeliveryFeesPage() {
                     </div>
 
                     {/* Free Delivery */}
-                    {fee.freeDeliveryThreshold !==
-                      null && (
+                    {(fee.isFreeDelivery || fee.freeDeliveryThreshold !== null) && (
                       <div className="mt-3 rounded-xl border border-border p-3">
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs text-muted-foreground">
@@ -873,10 +815,7 @@ export default function DeliveryFeesPage() {
                           </span>
 
                           <span className="text-sm font-semibold text-success">
-                            Above AED{" "}
-                            {
-                              fee.freeDeliveryThreshold
-                            }
+                            {fee.isFreeDelivery ? "Free for every order" : `Above AED ${fee.freeDeliveryThreshold}`}
                           </span>
                         </div>
                       </div>
@@ -952,6 +891,8 @@ export default function DeliveryFeesPage() {
                 freeDeliveryThreshold:
                   editingFee.freeDeliveryThreshold ??
                   "",
+
+                isFreeDelivery: editingFee.isFreeDelivery,
 
                 status:
                   editingFee.status,

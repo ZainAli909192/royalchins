@@ -39,6 +39,7 @@ export async function POST(
     const paymentMethodId = typeof intent.payment_method === "string" ? intent.payment_method : intent.payment_method?.id;
     const stripeMethod = paymentMethodId ? await getStripe().paymentMethods.retrieve(paymentMethodId) : null;
     const card = stripeMethod?.card;
+    const charge = intent.latest_charge && typeof intent.latest_charge !== "string" ? intent.latest_charge : null;
 
     const completed = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const order = await tx.order.findFirst({
@@ -68,22 +69,28 @@ export async function POST(
         create: {
           orderId: order.id,
           amount: Number(order.total),
-          currency: intent.currency,
+          currency: intent.currency.toUpperCase(),
+          provider: "Stripe",
+          method: "Card",
           status: "Paid",
-          providerPaymentIntentId: intent.id,
+          providerPaymentId: intent.id,
+          providerChargeId: charge?.id ?? null,
           cardBrand: card?.brand ?? null,
           cardLast4: card?.last4 ?? null,
-          receiptUrl: intent.latest_charge && typeof intent.latest_charge !== "string" ? intent.latest_charge.receipt_url : null,
+          receiptUrl: charge?.receipt_url ?? null,
           paidAt: new Date(),
         },
         update: {
           status: "Paid",
-          providerPaymentIntentId: intent.id,
+          providerPaymentId: intent.id,
+          providerChargeId: charge?.id ?? null,
           cardBrand: card?.brand ?? null,
           cardLast4: card?.last4 ?? null,
           receiptUrl: intent.latest_charge && typeof intent.latest_charge !== "string" ? intent.latest_charge.receipt_url : null,
           paidAt: new Date(),
+          failureCode: null,
           failureMessage: null,
+          failedAt: null,
         },
       });
       return { order: paidOrder, newlyPaid: true };

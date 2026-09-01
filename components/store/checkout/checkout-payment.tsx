@@ -36,9 +36,9 @@ const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 type PaymentMethod =
-  | "card"
-  | "tamara"
-  | "tabby";
+  | "card";
+  // | "tamara"
+  // | "tabby";
 
 export function CheckoutPayment() {
   const router = useRouter();
@@ -334,7 +334,9 @@ export function CheckoutPayment() {
                 </PaymentOption>
               </RevealItem>
 
-              <RevealItem
+
+{/* tabby tamara  */}
+              {/* <RevealItem
                 direction="scale"
                 scaleFrom={0.95}
               >
@@ -358,9 +360,10 @@ export function CheckoutPayment() {
                     tamara
                   </span>
                 </PaymentOption>
-              </RevealItem>
+              </RevealItem> */}
 
-              <RevealItem
+{/* tabby tamara  */}
+              {/* <RevealItem
                 direction="scale"
                 scaleFrom={0.95}
               >
@@ -384,7 +387,7 @@ export function CheckoutPayment() {
                     tabby
                   </span>
                 </PaymentOption>
-              </RevealItem>
+              </RevealItem> */}
             </RevealGroup>
           </section>
         </Reveal>
@@ -400,7 +403,8 @@ export function CheckoutPayment() {
           </Reveal>
         )}
 
-        {paymentMethod ===
+{/* tabby tamara  */}
+        {/* {paymentMethod ===
           "tamara" && (
           <Reveal
             key="tamara-payment"
@@ -428,7 +432,7 @@ export function CheckoutPayment() {
               text="This payment method is not available yet. Please choose secure card payment."
             />
           </Reveal>
-        )}
+        )} */}
 
         {paymentMethod === "card" && stripePayment && !stripePromise && (
           <section className="rounded-2xl border border-error/30 bg-error/5 p-5 text-sm text-error">

@@ -184,7 +184,7 @@ export default function PaymentsPage() {
         amount: Number(record.amount),
         method: record.order.paymentMethod,
         status: record.status,
-        transactionReference: record.providerPaymentIntentId ?? "Stripe payment pending",
+        transactionReference: record.providerPaymentId ?? "Stripe payment pending",
         createdAt: new Date(record.createdAt).toLocaleString("en-AE"),
         paidAt: record.paidAt ? new Date(record.paidAt).toLocaleString("en-AE") : undefined,
       })));
@@ -247,6 +247,7 @@ export default function PaymentsPage() {
       );
     });
   }, [
+    payments,
     search,
     status,
     method,
