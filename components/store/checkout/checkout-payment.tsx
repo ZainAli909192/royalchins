@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import {
   ArrowLeft,
   Check,
@@ -27,6 +29,11 @@ import {
   clearCheckout,
   getCheckout,
 } from "@/lib/store/checkout-storage";
+import { clearCart } from "@/lib/store/cart-storage";
+import { StripeCardForm } from "@/components/store/checkout/stripe-card-from";
+
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 type PaymentMethod =
   | "card"
@@ -78,6 +85,12 @@ export function CheckoutPayment() {
   ] =
     useState("");
 
+  const [stripePayment, setStripePayment] = useState<{
+    orderNumber: string;
+    clientSecret: string;
+    amount: number;
+  } | null>(null);
+
   useEffect(() => {
     const checkout =
       getCheckout();
@@ -123,17 +136,18 @@ export function CheckoutPayment() {
     subtotal +
     deliveryFee;
 
-  const handleSubmit =
-    async (
-      event: FormEvent<HTMLFormElement>
-    ) => {
-      event.preventDefault();
+  const prepareCardPayment = async () => {
 
       if (
         !addressId ||
         checkoutItems.length ===
           0
       ) {
+        return;
+      }
+
+      if (paymentMethod !== "card") {
+        setError("Only secure card payments are available at the moment.");
         return;
       }
 
@@ -197,13 +211,15 @@ export function CheckoutPayment() {
           );
         }
 
-        clearCheckout();
+        if (!order.clientSecret) {
+          throw new Error("Stripe could not prepare your secure payment form.");
+        }
 
-        router.push(
-          `/checkout/confirmation?order=${encodeURIComponent(
-            order.orderNumber
-          )}`
-        );
+        setStripePayment({
+          orderNumber: order.orderNumber,
+          clientSecret: order.clientSecret,
+          amount: Number(order.amount),
+        });
       } catch (
         caught
       ) {
@@ -218,13 +234,36 @@ export function CheckoutPayment() {
           false
         );
       }
-    };
+  };
+
+  useEffect(() => {
+    if (paymentMethod !== "card" || stripePayment || !addressId || checkoutItems.length === 0) return;
+    void prepareCardPayment();
+  // Preparing a payment intent is deliberately done once for the current checkout selection.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMethod, stripePayment, addressId, checkoutItems]);
+
+  const handlePaymentSucceeded = async (paymentIntentId: string) => {
+    if (!stripePayment) return;
+    const response = await fetch(
+      `/api/store/checkout/orders/${encodeURIComponent(stripePayment.orderNumber)}/payment`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentIntentId }),
+      }
+    );
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message ?? "We could not confirm your payment.");
+
+    clearCheckout();
+    clearCart();
+    router.push(`/checkout/confirmation?order=${encodeURIComponent(stripePayment.orderNumber)}`);
+  };
 
   return (
     <form
-      onSubmit={
-        handleSubmit
-      }
+      onSubmit={(event) => { event.preventDefault(); void prepareCardPayment(); }}
       className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]"
     >
       <div className="min-w-0 space-y-4 sm:space-y-5">
@@ -350,8 +389,7 @@ export function CheckoutPayment() {
           </section>
         </Reveal>
 
-        {paymentMethod ===
-          "card" && (
+        {paymentMethod === "card" && !stripePayment && (
           <Reveal
             key="card-payment"
             direction="up"
@@ -372,7 +410,7 @@ export function CheckoutPayment() {
           >
             <ExternalPaymentNotice
               name="Tamara"
-              text="After you continue, you will be redirected to Tamara to complete your payment securely."
+              text="This payment method is not available yet. Please choose secure card payment."
             />
           </Reveal>
         )}
@@ -387,12 +425,36 @@ export function CheckoutPayment() {
           >
             <ExternalPaymentNotice
               name="Tabby"
-              text="After you continue, you will be redirected to Tabby to complete your payment securely."
+              text="This payment method is not available yet. Please choose secure card payment."
             />
           </Reveal>
         )}
 
-        <Reveal
+        {paymentMethod === "card" && stripePayment && !stripePromise && (
+          <section className="rounded-2xl border border-error/30 bg-error/5 p-5 text-sm text-error">
+            Stripe checkout is not configured. Add <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to the environment and restart the application.
+          </section>
+        )}
+
+        {paymentMethod === "card" && stripePayment && stripePromise && (
+          <Reveal direction="up" distance={30}>
+            <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-5">
+              <h2 className="text-base font-bold text-foreground">Enter card details</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Your payment is securely processed by Stripe.</p>
+              <div className="mt-5">
+                <Elements stripe={stripePromise} options={{ appearance: { theme: "stripe" } }}>
+                  <StripeCardForm
+                    clientSecret={stripePayment.clientSecret}
+                    total={stripePayment.amount}
+                    onPaymentSucceeded={handlePaymentSucceeded}
+                  />
+                </Elements>
+              </div>
+            </section>
+          </Reveal>
+        )}
+
+        {!stripePayment && <Reveal
           direction="up"
           distance={30}
         >
@@ -484,7 +546,7 @@ export function CheckoutPayment() {
               </div>
             </Reveal>
           </section>
-        </Reveal>
+        </Reveal>}
       </div>
     </form>
   );

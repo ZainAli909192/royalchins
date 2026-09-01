@@ -2,20 +2,20 @@ import "server-only";
 
 import { compare, hash } from "bcryptjs";
 import { createHash, randomBytes } from "crypto";
-import { mkdir, readFile, rename, writeFile } from "fs/promises";
 import { SignJWT, jwtVerify } from "jose";
-import path from "path";
+
+import { prisma } from "@/lib/prisma";
 
 type AdminRecord = {
   id: string;
   name: string;
   email: string;
   passwordHash: string;
-  resetTokenHash?: string;
-  resetTokenExpiresAt?: string;
+  adminEmail: string;
+  resetTokenHash?: string | null;
+  resetTokenExpiresAt?: Date | null;
 };
 
-const storePath = path.join(process.cwd(), "data", "admin-auth.json");
 export const ADMIN_SESSION_COOKIE = "royalchins_admin_session";
 
 function secretKey() {
@@ -25,24 +25,25 @@ function secretKey() {
 }
 
 async function readAdmin(): Promise<AdminRecord> {
-  try {
-    return JSON.parse(await readFile(storePath, "utf8")) as AdminRecord;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    const email = process.env.ADMIN_EMAIL;
-    const password = process.env.ADMIN_PASSWORD;
-    if (!email || !password) throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be configured.");
-    const admin: AdminRecord = { id: "admin", name: process.env.ADMIN_NAME ?? "Administrator", email: email.trim().toLowerCase(), passwordHash: await hash(password, 12) };
-    await saveAdmin(admin);
-    return admin;
-  }
+  const configuredEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const configuredPassword = process.env.ADMIN_PASSWORD;
+  if (!configuredEmail || !configuredPassword) throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be configured.");
+
+  const existing = await prisma.adminAccount.findUnique({ where: { email: configuredEmail } });
+  if (existing) return existing;
+
+  return prisma.adminAccount.create({
+    data: {
+      name: process.env.ADMIN_NAME?.trim() || "Administrator",
+      email: configuredEmail,
+      passwordHash: await hash(configuredPassword, 12),
+      adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL?.trim().toLowerCase() || configuredEmail,
+    },
+  });
 }
 
-async function saveAdmin(admin: AdminRecord) {
-  await mkdir(path.dirname(storePath), { recursive: true });
-  const temporaryPath = `${storePath}.${randomBytes(6).toString("hex")}.tmp`;
-  await writeFile(temporaryPath, JSON.stringify(admin), { encoding: "utf8", mode: 0o600 });
-  await rename(temporaryPath, storePath);
+export async function getAdminNotificationEmail() {
+  return (await readAdmin()).adminEmail;
 }
 
 export async function authenticateAdmin(email: string, password: string) {
@@ -74,19 +75,16 @@ export async function beginPasswordReset(email: string) {
   if (admin.email !== email.trim().toLowerCase()) return null;
   const token = randomBytes(32).toString("base64url");
   admin.resetTokenHash = createHash("sha256").update(token).digest("hex");
-  admin.resetTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-  await saveAdmin(admin);
+  admin.resetTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
+  await prisma.adminAccount.update({ where: { id: admin.id }, data: { resetTokenHash: admin.resetTokenHash, resetTokenExpiresAt: admin.resetTokenExpiresAt } });
   return token;
 }
 
 export async function completePasswordReset(token: string, password: string) {
   const admin = await readAdmin();
   const hashOfToken = createHash("sha256").update(token).digest("hex");
-  const isValid = admin.resetTokenHash === hashOfToken && admin.resetTokenExpiresAt && Date.parse(admin.resetTokenExpiresAt) > Date.now();
+  const isValid = admin.resetTokenHash === hashOfToken && admin.resetTokenExpiresAt && admin.resetTokenExpiresAt.getTime() > Date.now();
   if (!isValid) return false;
-  admin.passwordHash = await hash(password, 12);
-  delete admin.resetTokenHash;
-  delete admin.resetTokenExpiresAt;
-  await saveAdmin(admin);
+  await prisma.adminAccount.update({ where: { id: admin.id }, data: { passwordHash: await hash(password, 12), resetTokenHash: null, resetTokenExpiresAt: null } });
   return true;
 }

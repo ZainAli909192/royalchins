@@ -180,11 +180,26 @@ export function CheckoutConfirmation() {
       return;
     }
 
-    fetch(
-      `/api/store/checkout/orders/${encodeURIComponent(
-        number
-      )}`
-    )
+    const loadOrder = async () => {
+      const paymentIntentId = searchParams.get("payment_intent");
+      if (paymentIntentId) {
+        const confirmation = await fetch(
+          `/api/store/checkout/orders/${encodeURIComponent(number)}/payment`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentIntentId }),
+          }
+        );
+        if (!confirmation.ok) throw new Error("We could not confirm your Stripe payment.");
+      }
+
+      return fetch(
+        `/api/store/checkout/orders/${encodeURIComponent(number)}`
+      );
+    };
+
+    loadOrder()
       .then(
         async (
           response

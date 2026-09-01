@@ -30,7 +30,7 @@ export function StoreFooter() {
                         </Link>
 
                         <p className="mt-4 max-w-sm text-sm leading-6 text-secondary-foreground/65">
-                            Browse animals and accessories available from Royal Chins.
+                            Browse pets and accessories available from Royal Chins.
                         </p>
                     </div>
 

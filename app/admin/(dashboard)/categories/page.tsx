@@ -120,7 +120,7 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Categories"
-        description="Manage animal and accessory categories."
+        description="Manage pet and accessory categories."
         action={
           <Button
             variant="primary"
@@ -181,7 +181,7 @@ export default function CategoriesPage() {
             </option>
 
             <option value="animal">
-              Animal
+              Pet
             </option>
 
             <option value="accessory">

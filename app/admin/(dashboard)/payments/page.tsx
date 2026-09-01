@@ -22,6 +22,7 @@ import { AdminEmptyState } from "@/components/admin/shared/admin-empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
+import { getPayments } from "@/lib/api/payments";
 
 type PaymentStatus =
   | "Pending"
@@ -35,11 +36,11 @@ type PaymentMethod =
   | "Tabby";
 
 type Payment = {
-  id: number;
+  id: string | number;
   paymentNumber: string;
-  orderId: number;
+  orderId: string | number;
   orderNumber: string;
-  customerId: number;
+  customerId: string | number;
   customerName: string;
   customerEmail: string;
   amount: number;
@@ -50,7 +51,7 @@ type Payment = {
   paidAt?: string;
 };
 
-const payments: Payment[] = [
+const seedPayments: Payment[] = [
   {
     id: 501,
     paymentNumber: "PAY-0501",
@@ -161,11 +162,34 @@ const pageSize = 6;
 export default function PaymentsPage() {
   const router = useRouter();
 
+  const [payments, setPayments] = useState<Payment[]>([]);
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [method, setMethod] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    getPayments().then((data: unknown) => {
+      const records = Array.isArray(data) ? data : [];
+      setPayments(records.map((record: any) => ({
+        id: record.id,
+        paymentNumber: `PAY-${record.id.slice(-6).toUpperCase()}`,
+        orderId: record.orderId,
+        orderNumber: record.order.orderNumber,
+        customerId: record.order.customerId ?? "",
+        customerName: record.order.customer?.name ?? record.order.customerName,
+        customerEmail: record.order.customer?.email ?? record.order.email,
+        amount: Number(record.amount),
+        method: record.order.paymentMethod,
+        status: record.status,
+        transactionReference: record.providerPaymentIntentId ?? "Stripe payment pending",
+        createdAt: new Date(record.createdAt).toLocaleString("en-AE"),
+        paidAt: record.paidAt ? new Date(record.paidAt).toLocaleString("en-AE") : undefined,
+      })));
+    }).catch(() => setPayments([]));
+  }, []);
 
   const filteredPayments = useMemo(() => {
     return payments.filter((payment) => {

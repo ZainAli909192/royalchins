@@ -182,7 +182,7 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Products"
-        description="Manage animals and accessories in one place."
+        description="Manage pets and accessories in one place."
         action={
           <Button
             variant="primary"
@@ -231,7 +231,7 @@ export default function ProductsPage() {
             </option>
 
             <option value="animal">
-              Animals
+              Pets
             </option>
 
             <option value="accessory">

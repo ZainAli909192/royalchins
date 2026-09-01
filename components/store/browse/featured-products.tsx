@@ -136,7 +136,7 @@ function FeaturedCard({
         )}
 
         <span className="absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-bold text-foreground shadow-sm">
-          {product.type}
+          {product.type === "Animal" ? "Pet" : product.type}
         </span>
       </div>
 

@@ -120,7 +120,7 @@ export function CheckoutAuth() {
 
     try {
       const response = await fetch("/api/store/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
-      const result = await response.json();
+      const result = await response.json().catch(() => ({ message: "The sign-in service returned an invalid response. Please try again." }));
       if (!response.ok) throw new Error(result.message);
       goToDelivery();
     } catch (caught) {
@@ -170,7 +170,7 @@ export function CheckoutAuth() {
 
     try {
       const response = await fetch("/api/store/auth/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: fullName, email: signupEmail, password: signupPassword }) });
-      const result = await response.json();
+      const result = await response.json().catch(() => ({ message: "The account service returned an invalid response. Please try again." }));
       if (!response.ok) throw new Error(result.message);
       goToDelivery();
     } catch (caught) {

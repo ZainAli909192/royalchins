@@ -115,7 +115,7 @@ export const productSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["gender"],
-          message: "Gender is required for animals.",
+          message: "Gender is required for pets.",
         });
       }
 
@@ -123,7 +123,7 @@ export const productSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["age"],
-          message: "Age is required for animals.",
+          message: "Age is required for pets.",
         });
       }
 
@@ -131,7 +131,7 @@ export const productSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["color"],
-          message: "Color is required for animals.",
+          message: "Color is required for pets.",
         });
       }
     }

@@ -253,7 +253,7 @@ export default function CreateProductPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Add Product"
-        description="Create a new animal or accessory product."
+        description="Edit a pet or accessory product."
         action={
           <Button
             variant="outline"
@@ -325,7 +325,7 @@ export default function CreateProductPage() {
                 className="h-12 w-full rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               >
                 <option value="Animal">
-                  Animal
+                  Pet
                 </option>
 
                 <option value="Accessory">
@@ -561,7 +561,7 @@ export default function CreateProductPage() {
               </h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Additional information for this animal.
+                Additional information for this pet.
               </p>
             </div>
 

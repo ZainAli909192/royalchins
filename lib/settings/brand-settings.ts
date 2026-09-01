@@ -65,13 +65,33 @@ export function applyBrandColors(
     return;
   }
 
-  document.documentElement.style.setProperty(
-    "--primary",
-    primaryColor
-  );
+  const primary = normalizeHex(primaryColor);
+  const secondary = normalizeHex(secondaryColor);
 
-  document.documentElement.style.setProperty(
-    "--secondary",
-    secondaryColor
+  document.documentElement.style.setProperty("--primary", primary);
+  document.documentElement.style.setProperty("--primary-hover", darken(primary, 0.14));
+  document.documentElement.style.setProperty("--primary-active", darken(primary, 0.24));
+  document.documentElement.style.setProperty("--primary-foreground", foregroundFor(primary));
+  document.documentElement.style.setProperty("--secondary", secondary);
+  document.documentElement.style.setProperty("--secondary-foreground", foregroundFor(secondary));
+}
+
+function normalizeHex(color: string) {
+  return /^#[0-9a-f]{6}$/i.test(color) ? color : "#6F3CC3";
+}
+
+function darken(color: string, amount: number) {
+  const channels = [1, 3, 5].map((offset) =>
+    Math.round(parseInt(color.slice(offset, offset + 2), 16) * (1 - amount))
   );
+  return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function foregroundFor(color: string) {
+  const [red, green, blue] = [1, 3, 5].map((offset) =>
+    parseInt(color.slice(offset, offset + 2), 16)
+  );
+  return red * 0.299 + green * 0.587 + blue * 0.114 > 160
+    ? "#111111"
+    : "#ffffff";
 }

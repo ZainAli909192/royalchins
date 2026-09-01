@@ -31,8 +31,10 @@ function productData(input: ProductApiValues, categoryId: string): Prisma.Produc
 
 export async function listProducts() { return prisma.product.findMany({ include: includeProduct, orderBy: { createdAt: "desc" } }); }
 export async function listStoreProducts() {
+  const inventorySetting = await prisma.storeSetting.findUnique({ where: { key: "inventory" }, select: { value: true } });
+  const hideOutOfStock = typeof inventorySetting?.value === "object" && inventorySetting.value !== null && !Array.isArray(inventorySetting.value) && inventorySetting.value.hideOutOfStock === true;
   return prisma.product.findMany({
-    where: { status: ProductStatus.Active },
+    where: { status: ProductStatus.Active, ...(hideOutOfStock ? { NOT: { type: "Accessory", quantity: { lte: 0 } } } : {}) },
     include: includeProduct,
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
   });

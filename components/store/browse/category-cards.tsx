@@ -3,10 +3,10 @@ import { ArrowRight, PackageOpen, PawPrint, Sparkles } from "lucide-react";
 
 const categories = [
   {
-    name: "Animals",
+    name: "Pets",
     href: "/animals",
     description: "Meet healthy, well-cared-for companions ready for their new home.",
-    action: "Meet the animals",
+    action: "Meet the pets",
     eyebrow: "Live companions",
     icon: PawPrint,
     tone: "primary",

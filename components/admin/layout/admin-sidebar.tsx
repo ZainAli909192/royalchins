@@ -68,11 +68,7 @@ const menuItems = [
     href: "/admin/reviews",
     icon: Star,
   },
-  {
-    label: "Pages / FAQ",
-    href: "/admin/pages",
-    icon: FileText,
-  },
+ 
   {
     label: "Delivery Fees",
     href: "/admin/delivery-fees",

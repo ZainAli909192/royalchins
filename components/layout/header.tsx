@@ -76,7 +76,7 @@ export function StoreHeader() {
                     event.target.value
                   )
                 }
-                placeholder="Search animals & accessories..."
+                placeholder="Search pets & accessories..."
                 className="h-12 w-full rounded-xl border border-border bg-surface-subtle pl-12 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/10"
               />
             </div>
@@ -138,7 +138,7 @@ export function StoreHeader() {
                     event.target.value
                   )
                 }
-                placeholder="Search animals & accessories..."
+                placeholder="Search pets & accessories..."
                 className="h-12 w-full bg-white px-5 pr-11 text-base text-black outline-none placeholder:text-muted-foreground"
               />
             </div>

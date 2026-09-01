@@ -176,7 +176,7 @@ export default async function ProductDetailsPage({
                 <PackageOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               )}
 
-              {product.type}
+              {isAnimal ? "Pet" : product.type}
             </span>
 
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:mt-4 sm:text-3xl lg:text-4xl">
@@ -212,7 +212,7 @@ export default async function ProductDetailsPage({
                 {price.toLocaleString()}
               </p>
 
-              <div
+              {!isAnimal && <div
                 className={`flex items-center gap-1.5 text-xs font-semibold sm:text-sm ${
                   product.quantity <= 0
                     ? "text-error"
@@ -232,7 +232,7 @@ export default async function ProductDetailsPage({
                 />
 
                 {stockLabel}
-              </div>
+              </div>}
             </div>
 
             <PurchasePanel

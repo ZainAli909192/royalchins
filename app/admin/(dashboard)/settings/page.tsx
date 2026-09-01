@@ -34,17 +34,8 @@ import {
 
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
-
-import {
-  getAutoApproveReviews,
-  saveAutoApproveReviews,
-} from "@/lib/reviews/review-settings";
-
-import {
-  applyBrandColors,
-  getBrandSettings,
-  saveBrandSettings,
-} from "@/lib/settings/brand-settings";
+import { getSettings, updateSettings } from "@/lib/api/settings";
+import { applyBrandColors } from "@/lib/settings/brand-settings";
 
 const initialBrandSettings: BrandSettings = {
   storeName: "Royal Chins",
@@ -130,31 +121,18 @@ export default function SettingsPage() {
   ] = useState("");
 
   useEffect(() => {
-    const savedBrand =
-      getBrandSettings();
-
-    if (savedBrand) {
-      setBrandSettings(
-        savedBrand
-      );
-
-      applyBrandColors(
-        savedBrand.primaryColor,
-        savedBrand.secondaryColor
-      );
-    } else {
-      applyBrandColors(
-        initialBrandSettings.primaryColor,
-        initialBrandSettings.secondaryColor
-      );
-    }
-
-    setReviewSettings({
-      autoApproveReviews:
-        getAutoApproveReviews(),
-    });
-
-    setSettingsLoaded(true);
+    getSettings().then((data: unknown) => {
+      const saved = data as { brand: BrandSettings; contact: ContactSettings; inventory: InventorySettings; reviews: ReviewSettings };
+      setBrandSettings(saved.brand);
+      setContactSettings(saved.contact);
+      setInventorySettings(saved.inventory);
+      setReviewSettings(saved.reviews);
+      applyBrandColors(saved.brand.primaryColor, saved.brand.secondaryColor);
+    }).catch((error: unknown) => setErrorMessage(
+      error instanceof Error
+        ? error.message
+        : "Unable to load settings. Please refresh and try again."
+    )).finally(() => setSettingsLoaded(true));
   }, []);
 
   const validateSettings = () => {
@@ -236,18 +214,14 @@ export default function SettingsPage() {
       try {
         setSaving(true);
 
-        saveBrandSettings(
-          brandSettings
-        );
+        await updateSettings({ brand: brandSettings, contact: contactSettings, inventory: inventorySettings, reviews: reviewSettings });
 
         applyBrandColors(
           brandSettings.primaryColor,
           brandSettings.secondaryColor
         );
 
-        saveAutoApproveReviews(
-          reviewSettings.autoApproveReviews
-        );
+        window.dispatchEvent(new Event("royalchins-settings-updated"));
 
         setSuccessMessage(
           "Settings saved successfully."

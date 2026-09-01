@@ -44,7 +44,8 @@ export function PurchasePanel({
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
-  const isOutOfStock = stock <= 0;
+  const isPet = type === "Animal";
+  const isOutOfStock = !isPet && stock <= 0;
 
   const handleDecreaseQuantity = () => {
     setQuantity((current) =>
@@ -68,7 +69,7 @@ export function PurchasePanel({
       image,
       type,
       price,
-      quantity,
+      quantity: isPet ? 1 : quantity,
       shortMeta,
     });
 
@@ -92,7 +93,7 @@ export function PurchasePanel({
           image,
           type,
           price,
-          quantity,
+          quantity: isPet ? 1 : quantity,
           shortMeta,
         },
       ],
@@ -115,6 +116,7 @@ export function PurchasePanel({
           )}
         </div>
 
+        {!isPet && (
         <div className="flex items-center gap-3">
         <span className="text-sm font-semibold text-foreground">
           Quantity
@@ -160,6 +162,7 @@ export function PurchasePanel({
           </button>
         </div>
         </div>
+        )}
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">

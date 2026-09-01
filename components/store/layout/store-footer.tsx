@@ -1,4 +1,5 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
 
 import {
@@ -7,8 +8,15 @@ import {
     Phone,
 } from "lucide-react";
 
+import { useStoreSettings } from "@/components/store/layout/store-settings-provider";
+
 
 export function StoreFooter() {
+    const { brand, contact } = useStoreSettings();
+    const telephone = contact.phone.replace(/[^\d+]/g, "");
+    const whatsappNumber = contact.whatsapp.replace(/\D/g, "");
+    const instagramHandle = contact.instagram.replace(/^@/, "");
+
     return (
         <footer className="border-t border-border bg-secondary pb-[76px] text-secondary-foreground lg:pb-0">
             <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
@@ -19,18 +27,16 @@ export function StoreFooter() {
                             className="inline-flex"
                         >
                             <div className="rounded-xl bg-background px-3 py-2">
-                                <Image
-                                    src="/logo.png"
-                                    alt="Royal Chins"
-                                    width={140}
-                                    height={65}
+                                <img
+                                    src={brand.logo || "/logo.png"}
+                                    alt={brand.storeName}
                                     className="h-[54px] w-[115px] object-contain"
                                 />
                             </div>
                         </Link>
 
                         <p className="mt-4 max-w-sm text-sm leading-6 text-secondary-foreground/65">
-                            Browse animals and accessories available from Royal Chins.
+                            Browse pets and accessories available from {brand.storeName}.
                         </p>
                     </div>
 
@@ -41,34 +47,34 @@ export function StoreFooter() {
 
                         <div className="mt-4 space-y-2">
                             <ContactLink
-                                href="mailto:theroyalchins@gmail.ae"
+                                href={`mailto:${contact.email}`}
                                 icon={Mail}
                             >
-                                theroyalchins@gmail.ae
+                                {contact.email}
                             </ContactLink>
 
                             <ContactLink
-                                href="tel:++971507801110"
+                                href={`tel:${telephone}`}
                                 icon={Phone}
                             >
-                                +971 50 780 1110
+                                {contact.phone}
                             </ContactLink>
 
                             <ContactLink
-                                href="https://wa.me/971507801110"
+                                href={whatsappNumber ? `https://wa.me/${whatsappNumber}` : "#"}
                                 icon={MessageCircle}
                             >
-                                WhatsApp
+                                {contact.whatsapp ? "WhatsApp" : "WhatsApp unavailable"}
                             </ContactLink>
 
                             <a
-                                href="https://www.instagram.com/royal.chins/"
+                                href={instagramHandle ? `https://www.instagram.com/${instagramHandle}/` : "#"}
                                 className="flex w-fit items-center gap-2.5 rounded-lg py-1 text-sm text-secondary-foreground/65 transition-colors hover:text-secondary-foreground"
                             >
                                 <InstagramIcon />
 
                                 <span>
-                                    Instagram
+                                    {contact.instagram || "Instagram"}
                                 </span>
                             </a>
                         </div>
@@ -77,7 +83,7 @@ export function StoreFooter() {
 
                 <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-5 text-xs text-secondary-foreground/50 sm:flex-row sm:items-center sm:justify-between">
                     <p>
-                        © 2026 Royal Chins. All rights reserved.
+                        © 2026 {brand.storeName}. All rights reserved.
                     </p>
 
                     <p>

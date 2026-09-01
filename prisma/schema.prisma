@@ -87,6 +87,7 @@ model Order {
   shippingAddressId String?
   shippingAddress CustomerAddress? @relation(fields: [shippingAddressId], references: [id], onDelete: SetNull)
   items         OrderItem[]
+  payment       Payment?
   reviews       Review[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -95,6 +96,27 @@ model Order {
   @@index([paymentStatus])
   @@index([customerId])
   @@index([shippingAddressId])
+}
+
+model Payment {
+  id                      String        @id @default(cuid())
+  orderId                 String        @unique
+  order                   Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider                String        @default("Stripe")
+  providerPaymentIntentId String?       @unique
+  amount                  Decimal       @db.Decimal(10, 2)
+  currency                String        @default("aed")
+  status                  PaymentStatus @default(Pending)
+  cardBrand               String?
+  cardLast4               String?
+  receiptUrl              String?
+  failureMessage          String?
+  paidAt                  DateTime?
+  refundedAt              DateTime?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([status, createdAt])
 }
 
 model Customer {
@@ -112,6 +134,26 @@ model Customer {
   addresses  CustomerAddress[]
 
   @@index([isActive, createdAt])
+}
+
+model AdminAccount {
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  passwordHash      String
+  adminEmail        String
+  resetTokenHash    String?
+  resetTokenExpiresAt DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model StoreSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CustomerAddress {

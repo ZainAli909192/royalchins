@@ -81,7 +81,7 @@ export default function CreateCategoryPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Add Category"
-        description="Create a new animal or accessory category."
+        description="Create a new pet or accessory category."
         action={
           <Button
             variant="outline"
@@ -154,7 +154,7 @@ export default function CreateCategoryPage() {
                 disabled={isSubmitting}
                 className="h-12 w-full rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               >
-                <option value="Animal">Animal</option>
+                <option value="Animal">Pet</option>
                 <option value="Accessory">Accessory</option>
               </select>
 

@@ -23,7 +23,7 @@ type ProductTypeFilterProps = {
 
 const animalOptions = [
   {
-    label: "All Animals",
+    label: "All Pets",
     value: "animals" as const,
   },
   {
@@ -70,7 +70,7 @@ export function ProductTypeFilter({
             strokeWidth={2}
           />
 
-          Animals
+          Pets
 
           <ChevronDown
             className={`h-4 w-4 transition-transform ${

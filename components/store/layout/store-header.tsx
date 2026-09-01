@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,12 +12,14 @@ import {
 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { getCartCount } from "@/lib/store/cart-storage";
+import { useStoreSettings } from "@/components/store/layout/store-settings-provider";
 
 export function StoreHeader() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
   const [customerName, setCustomerName] = useState<string | null>(null);
+  const { brand } = useStoreSettings();
 
   useEffect(() => {
     const refreshCart = () => setCartCount(getCartCount());
@@ -56,15 +57,12 @@ export function StoreHeader() {
         <div className="flex h-[72px] items-center justify-between gap-3 lg:h-[82px] lg:gap-5">
           <Link
             href="/"
-            aria-label="Royal Chins home"
+            aria-label={`${brand.storeName} home`}
             className="flex h-14 shrink-0 items-center justify-center rounded-xl bg-background px-2 shadow-sm transition-transform duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary motion-reduce:transition-none lg:h-16 lg:px-3"
           >
-            <Image
-              src="/logo.png"
-              alt="Royal Chins"
-              width={200}
-              height={100}
-              priority
+            <img
+              src={brand.logo || "/logo.png"}
+              alt={brand.storeName}
               className="h-[50px] w-[105px] object-contain lg:h-[58px] lg:w-[132px]"
             />
           </Link>
@@ -85,8 +83,8 @@ export function StoreHeader() {
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                placeholder="Search animals, food, cages & accessories"
-                aria-label="Search animals and accessories"
+              placeholder={`Search ${brand.storeName}`}
+              aria-label={`Search ${brand.storeName}`}
                 className="min-w-0 flex-1 bg-background px-4 text-base text-foreground outline-none placeholder:text-muted-foreground"
               />
 
@@ -159,8 +157,8 @@ export function StoreHeader() {
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Search Royal Chins"
-              aria-label="Search animals and accessories"
+              placeholder={`Search ${brand.storeName}`}
+              aria-label={`Search ${brand.storeName}`}
               className="min-w-0 flex-1 bg-background px-4 text-base text-foreground outline-none placeholder:text-muted-foreground"
             />
 
@@ -168,7 +166,7 @@ export function StoreHeader() {
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <Link href="/search?type=Animal" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-background/15 bg-background/10 px-3 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <PawPrint className="h-4 w-4" /> Animals
+              <PawPrint className="h-4 w-4" /> Pets
             </Link>
             <Link href="/search?type=Accessory" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-background/15 bg-background/10 px-3 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <PackageOpen className="h-4 w-4" /> Accessories

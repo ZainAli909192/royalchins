@@ -42,17 +42,17 @@ export default function AnimalDetailsPage() {
     return (
       <div className="space-y-6">
         <AdminPageHeader
-          title="Animal Details"
-          description="View animal information."
+          title="Pet Details"
+          description="View pet information."
         />
 
         <div className="rounded-xl border border-border bg-white p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-foreground">
-            Animal not found
+            Pet not found
           </p>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            The animal you are looking for does not exist.
+            The pet you are looking for does not exist.
           </p>
 
           <Button
@@ -62,7 +62,7 @@ export default function AnimalDetailsPage() {
           >
             <span className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back to Animals
+              Back to Pets
             </span>
           </Button>
         </div>
@@ -80,8 +80,8 @@ export default function AnimalDetailsPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        title="Animal Details"
-        description="View animal information, pricing and stock."
+        title="Pet Details"
+        description="View pet information, pricing and stock."
         action={
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
@@ -102,7 +102,7 @@ export default function AnimalDetailsPage() {
             >
               <span className="flex items-center gap-2 whitespace-nowrap">
                 <Pencil className="h-4 w-4" />
-                Edit Animal
+                Edit Pet
               </span>
             </Button>
           </div>
@@ -113,11 +113,11 @@ export default function AnimalDetailsPage() {
         <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
           <div>
             <h2 className="text-lg font-semibold text-foreground">
-              Animal Images
+              Pet Images
             </h2>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Uploaded images for this animal.
+              Uploaded images for this pet.
             </p>
           </div>
 

@@ -604,7 +604,7 @@ function CartItemCard({
                   }
                 />
 
-                {item.type}
+                {isAnimal ? "Pet" : item.type}
               </span>
 
               <Link
@@ -665,11 +665,7 @@ function CartItemCard({
               )}
             </div>
 
-            {isAnimal ? (
-              <div className="rounded-xl border border-border bg-surface-subtle px-3 py-2 text-xs font-semibold text-muted-foreground">
-                Qty 1
-              </div>
-            ) : (
+            {!isAnimal && (
               <div className="flex h-10 items-center overflow-hidden rounded-xl border border-border bg-background shadow-sm">
                 <button
                   type="button"

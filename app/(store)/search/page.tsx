@@ -259,7 +259,7 @@ export default async function SearchPage({
                     ? `“${query}”`
                     : type ===
                         "Animal"
-                      ? "Animals"
+                      ? "Pets"
                       : "Accessories"}
                 </span>
               </p>
@@ -364,7 +364,7 @@ function SearchProductCard({
             className="h-3 w-3"
           />
 
-          {product.type}
+          {product.type === "Animal" ? "Pet" : product.type}
         </span>
       </div>
 
@@ -409,7 +409,7 @@ function EmptySearch() {
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Search for animals,
+          Search for pets,
           accessories,
           categories, colors or
           product names.

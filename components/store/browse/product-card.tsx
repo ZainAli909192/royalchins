@@ -30,7 +30,8 @@ export function ProductCard({
 }: ProductCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
 
-  const isOutOfStock = stock === 0;
+  const isPet = type === "Animal";
+  const isOutOfStock = !isPet && stock === 0;
   const isLowStock = stock > 0 && stock <= 2;
 
   const productHref = `/product/${slug}`;
@@ -94,7 +95,7 @@ export function ProductCard({
 
           {/* Product Type */}
           <span className="absolute left-2.5 top-2.5 rounded-full bg-background/95 px-2.5 py-1 text-[10px] font-bold text-foreground shadow-sm sm:left-3 sm:top-3 sm:text-[11px]">
-            {type}
+            {isPet ? "Pet" : type}
           </span>
         </div>
       </Link>
@@ -130,7 +131,7 @@ export function ProductCard({
               </p>
 
               {/* Stock */}
-              <div
+              {!isPet && <div
                 className={`mt-1.5 flex items-center gap-1.5 ${stockTextColor}`}
               >
                 <span
@@ -141,7 +142,7 @@ export function ProductCard({
                 <span className="line-clamp-1 text-[10px] font-semibold sm:text-xs">
                   {stockLabel}
                 </span>
-              </div>
+              </div>}
             </div>
 
             {/* Cart */}
