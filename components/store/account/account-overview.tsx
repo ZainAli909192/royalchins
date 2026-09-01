@@ -25,41 +25,26 @@ import {
   RevealItem,
 } from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 
-const customer = {
-  firstName: "Ahmed",
-  fullName: "Ahmed Daniyal",
-  email: "ahmed@example.com",
-  phone: "+971 50 780 1110",
+type CustomerData = {
+  firstName: string;
+  fullName: string;
+  email: string;
+  phone: string;
 };
 
-const stats = {
-  orders: 3,
-  pendingReviews: 1,
+type AccountStats = {
+  orders: number;
+  pendingReviews: number;
 };
 
-const recentOrder = {
-  id: "RC-2026-00124",
-  date: "31 Aug 2026",
-  status: "Confirmed",
-  total: 2160,
-  items: [
-    {
-      id: "white-chinchilla",
-      name: "White Chinchilla",
-      image: "/animals/1.png",
-    },
-    {
-      id: "premium-chinchilla-cage",
-      name: "Premium Chinchilla Cage",
-      image: "/animals/3.png",
-    },
-    {
-      id: "wooden-hideout",
-      name: "Wooden Hideout",
-      image: "/animals/5.png",
-    },
-  ],
+type RecentOrder = {
+  id: string;
+  date: string;
+  status: string;
+  total: number;
+  items: { id: string; name: string; image: string }[];
 };
 
 const accountLinks = [
@@ -87,23 +72,17 @@ const accountLinks = [
 ];
 
 export function AccountOverview() {
-  const [
-    customerData,
-    setCustomerData,
-  ] =
-    useState(customer);
+  const [customerData, setCustomerData] =
+    useState<CustomerData | null>(null);
 
-  const [
-    statsData,
-    setStatsData,
-  ] =
-    useState(stats);
+  const [statsData, setStatsData] =
+    useState<AccountStats | null>(null);
 
-  const [
-    recentOrderData,
-    setRecentOrderData,
-  ] =
-    useState(recentOrder);
+  const [recentOrderData, setRecentOrderData] =
+    useState<RecentOrder | null>(null);
+
+  const [isLoading, setIsLoading] =
+    useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -232,8 +211,19 @@ export function AccountOverview() {
       )
       .catch(
         () => undefined
+      )
+      .finally(() =>
+        setIsLoading(false)
       );
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+        <AdminPageLoader label="Loading your account" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
@@ -249,7 +239,8 @@ export function AccountOverview() {
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Hello,{" "}
             {
-              customerData.firstName
+              customerData?.firstName ??
+                "Customer"
             }
           </h1>
 
@@ -273,7 +264,7 @@ export function AccountOverview() {
         >
           <OverviewCard
             title="Orders"
-            value={statsData.orders.toString()}
+            value={(statsData?.orders ?? 0).toString()}
             description="Total orders"
             href="/account/orders"
             icon={ShoppingBag}
@@ -286,9 +277,12 @@ export function AccountOverview() {
         >
           <OverviewCard
             title="Reviews"
-            value={statsData.pendingReviews.toString()}
+            value={(
+              statsData?.pendingReviews ??
+              0
+            ).toString()}
             description={
-              statsData.pendingReviews ===
+              statsData?.pendingReviews ===
               1
                 ? "Pending review"
                 : "Pending reviews"
@@ -327,8 +321,9 @@ export function AccountOverview() {
             </Link>
           </div>
 
-          <div className="p-4 sm:p-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          {recentOrderData ? (
+            <div className="p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
                   Order Number
@@ -364,9 +359,9 @@ export function AccountOverview() {
               </Reveal>
             </div>
 
-            <div className="my-5 border-t border-border" />
+              <div className="my-5 border-t border-border" />
 
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <RevealGroup
                 stagger={0.06}
                 className="flex items-center"
@@ -450,8 +445,21 @@ export function AccountOverview() {
                   </Button>
                 </div>
               </Reveal>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-8 text-center">
+              <p className="font-semibold text-foreground">
+                No orders yet
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your completed purchases will appear here.
+              </p>
+              <Button asChild variant="primary" className="mt-5 rounded-xl px-4 text-sm font-bold">
+                <Link href="/">Browse pets and accessories</Link>
+              </Button>
+            </div>
+          )}
         </section>
       </Reveal>
 

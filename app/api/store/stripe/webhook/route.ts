@@ -457,7 +457,7 @@ async function handleRefundUpdated(
     },
 
     data: {
-      status: "Pending",
+      status: "Approved",
 
       gatewayRefundId:
         stripeRefund.id,

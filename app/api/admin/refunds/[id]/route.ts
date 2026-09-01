@@ -336,12 +336,12 @@ export async function PATCH(
       stripeRefund.status ===
         "canceled";
 
-    const refundStatus =
+    const refundStatus: "Completed" | "Failed" | "Approved" =
       stripeSucceeded
         ? "Completed"
         : stripeFailed
           ? "Failed"
-          : "Pending";
+          : "Approved";
 
     const now =
       new Date();

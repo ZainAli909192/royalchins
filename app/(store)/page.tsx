@@ -16,6 +16,7 @@ import {
 import { ProductCard } from "@/components/store/browse/product-card";
 import { BrowseHeader } from "@/components/store/browse/browse-header";
 import { FeaturedProducts } from "@/components/store/browse/featured-products";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import FinalCTA from "@/components/store/layout/finalcta";
 
 import {
@@ -40,6 +41,9 @@ type StoreProduct = {
 export default function BrowsePage() {
   const [products, setProducts] =
     useState<StoreProduct[]>([]);
+
+  const [productsLoaded, setProductsLoaded] =
+    useState(false);
 
   const [
     filter,
@@ -148,6 +152,9 @@ export default function BrowsePage() {
       )
       .catch(() =>
         setProducts([])
+      )
+      .finally(() =>
+        setProductsLoaded(true)
       );
   }, []);
 
@@ -206,13 +213,17 @@ export default function BrowsePage() {
         distance={50}
         delay={0.08}
       >
-        <FeaturedProducts
-          products={products.filter(
-            (product) =>
-              product.isFeatured !==
-              false
-          )}
-        />
+        {productsLoaded ? (
+          <FeaturedProducts
+            products={products.filter(
+              (product) =>
+                product.isFeatured !==
+                false
+            )}
+          />
+        ) : (
+          <AdminPageLoader label="Loading featured products" />
+        )}
       </Reveal>
 
       <Reveal
@@ -234,13 +245,17 @@ export default function BrowsePage() {
               </h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Showing{" "}
-                <span className="font-semibold text-foreground">
-                  {
-                    filteredProducts.length
-                  }
-                </span>{" "}
-                products
+                {productsLoaded ? (
+                  <>
+                    Showing{" "}
+                    <span className="font-semibold text-foreground">
+                      {filteredProducts.length}
+                    </span>{" "}
+                    products
+                  </>
+                ) : (
+                  "Loading products..."
+                )}
               </p>
             </div>
           </Reveal>
@@ -268,7 +283,9 @@ export default function BrowsePage() {
           </Reveal>
         </div>
 
-        {filteredProducts.length >
+        {!productsLoaded ? (
+          <AdminPageLoader label="Loading products" />
+        ) : filteredProducts.length >
         0 ? (
           <RevealGroup
             key={filter}
