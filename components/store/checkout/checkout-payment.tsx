@@ -442,9 +442,8 @@ export function CheckoutPayment() {
               <h2 className="text-base font-bold text-foreground">Enter card details</h2>
               <p className="mt-1 text-sm text-muted-foreground">Your payment is securely processed by Stripe.</p>
               <div className="mt-5">
-                <Elements stripe={stripePromise} options={{ appearance: { theme: "stripe" } }}>
+                <Elements stripe={stripePromise} options={{ clientSecret: stripePayment.clientSecret, appearance: { theme: "stripe" } }}>
                   <StripeCardForm
-                    clientSecret={stripePayment.clientSecret}
                     total={stripePayment.amount}
                     onPaymentSucceeded={handlePaymentSucceeded}
                   />
