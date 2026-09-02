@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { prisma } from "@/lib/prisma";
-import { getStripe } from "@/lib/payments/stripe";
+import { assertStripeCanAcceptCardPayments, getStripe } from "@/lib/payments/stripe";
 import { getDeliveryQuote } from "@/lib/delivery/delivery-store";
 
 const schema = z.object({
@@ -58,8 +58,11 @@ export async function POST(
   }
 
   const input = parsed.data;
+  let createdOrderId: string | null = null;
+  let createdPaymentIntentId: string | null = null;
 
   try {
+    await assertStripeCanAcceptCardPayments();
     const result =
       await prisma.$transaction(
         async (
@@ -302,6 +305,8 @@ export async function POST(
         }
       );
 
+    createdOrderId = result.order.id;
+
     const amountInFils =
       Math.round(
         result.total * 100
@@ -331,6 +336,8 @@ export async function POST(
             session.sub,
         },
       });
+
+    createdPaymentIntentId = paymentIntent.id;
 
     if (!paymentIntent.client_secret) {
       throw new Error(
@@ -395,10 +402,19 @@ export async function POST(
         ? error.message
         : "PAYMENT_FAILED";
 
-    let message =
+      let message =
       "We could not prepare your payment. Please try again.";
 
-    if (
+    if (createdPaymentIntentId) {
+      await getStripe().paymentIntents.cancel(createdPaymentIntentId).catch(() => undefined);
+    }
+    if (createdOrderId) {
+      await prisma.order.delete({ where: { id: createdOrderId } }).catch(() => undefined);
+    }
+
+    if (reason === "STRIPE_ACCOUNT_NOT_READY") {
+      message = "Online card payments are not activated for this Stripe account yet. Please complete Stripe activation, then try again.";
+    } else if (
       reason.startsWith(
         "OUT_OF_STOCK:"
       )

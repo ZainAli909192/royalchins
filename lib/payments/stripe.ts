@@ -13,3 +13,10 @@ export function getStripe() {
   stripeClient ??= new Stripe(secretKey);
   return stripeClient;
 }
+
+export async function assertStripeCanAcceptCardPayments() {
+  const account = await getStripe().accounts.retrieveCurrent();
+  if (!account.charges_enabled || account.capabilities?.card_payments !== "active") {
+    throw new Error("STRIPE_ACCOUNT_NOT_READY");
+  }
+}
