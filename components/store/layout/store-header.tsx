@@ -20,14 +20,17 @@ export function StoreHeader() {
   const [cartCount, setCartCount] = useState(0);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const { brand } = useStoreSettings();
+  const accountHref = customerName ? "/account" : "/auth/login";
 
   useEffect(() => {
     const refreshCart = () => setCartCount(getCartCount());
     refreshCart();
     window.addEventListener("storage", refreshCart);
     window.addEventListener("royalchins-cart-updated", refreshCart);
-    fetch("/api/store/auth/session").then(async (response) => ({ response, data: await response.json() })).then(({ response, data }) => { if (response.ok) setCustomerName(data.customer.name); }).catch(() => undefined);
-    return () => { window.removeEventListener("storage", refreshCart); window.removeEventListener("royalchins-cart-updated", refreshCart); };
+    const refreshAccount = () => fetch("/api/store/auth/session").then(async (response) => ({ response, data: await response.json().catch(() => null) })).then(({ response, data }) => setCustomerName(response.ok ? data.customer.name : null)).catch(() => setCustomerName(null));
+    refreshAccount();
+    window.addEventListener("royalchins-auth-changed", refreshAccount);
+    return () => { window.removeEventListener("storage", refreshCart); window.removeEventListener("royalchins-cart-updated", refreshCart); window.removeEventListener("royalchins-auth-changed", refreshAccount); };
   }, []);
 
   useEffect(() => {
@@ -102,7 +105,7 @@ export function StoreHeader() {
               className="hidden lg:flex"
             />
 
-            <Link href="/account" aria-label="My account" className="flex h-11 w-11 items-center justify-center rounded-xl bg-background/10 text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground lg:hidden">
+            <Link href={accountHref} aria-label="My account" className="flex h-11 w-11 items-center justify-center rounded-xl bg-background/10 text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground lg:hidden">
               <UserRound className="h-5 w-5" strokeWidth={2} />
             </Link>
 
@@ -112,7 +115,7 @@ export function StoreHeader() {
             </Link>
 
             <HeaderAction
-              href="/account"
+              href={accountHref}
               ariaLabel="My account"
               icon={UserRound}
               eyebrow={customerName ? `Hello, ${customerName.split(" ")[0]}` : "Hello, sign in"}

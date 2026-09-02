@@ -13,13 +13,15 @@ import {
 
 import { clearAdminSession } from "@/lib/auth/admin-auth";
 
+
 export function AdminHeader() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/admin/auth/logout", { method: "POST" }).catch(() => undefined);
     clearAdminSession();
-    router.push("/admin/login");
+    router.replace("/admin/login");
     router.refresh();
   };
 

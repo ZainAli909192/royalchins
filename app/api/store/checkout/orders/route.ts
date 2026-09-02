@@ -150,12 +150,19 @@ export async function POST(
 
                 if (
                   product.type ===
-                    "Animal" &&
+                  "Animal" &&
                   item.quantity !== 1
                 ) {
                   throw new Error(
                     "PET_LIMIT"
                   );
+                }
+
+                if (
+                  product.type === "Animal" &&
+                  product.isSold
+                ) {
+                  throw new Error("PET_SOLD");
                 }
 
                 if (
@@ -411,6 +418,9 @@ export async function POST(
     ) {
       message =
         "Animals can only be purchased one at a time.";
+    } else if (reason === "PET_SOLD") {
+      message =
+        "This pet has already found a home. Please choose another pet.";
     } else if (
       reason ===
       "PRODUCT_UNAVAILABLE"

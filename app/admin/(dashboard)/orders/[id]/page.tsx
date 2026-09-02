@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useMemo,
+  useEffect,
   useState,
 } from "react";
 import {
@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import { CancelOrderDialog } from "@/components/admin/orders/cancel-order-dialog";
 import { FormAlert } from "@/components/forms/form-alert";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ type DeliveryStatus =
   | "Cancelled";
 
 type OrderItem = {
-  id: number;
+  id: string | number;
   name: string;
   type: "Animal" | "Accessory";
   sku: string;
@@ -69,7 +70,7 @@ type OrderItem = {
 };
 
 type Order = {
-  id: number;
+  id: string | number;
   orderNumber: string;
   customerName: string;
   email: string;
@@ -184,16 +185,9 @@ export default function OrderDetailsPage() {
   const router = useRouter();
   const params = useParams();
 
-  const orderId = Number(params.id);
-
-  const order = useMemo(
-    () =>
-      mockOrders.find(
-        (item) =>
-          item.id === orderId
-      ),
-    [orderId]
-  );
+  const orderId = String(params.id);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [currentOrderStatus, setCurrentOrderStatus] =
     useState<OrderStatus>(
@@ -209,6 +203,42 @@ export default function OrderDetailsPage() {
       "Not Scheduled"
   );
 
+  useEffect(() => {
+    fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`)
+      .then(async (response) => ({ response, data: await response.json().catch(() => null) }))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data?.message ?? "Order not found.");
+        const payment = data.payment;
+        const address = data.shippingAddress;
+        const mapped: Order = {
+          id: data.id,
+          orderNumber: data.orderNumber,
+          customerName: data.customerName,
+          email: data.email,
+          phone: data.phone,
+          placedAt: new Intl.DateTimeFormat("en-AE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(data.createdAt)),
+          orderStatus: data.orderStatus,
+          paymentMethod: payment?.method ?? data.paymentMethod,
+          paymentStatus: payment?.status ?? data.paymentStatus,
+          transactionReference: payment?.providerPaymentId ?? payment?.id ?? "—",
+          paidAt: payment?.paidAt ? new Intl.DateTimeFormat("en-AE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(payment.paidAt)) : "Not paid",
+          deliveryStatus: data.orderStatus === "Delivered" ? "Delivered" : data.orderStatus === "Cancelled" ? "Cancelled" : "Not Scheduled",
+          deliveryFee: Number(data.deliveryFee),
+          deliveryAddress: { emirate: address?.emirate ?? "—", area: address?.area ?? "—", address: [address?.unit, address?.building, address?.street].filter(Boolean).join(", ") || "No delivery address", building: address?.building ?? "—", phone: address?.phone ?? data.phone },
+          items: data.items.map((item: { id: string; productName: string; quantity: number; unitPrice: string | number; product?: { type?: "Animal" | "Accessory"; sku?: string } | null }) => ({ id: item.id, name: item.productName, type: item.product?.type ?? "Accessory", sku: item.product?.sku ?? "—", quantity: item.quantity, unitPrice: Number(item.unitPrice) })),
+          subtotal: Number(data.subtotal),
+          total: Number(data.total),
+          customerNotes: data.notes ?? "",
+          adminNotes: data.notes ?? "",
+        };
+        setOrder(mapped);
+        setCurrentOrderStatus(mapped.orderStatus);
+        setCurrentDeliveryStatus(mapped.deliveryStatus);
+      })
+      .catch((error) => setErrorMessage(error instanceof Error ? error.message : "Unable to load this order."))
+      .finally(() => setIsLoading(false));
+  }, [orderId]);
+
   const [
     cancelDialogOpen,
     setCancelDialogOpen,
@@ -223,6 +253,10 @@ export default function OrderDetailsPage() {
     errorMessage,
     setErrorMessage,
   ] = useState("");
+
+  if (isLoading) {
+    return <AdminPageLoader label="Loading order details…" />;
+  }
 
   if (!order) {
     return (
@@ -330,22 +364,16 @@ export default function OrderDetailsPage() {
     setSuccessMessage("");
 
     try {
-      console.log(
-        "Update order status:",
-        {
-          orderId,
-          status:
-            currentOrderStatus,
-        }
-      );
+      const response = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderStatus: currentOrderStatus }) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message ?? "Unable to update order status.");
+      setOrder((current) => current ? { ...current, orderStatus: currentOrderStatus } : current);
 
       setSuccessMessage(
         "Order status updated successfully."
       );
-    } catch {
-      setErrorMessage(
-        "Unable to update order status."
-      );
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to update order status.");
     }
   };
 
@@ -383,14 +411,10 @@ export default function OrderDetailsPage() {
       setSuccessMessage("");
 
       try {
-        console.log(
-          "Cancel order:",
-          {
-            orderId,
-            reason,
-            notes,
-          }
-        );
+        const response = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderStatus: "Cancelled", notes: `${reason}${notes ? `: ${notes}` : ""}` }) });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message ?? "Unable to cancel order.");
+        setOrder((current) => current ? { ...current, orderStatus: "Cancelled", adminNotes: `${reason}${notes ? `: ${notes}` : ""}` } : current);
 
         setCurrentOrderStatus(
           "Cancelled"
@@ -403,10 +427,8 @@ export default function OrderDetailsPage() {
         setSuccessMessage(
           `Order #${order.orderNumber} cancelled successfully.`
         );
-      } catch {
-        setErrorMessage(
-          "Unable to cancel order."
-        );
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Unable to cancel order.");
       }
     };
 

@@ -2,17 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
   ChevronRight,
   KeyRound,
+  LogOut,
   Mail,
   MapPin,
   MessageSquareText,
   Phone,
   ShoppingBag,
   UserRound,
+  X,
 } from "lucide-react";
 import {
   useEffect,
@@ -44,7 +47,11 @@ type RecentOrder = {
   date: string;
   status: string;
   total: number;
-  items: { id: string; name: string; image: string }[];
+  items: {
+    id: string;
+    name: string;
+    image: string;
+  }[];
 };
 
 const accountLinks = [
@@ -72,6 +79,8 @@ const accountLinks = [
 ];
 
 export function AccountOverview() {
+  const router = useRouter();
+
   const [customerData, setCustomerData] =
     useState<CustomerData | null>(null);
 
@@ -83,6 +92,15 @@ export function AccountOverview() {
 
   const [isLoading, setIsLoading] =
     useState(true);
+
+  const [showLogout, setShowLogout] =
+    useState(false);
+
+  const [isLoggingOut, setIsLoggingOut] =
+    useState(false);
+
+  const [logoutError, setLogoutError] =
+    useState("");
 
   useEffect(() => {
     Promise.all([
@@ -135,6 +153,9 @@ export function AccountOverview() {
               phone:
                 session.customer.phone,
             });
+          } else {
+            router.replace("/auth/login");
+            return;
           }
 
           if (
@@ -215,7 +236,58 @@ export function AccountOverview() {
       .finally(() =>
         setIsLoading(false)
       );
-  }, []);
+  }, [router]);
+
+  async function handleLogout() {
+    if (isLoggingOut) {
+      return;
+    }
+
+    setLogoutError("");
+    setIsLoggingOut(true);
+
+    try {
+      const response =
+        await fetch(
+          "/api/store/auth/logout",
+          {
+            method: "POST",
+          }
+        );
+
+      const data =
+        await response
+          .json()
+          .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ??
+            "Unable to log out."
+        );
+      }
+
+      setShowLogout(false);
+
+      window.dispatchEvent(
+        new Event("royalchins-auth-changed")
+      );
+
+      router.replace("/");
+
+      router.refresh();
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error
+          ? error.message
+          : "Unable to log out."
+      );
+    } finally {
+      setIsLoggingOut(
+        false
+      );
+    }
+  }
 
   if (isLoading) {
     return (
@@ -226,304 +298,356 @@ export function AccountOverview() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <Reveal
-        direction="left"
-        distance={40}
-      >
-        <header>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-            My Account
-          </p>
-
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Hello,{" "}
-            {
-              customerData?.firstName ??
-                "Customer"
-            }
-          </h1>
-
-          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-            Manage your Royal
-            Chins account,
-            orders and delivery
-            information.
-          </p>
-        </header>
-      </Reveal>
-
-      <RevealGroup
-        stagger={0.08}
-        delay={0.05}
-        className="mt-6 grid grid-cols-2 gap-3 sm:gap-4"
-      >
-        <RevealItem
-          direction="scale"
-          scaleFrom={0.94}
+    <>
+      <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+        <Reveal
+          direction="left"
+          distance={40}
         >
-          <OverviewCard
-            title="Orders"
-            value={(statsData?.orders ?? 0).toString()}
-            description="Total orders"
-            href="/account/orders"
-            icon={ShoppingBag}
-          />
-        </RevealItem>
+          <header>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              My Account
+            </p>
 
-        <RevealItem
-          direction="scale"
-          scaleFrom={0.94}
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Hello,{" "}
+              {customerData?.firstName ??
+                "Customer"}
+            </h1>
+
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+              Manage your Royal
+              Chins account,
+              orders and delivery
+              information.
+            </p>
+          </header>
+        </Reveal>
+
+        <RevealGroup
+          stagger={0.08}
+          delay={0.05}
+          className="mt-6 grid grid-cols-2 gap-3 sm:gap-4"
         >
-          <OverviewCard
-            title="Reviews"
-            value={(
-              statsData?.pendingReviews ??
-              0
-            ).toString()}
-            description={
-              statsData?.pendingReviews ===
-              1
-                ? "Pending review"
-                : "Pending reviews"
-            }
-            href="/account/reviews"
-            icon={
-              MessageSquareText
-            }
-          />
-        </RevealItem>
-      </RevealGroup>
-
-      <Reveal
-        direction="up"
-        distance={35}
-        className="mt-6"
-      >
-        <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm sm:rounded-3xl">
-          <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-4 sm:px-5">
-            <div>
-              <h2 className="text-base font-bold text-foreground sm:text-lg">
-                Recent Order
-              </h2>
-
-              <p className="mt-1 text-xs text-muted-foreground">
-                Your latest Royal
-                Chins purchase
-              </p>
-            </div>
-
-            <Link
+          <RevealItem
+            direction="scale"
+            scaleFrom={0.94}
+          >
+            <OverviewCard
+              title="Orders"
+              value={(
+                statsData?.orders ??
+                0
+              ).toString()}
+              description="Total orders"
               href="/account/orders"
-              className="shrink-0 text-xs font-bold text-primary hover:underline sm:text-sm"
-            >
-              View All
-            </Link>
-          </div>
+              icon={ShoppingBag}
+            />
+          </RevealItem>
 
-          {recentOrderData ? (
-            <div className="p-4 sm:p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <RevealItem
+            direction="scale"
+            scaleFrom={0.94}
+          >
+            <OverviewCard
+              title="Reviews"
+              value={(
+                statsData?.pendingReviews ??
+                0
+              ).toString()}
+              description={
+                statsData?.pendingReviews ===
+                1
+                  ? "Pending review"
+                  : "Pending reviews"
+              }
+              href="/account/reviews"
+              icon={
+                MessageSquareText
+              }
+            />
+          </RevealItem>
+        </RevealGroup>
+
+        <Reveal
+          direction="up"
+          distance={35}
+          className="mt-6"
+        >
+          <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm sm:rounded-3xl">
+            <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-4 sm:px-5">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                  Order Number
-                </p>
-
-                <Link
-                  href={`/account/orders/${recentOrderData.id}`}
-                  className="mt-1 block text-base font-bold text-foreground transition-colors hover:text-primary"
-                >
-                  #
-                  {
-                    recentOrderData.id
-                  }
-                </Link>
+                <h2 className="text-base font-bold text-foreground sm:text-lg">
+                  Recent Order
+                </h2>
 
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {
-                    recentOrderData.date
-                  }
+                  Your latest
+                  Royal Chins
+                  purchase
                 </p>
               </div>
 
-              <Reveal
-                direction="scale"
-                scaleFrom={0.9}
-                delay={0.05}
+              <Link
+                href="/account/orders"
+                className="shrink-0 text-xs font-bold text-primary hover:underline sm:text-sm"
               >
-                <OrderStatus
-                  status={
-                    recentOrderData.status
-                  }
-                />
-              </Reveal>
+                View All
+              </Link>
             </div>
 
-              <div className="my-5 border-t border-border" />
-
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <RevealGroup
-                stagger={0.06}
-                className="flex items-center"
-              >
-                {recentOrderData.items.map(
-                  (
-                    item,
-                    index
-                  ) => (
-                    <RevealItem
-                      key={
-                        item.id
-                      }
-                      direction="scale"
-                      scaleFrom={
-                        0.88
-                      }
-                    >
-                      <div
-                        title={
-                          item.name
-                        }
-                        className={`relative h-[66px] w-[66px] overflow-hidden rounded-xl border-2 border-background bg-surface-subtle sm:h-[76px] sm:w-[76px] ${
-                          index >
-                          0
-                            ? "-ml-3"
-                            : ""
-                        }`}
-                      >
-                        <Image
-                          src={
-                            item.image
-                          }
-                          alt={
-                            item.name
-                          }
-                          fill
-                          unoptimized
-                          sizes="76px"
-                          className="object-cover"
-                        />
-                      </div>
-                    </RevealItem>
-                  )
-                )}
-              </RevealGroup>
-
-              <Reveal
-                direction="right"
-                distance={30}
-              >
-                <div className="flex items-end justify-between gap-5 sm:flex-col sm:items-end">
-                  <div className="sm:text-right">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                      Total
+            {recentOrderData ? (
+              <div className="p-4 sm:p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                      Order Number
                     </p>
 
-                    <p className="mt-1 text-xl font-bold text-primary">
-                      AED{" "}
-                      {recentOrderData.total.toLocaleString()}
+                    <Link
+                      href={`/account/orders/${recentOrderData.id}`}
+                      className="mt-1 block text-base font-bold text-foreground transition-colors hover:text-primary"
+                    >
+                      #
+                      {
+                        recentOrderData.id
+                      }
+                    </Link>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {
+                        recentOrderData.date
+                      }
                     </p>
                   </div>
 
-                  <Button
-                    asChild
-                    variant="primary"
-                    className="h-10 rounded-xl px-4 text-xs font-bold"
+                  <Reveal
+                    direction="scale"
+                    scaleFrom={0.9}
+                    delay={0.05}
                   >
-                    <Link
-                      href={`/account/orders/${recentOrderData.id}`}
-                      className="whitespace-nowrap"
-                    >
-                      <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-                        <span>
-                          View Order
-                        </span>
-
-                        <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-                      </span>
-                    </Link>
-                  </Button>
-                </div>
-              </Reveal>
-              </div>
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <p className="font-semibold text-foreground">
-                No orders yet
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your completed purchases will appear here.
-              </p>
-              <Button asChild variant="primary" className="mt-5 rounded-xl px-4 text-sm font-bold">
-                <Link href="/">Browse pets and accessories</Link>
-              </Button>
-            </div>
-          )}
-        </section>
-      </Reveal>
-
-      <Reveal
-        direction="left"
-        distance={30}
-        className="mt-6"
-      >
-        <section>
-          <div className="mb-4">
-            <h2 className="text-lg font-bold text-foreground">
-              Account
-            </h2>
-
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Manage your
-              personal and
-              delivery
-              information.
-            </p>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm sm:rounded-3xl">
-            <RevealGroup
-              stagger={0.07}
-            >
-              {accountLinks.map(
-                (
-                  item,
-                  index
-                ) => (
-                  <RevealItem
-                    key={
-                      item.href
-                    }
-                    direction="right"
-                    distance={
-                      20
-                    }
-                  >
-                    <AccountLink
-                      {...item}
-                      bordered={
-                        index !==
-                        accountLinks.length -
-                          1
+                    <OrderStatus
+                      status={
+                        recentOrderData.status
                       }
                     />
-                  </RevealItem>
-                )
-              )}
-            </RevealGroup>
-          </div>
-        </section>
-      </Reveal>
+                  </Reveal>
+                </div>
 
-      <Reveal
-        direction="up"
-        distance={35}
-        className="mt-6"
-      >
-        <HelpSection />
-      </Reveal>
-    </div>
+                <div className="my-5 border-t border-border" />
+
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <RevealGroup
+                    stagger={0.06}
+                    className="flex items-center"
+                  >
+                    {recentOrderData.items.map(
+                      (
+                        item,
+                        index
+                      ) => (
+                        <RevealItem
+                          key={
+                            item.id
+                          }
+                          direction="scale"
+                          scaleFrom={
+                            0.88
+                          }
+                        >
+                          <div
+                            title={
+                              item.name
+                            }
+                            className={`relative h-[66px] w-[66px] overflow-hidden rounded-xl border-2 border-background bg-surface-subtle sm:h-[76px] sm:w-[76px] ${
+                              index >
+                              0
+                                ? "-ml-3"
+                                : ""
+                            }`}
+                          >
+                            <Image
+                              src={
+                                item.image
+                              }
+                              alt={
+                                item.name
+                              }
+                              fill
+                              unoptimized
+                              sizes="76px"
+                              className="object-cover"
+                            />
+                          </div>
+                        </RevealItem>
+                      )
+                    )}
+                  </RevealGroup>
+
+                  <Reveal
+                    direction="right"
+                    distance={30}
+                  >
+                    <div className="flex items-end justify-between gap-5 sm:flex-col sm:items-end">
+                      <div className="sm:text-right">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Total
+                        </p>
+
+                        <p className="mt-1 text-xl font-bold text-primary">
+                          AED{" "}
+                          {recentOrderData.total.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <Button
+                        asChild
+                        variant="primary"
+                        className="h-10 rounded-xl px-4 text-xs font-bold"
+                      >
+                        <Link
+                          href={`/account/orders/${recentOrderData.id}`}
+                          className="whitespace-nowrap"
+                        >
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                            <span>
+                              View
+                              Order
+                            </span>
+
+                            <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                          </span>
+                        </Link>
+                      </Button>
+                    </div>
+                  </Reveal>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="font-semibold text-foreground">
+                  No orders yet
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Your completed
+                  purchases will
+                  appear here.
+                </p>
+
+                <Button
+                  asChild
+                  variant="primary"
+                  className="mt-5 rounded-xl px-4 text-sm font-bold"
+                >
+                  <Link href="/">
+                    Browse pets
+                    and
+                    accessories
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </section>
+        </Reveal>
+
+        <Reveal
+          direction="left"
+          distance={30}
+          className="mt-6"
+        >
+          <section>
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-foreground">
+                Account
+              </h2>
+
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Manage your
+                personal and
+                delivery
+                information.
+              </p>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm sm:rounded-3xl">
+              <RevealGroup
+                stagger={0.07}
+              >
+                {accountLinks.map(
+                  (item) => (
+                    <RevealItem
+                      key={
+                        item.href
+                      }
+                      direction="right"
+                      distance={20}
+                    >
+                      <AccountLink
+                        {...item}
+                        bordered
+                      />
+                    </RevealItem>
+                  )
+                )}
+
+                <RevealItem
+                  direction="right"
+                  distance={20}
+                >
+                  <LogoutLink
+                    onClick={() => {
+                      setLogoutError(
+                        ""
+                      );
+
+                      setShowLogout(
+                        true
+                      );
+                    }}
+                  />
+                </RevealItem>
+              </RevealGroup>
+            </div>
+          </section>
+        </Reveal>
+
+        <Reveal
+          direction="up"
+          distance={35}
+          className="mt-6"
+        >
+          <HelpSection />
+        </Reveal>
+      </div>
+
+      {showLogout && (
+        <LogoutModal
+          isLoggingOut={
+            isLoggingOut
+          }
+          error={logoutError}
+          onClose={() => {
+            if (
+              isLoggingOut
+            ) {
+              return;
+            }
+
+            setLogoutError(
+              ""
+            );
+
+            setShowLogout(
+              false
+            );
+          }}
+          onConfirm={
+            handleLogout
+          }
+        />
+      )}
+    </>
   );
 }
 
@@ -600,14 +724,147 @@ function AccountLink({
         </p>
 
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          {
-            description
-          }
+          {description}
         </p>
       </div>
 
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
     </Link>
+  );
+}
+
+function LogoutLink({
+  onClick,
+}: {
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-error/5 sm:gap-4 sm:px-5 sm:py-5"
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-error/10 text-error">
+        <LogOut className="h-5 w-5" />
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-error">
+          Logout
+        </p>
+
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Sign out of your
+          Royal Chins account.
+        </p>
+      </div>
+
+      <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-error" />
+    </button>
+  );
+}
+
+function LogoutModal({
+  isLoggingOut,
+  error,
+  onClose,
+  onConfirm,
+}: {
+  isLoggingOut: boolean;
+  error: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onMouseDown={
+        onClose
+      }
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="logout-title"
+        onMouseDown={(
+          event
+        ) =>
+          event.stopPropagation()
+        }
+        className="relative w-full max-w-md rounded-3xl border border-border bg-background p-5 shadow-xl sm:p-6"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={
+            isLoggingOut
+          }
+          aria-label="Close"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-surface-subtle hover:text-foreground disabled:pointer-events-none"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-error/10 text-error">
+          <LogOut className="h-5 w-5" />
+        </span>
+
+        <h2
+          id="logout-title"
+          className="mt-5 text-xl font-bold text-foreground"
+        >
+          Logout?
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Are you sure you want
+          to sign out of your
+          Royal Chins account?
+        </p>
+
+        {error && (
+          <div className="mt-4 rounded-xl bg-error/10 px-4 py-3 text-sm font-semibold text-error">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={
+              isLoggingOut
+            }
+            onClick={onClose}
+            className="h-11 rounded-xl px-5"
+          >
+            Stay Logged In
+          </Button>
+
+          <Button
+            type="button"
+            variant="danger"
+            disabled={
+              isLoggingOut
+            }
+            onClick={
+              onConfirm
+            }
+            className="h-11 rounded-xl px-5"
+          >
+            <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+              <LogOut className="h-4 w-4 shrink-0" />
+
+              <span>
+                {isLoggingOut
+                  ? "Logging out..."
+                  : "Logout"}
+              </span>
+            </span>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

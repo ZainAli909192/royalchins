@@ -51,7 +51,17 @@ export async function POST(
       if (order.paymentStatus === "Paid") return { order, newlyPaid: false };
 
       for (const item of order.items) {
-        if (!item.product || item.product.type === "Animal") continue;
+        if (!item.product) continue;
+
+        if (item.product.type === "Animal") {
+          const updated = await tx.product.updateMany({
+            where: { id: item.productId ?? "", isSold: false },
+            data: { isSold: true },
+          });
+          if (updated.count !== 1) throw new Error("PET_SOLD");
+          continue;
+        }
+
         const updated = await tx.product.updateMany({
           where: { id: item.productId ?? "", quantity: { gte: item.quantity } },
           data: { quantity: { decrement: item.quantity } },
@@ -107,6 +117,8 @@ export async function POST(
     console.error("Stripe payment confirmation failed:", error);
     const message = error instanceof Error && error.message === "OUT_OF_STOCK"
       ? "One of the selected accessories is no longer in stock."
+      : error instanceof Error && error.message === "PET_SOLD"
+        ? "This pet has already found a home. Please choose another pet."
       : "We could not confirm your payment. Please contact support if the charge was completed.";
     return NextResponse.json({ message }, { status: 400 });
   }

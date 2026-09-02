@@ -16,6 +16,7 @@ type ProductCardProps = {
   type: "Animal" | "Accessory";
   price: number;
   stock: number;
+  isSold?: boolean;
   shortMeta?: string;
 };
 
@@ -26,12 +27,14 @@ export function ProductCard({
   type,
   price,
   stock,
+  isSold = false,
   shortMeta,
 }: ProductCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
 
   const isPet = type === "Animal";
   const isOutOfStock = !isPet && stock === 0;
+  const isUnavailable = isPet ? isSold : isOutOfStock;
   const isLowStock = stock > 0 && stock <= 2;
 
   const productHref = `/product/${slug}`;
@@ -41,19 +44,21 @@ export function ProductCard({
       ? PawPrint
       : PackageOpen;
 
-  const stockLabel = isOutOfStock
+  const stockLabel = isPet && isSold
+    ? "Sold"
+    : isOutOfStock
     ? "Out of Stock"
     : isLowStock
       ? `Only ${stock} left`
       : `${stock} In Stock`;
 
-  const stockTextColor = isOutOfStock
+  const stockTextColor = isUnavailable
     ? "text-error"
     : isLowStock
       ? "text-warning"
       : "text-success";
 
-  const stockDotColor = isOutOfStock
+  const stockDotColor = isUnavailable
     ? "bg-error"
     : isLowStock
       ? "bg-warning"
@@ -131,7 +136,7 @@ export function ProductCard({
               </p>
 
               {/* Stock */}
-              {!isPet && <div
+              <div
                 className={`mt-1.5 flex items-center gap-1.5 ${stockTextColor}`}
               >
                 <span
@@ -142,30 +147,10 @@ export function ProductCard({
                 <span className="line-clamp-1 text-[10px] font-semibold sm:text-xs">
                   {stockLabel}
                 </span>
-              </div>}
+              </div>
             </div>
 
-            {/* Cart */}
-            <button
-              type="button"
-              disabled={isOutOfStock}
-              aria-label={
-                isOutOfStock
-                  ? `${name} is out of stock`
-                  : `Add ${name} to cart`
-              }
-              title={
-                isOutOfStock
-                  ? "Out of stock"
-                  : "Add to cart"
-              }
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary-hover active:bg-primary-active disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
-            >
-              <ShoppingCart
-                className="h-[17px] w-[17px] sm:h-5 sm:w-5"
-                strokeWidth={2}
-              />
-            </button>
+            
           </div>
         </div>
       </div>

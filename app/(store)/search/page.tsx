@@ -39,6 +39,7 @@ type Product = {
     | "Accessory";
   category: string;
   price: number;
+  isSold?: boolean;
   shortMeta?: string;
 };
 
@@ -170,7 +171,7 @@ export default async function SearchPage({
   const products: Product[] =
     (
       await listStoreProducts()
-    ).map((product: { id: string; slug: string; name: string; images: { url: string }[]; type: "Animal" | "Accessory"; category: { name: string }; salePrice: unknown; regularPrice: unknown; gender: string | null; age: string | null; shortDescription: string }) => ({
+    ).map((product: { id: string; slug: string; name: string; images: { url: string }[]; type: "Animal" | "Accessory"; category: { name: string }; salePrice: unknown; regularPrice: unknown; gender: string | null; age: string | null; shortDescription: string; isSold: boolean }) => ({
       id: product.id,
 
       slug:
@@ -194,6 +195,8 @@ export default async function SearchPage({
         product.salePrice ??
           product.regularPrice
       ),
+
+      isSold: product.isSold,
 
       shortMeta:
         product.type ===
@@ -391,6 +394,10 @@ function SearchProductCard({
           AED{" "}
           {product.price.toLocaleString()}
         </p>
+
+        {product.type === "Animal" && product.isSold && (
+          <p className="mt-1 text-xs font-semibold text-error">Sold</p>
+        )}
       </div>
     </Link>
   );

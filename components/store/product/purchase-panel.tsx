@@ -22,6 +22,7 @@ type PurchasePanelProps = {
   type: "Animal" | "Accessory";
   price: number;
   stock: number;
+  isSold?: boolean;
   shortMeta?: string;
   averageRating?: number;
   reviewCount?: number;
@@ -35,6 +36,7 @@ export function PurchasePanel({
   type,
   price,
   stock,
+  isSold = false,
   shortMeta,
   averageRating = 0,
   reviewCount = 0,
@@ -46,6 +48,7 @@ export function PurchasePanel({
 
   const isPet = type === "Animal";
   const isOutOfStock = !isPet && stock <= 0;
+  const isUnavailable = isPet ? isSold : isOutOfStock;
 
   const handleDecreaseQuantity = () => {
     setQuantity((current) =>
@@ -60,7 +63,7 @@ export function PurchasePanel({
   };
 
   const handleAddToCart = () => {
-    if (isOutOfStock) return;
+    if (isUnavailable) return;
 
     addToCart({
       id,
@@ -81,7 +84,7 @@ export function PurchasePanel({
   };
 
   const handleBuyNow = () => {
-    if (isOutOfStock) return;
+    if (isUnavailable) return;
 
     saveCheckout({
       source: "buy-now",
@@ -128,7 +131,7 @@ export function PurchasePanel({
             onClick={handleDecreaseQuantity}
             disabled={
               quantity <= 1 ||
-              isOutOfStock
+              isUnavailable
             }
             aria-label="Decrease quantity"
             className="flex h-full w-11 items-center justify-center text-foreground transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
@@ -141,7 +144,7 @@ export function PurchasePanel({
           </button>
 
           <span className="min-w-9 text-center text-sm font-bold tabular-nums text-foreground">
-            {isOutOfStock ? 0 : quantity}
+            {isUnavailable ? 0 : quantity}
           </span>
 
           <button
@@ -149,7 +152,7 @@ export function PurchasePanel({
             onClick={handleIncreaseQuantity}
             disabled={
               quantity >= stock ||
-              isOutOfStock
+              isUnavailable
             }
             aria-label="Increase quantity"
             className="flex h-full w-11 items-center justify-center text-foreground transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
@@ -169,7 +172,7 @@ export function PurchasePanel({
         <Button
           type="button"
           variant="secondary"
-          disabled={isOutOfStock}
+          disabled={isUnavailable}
           onClick={handleAddToCart}
           className="h-13 w-full rounded-xl border border-transparent text-sm font-bold shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
         >
@@ -191,18 +194,18 @@ export function PurchasePanel({
         <Button
           type="button"
           variant="primary"
-          disabled={isOutOfStock}
+          disabled={isUnavailable}
           onClick={handleBuyNow}
           className="h-13 w-full rounded-xl text-sm font-bold shadow-primary transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 motion-reduce:transform-none"
         >
           <span className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap">
             <span>
-              {isOutOfStock
-                ? "Out of Stock"
+              {isUnavailable
+                ? isPet ? "Sold" : "Out of Stock"
                 : "Buy Now"}
             </span>
 
-            {!isOutOfStock && (
+            {!isUnavailable && (
               <ArrowRight
                 aria-hidden="true"
                 className="h-5 w-5 shrink-0"

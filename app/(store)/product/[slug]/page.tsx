@@ -78,8 +78,11 @@ export default async function ProductDetailsPage({
   const isAnimal =
     product.type === "Animal";
 
-  const stockLabel =
-    product.quantity <= 0
+  const stockLabel = isAnimal
+    ? product.isSold
+      ? "Sold"
+      : "Available"
+    : product.quantity <= 0
       ? "Out of stock"
       : product.quantity <= 2
         ? `Only ${product.quantity} left`
@@ -248,6 +251,7 @@ export default async function ProductDetailsPage({
               stock={
                 product.quantity
               }
+              isSold={product.isSold}
               shortMeta={
                 isAnimal
                   ? [

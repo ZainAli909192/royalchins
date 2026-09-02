@@ -2,6 +2,7 @@
 
 import {
   ChangeEvent,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -41,9 +42,9 @@ type FormErrors = {
 };
 
 const initialProfile: ProfileForm = {
-  fullName: "Royal Chins Admin",
-  email: "admin@royalchins.ae",
-  phone: "+971 50 000 0000",
+  fullName: "",
+  email: "",
+  phone: "",
   role: "Owner / Admin",
   avatar: "",
   currentPassword: "",
@@ -67,8 +68,21 @@ export default function ProfilePage() {
   const [errorMessage, setErrorMessage] =
     useState("");
 
+  const [loading, setLoading] = useState(true);
+
   const fileInputRef =
     useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/profile")
+      .then(async (response) => ({ response, data: await response.json().catch(() => null) }))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data?.message ?? "Unable to load your profile.");
+        setForm((current) => ({ ...current, fullName: data.fullName, email: data.email, phone: data.phone ?? "", avatar: data.avatar ?? "", role: data.role ?? current.role }));
+      })
+      .catch((error) => setErrorMessage(error instanceof Error ? error.message : "Unable to load your profile."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const updateField = <K extends keyof ProfileForm>(
     key: K,
@@ -219,32 +233,16 @@ export default function ProfilePage() {
         email: form.email.trim(),
         phone: form.phone.trim(),
         avatar: form.avatar,
+        currentPassword: form.currentPassword || undefined,
+        newPassword: form.newPassword || undefined,
       };
 
-      console.log(
-        "Profile update:",
-        profilePayload
-      );
-
-      if (form.newPassword) {
-        const passwordPayload = {
-          currentPassword:
-            form.currentPassword,
-          newPassword:
-            form.newPassword,
-        };
-
-        console.log(
-          "Password update requested:",
-          Boolean(passwordPayload.newPassword)
-        );
-      }
+      const response = await fetch("/api/admin/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(profilePayload) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message ?? "Unable to save your changes.");
 
       setForm((current) => ({
-        ...current,
-        fullName: current.fullName.trim(),
-        email: current.email.trim(),
-        phone: current.phone.trim(),
+        ...current, fullName: data.fullName, email: data.email, phone: data.phone ?? "", avatar: data.avatar ?? "",
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
@@ -255,10 +253,8 @@ export default function ProfilePage() {
           ? "Profile and password updated successfully."
           : "Profile updated successfully."
       );
-    } catch {
-      setErrorMessage(
-        "Unable to save your changes. Please try again."
-      );
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to save your changes. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -271,7 +267,9 @@ export default function ProfilePage() {
         description="Manage your admin account information and password."
       />
 
-      {successMessage && (
+      {loading && <p className="rounded-xl border border-border bg-white p-5 text-sm text-muted-foreground">Loading profile…</p>}
+
+      {!loading && successMessage && (
         <FormAlert
           variant="success"
           message={successMessage}
@@ -281,7 +279,7 @@ export default function ProfilePage() {
         />
       )}
 
-      {errorMessage && (
+      {!loading && errorMessage && (
         <FormAlert
           variant="error"
           message={errorMessage}
@@ -291,7 +289,7 @@ export default function ProfilePage() {
         />
       )}
 
-      <div className="rounded-xl border border-border bg-white shadow-sm">
+      {!loading && <div className="rounded-xl border border-border bg-white shadow-sm">
         <div className="p-5 sm:p-6">
           <div className="flex flex-col gap-7 lg:flex-row lg:items-start">
             <div className="flex shrink-0 flex-col items-center lg:w-[190px]">
@@ -544,7 +542,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

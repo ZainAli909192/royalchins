@@ -50,6 +50,8 @@ type PaymentMethod =
 
 type Order = {
   id: string;
+  customerId: string | null;
+  paymentId: string | null;
   orderNumber: string;
   customerName: string;
   email: string;
@@ -200,7 +202,7 @@ export default function OrdersPage() {
     getOrders()
       .then((items) => {
         const mapped = items.map((order: OrderResponse): Order => ({
-          id: order.id, orderNumber: order.orderNumber, customerName: order.customerName,
+          id: order.id, customerId: order.customerId, paymentId: order.payment?.id ?? null, orderNumber: order.orderNumber, customerName: order.customerName,
           email: order.email, phone: order.phone, itemCount: order.items.length,
           total: Number(order.total), paymentStatus: order.paymentStatus,
           paymentMethod: order.paymentMethod as PaymentMethod, orderStatus: order.orderStatus,
@@ -722,15 +724,7 @@ export default function OrdersPage() {
 
                               <button
                                 type="button"
-                                onClick={() => {
-                                  console.log(
-                                    "View customer:",
-                                    order.id
-                                  );
-                                  setOpenMenuId(
-                                    null
-                                  );
-                                }}
+                                onClick={() => { if (order.customerId) router.push(`/admin/customers/${order.customerId}`); else setFormError("This order is not linked to a customer account."); setOpenMenuId(null); }}
                                 className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-foreground hover:bg-surface-subtle"
                               >
                                 View Customer
@@ -738,15 +732,7 @@ export default function OrdersPage() {
 
                               <button
                                 type="button"
-                                onClick={() => {
-                                  console.log(
-                                    "View payment:",
-                                    order.id
-                                  );
-                                  setOpenMenuId(
-                                    null
-                                  );
-                                }}
+                                onClick={() => { if (order.paymentId) router.push(`/admin/payments/${order.paymentId}`); else setFormError("No payment record is available for this order."); setOpenMenuId(null); }}
                                 className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-foreground hover:bg-surface-subtle"
                               >
                                 View Payment
@@ -907,15 +893,7 @@ export default function OrdersPage() {
                         <div className="absolute bottom-[48px] right-0 z-30 w-[185px] overflow-hidden rounded-xl border border-border bg-white p-1.5 shadow-lg">
                           <button
                             type="button"
-                            onClick={() => {
-                              console.log(
-                                "View customer:",
-                                order.id
-                              );
-                              setOpenMenuId(
-                                null
-                              );
-                            }}
+                            onClick={() => { if (order.customerId) router.push(`/admin/customers/${order.customerId}`); else setFormError("This order is not linked to a customer account."); setOpenMenuId(null); }}
                             className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-subtle"
                           >
                             View Customer
@@ -923,15 +901,7 @@ export default function OrdersPage() {
 
                           <button
                             type="button"
-                            onClick={() => {
-                              console.log(
-                                "View payment:",
-                                order.id
-                              );
-                              setOpenMenuId(
-                                null
-                              );
-                            }}
+                            onClick={() => { if (order.paymentId) router.push(`/admin/payments/${order.paymentId}`); else setFormError("No payment record is available for this order."); setOpenMenuId(null); }}
                             className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-subtle"
                           >
                             View Payment

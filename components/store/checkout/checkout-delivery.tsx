@@ -70,16 +70,16 @@ type DeliveryForm = {
   saveAddress: boolean;
 };
 
-const fallbackAddress = {
-  id: "home",
-  label: "Home",
-  fullName: "Ahmed Daniyal",
-  phone: "+971 50 780 1110",
-  emirate: "Dubai" as Emirate,
-  area: "Dubai Marina",
-  street: "Al Marsa Street",
-  building: "Marina Residence",
-  unit: "Apartment 1204",
+type SavedAddress = {
+  id: string;
+  label: string;
+  fullName: string;
+  phone: string;
+  emirate: Emirate;
+  area: string;
+  street: string;
+  building: string;
+  unit: string;
 };
 
 const emirates: Exclude<Emirate, "">[] = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"];
@@ -131,9 +131,7 @@ export function CheckoutDelivery() {
     savedAddress,
     setSavedAddress,
   ] =
-    useState(
-      fallbackAddress
-    );
+    useState<SavedAddress | null>(null);
 
   const [
     savedAddressId,
@@ -245,13 +243,7 @@ export function CheckoutDelivery() {
             "customer" in data && data.customer
               ?.addresses?.[0];
 
-          if (!address) {
-            setAddressMode(
-              "new"
-            );
-
-            return;
-          }
+          if (!address) return;
 
           setSavedAddress({
             id:
@@ -298,7 +290,7 @@ export function CheckoutDelivery() {
   const selectedEmirate =
     addressMode ===
     "saved"
-      ? savedAddress.emirate
+      ? savedAddress?.emirate ?? ""
       : form.emirate;
 
   const subtotal =
@@ -317,7 +309,7 @@ export function CheckoutDelivery() {
       [checkoutItems]
     );
 
-  const selectedArea = addressMode === "saved" ? savedAddress.area : form.area;
+  const selectedArea = addressMode === "saved" ? savedAddress?.area ?? "" : form.area;
   const deliveryFee = deliveryQuote?.fee ?? null;
 
   useEffect(() => {
@@ -589,8 +581,7 @@ export function CheckoutDelivery() {
               </div>
             </Reveal>
 
-            {addressMode ===
-            "saved" ? (
+            {addressMode === "saved" && savedAddress ? (
               <Reveal
                 key="saved-address"
                 direction="scale"
@@ -601,6 +592,18 @@ export function CheckoutDelivery() {
                   address={
                     savedAddress
                   }
+                  onAddAddress={() => setAddressMode("new")}
+                />
+              </Reveal>
+            ) : addressMode === "saved" ? (
+              <Reveal
+                key="no-saved-address"
+                direction="scale"
+                scaleFrom={0.96}
+                duration={0.5}
+              >
+                <NoSavedAddress
+                  onAddAddress={() => setAddressMode("new")}
                 />
               </Reveal>
             ) : (
@@ -765,9 +768,11 @@ export function CheckoutDelivery() {
 function SavedAddress({
   address:
     savedAddress,
+  onAddAddress,
 }: {
   address:
-    typeof fallbackAddress;
+    SavedAddress;
+  onAddAddress: () => void;
 }) {
   return (
     <div className="mt-6">
@@ -858,12 +863,7 @@ function SavedAddress({
 
       <button
         type="button"
-        onClick={() => {
-          /*
-           * We'll connect this to the
-           * saved-address system later.
-           */
-        }}
+        onClick={onAddAddress}
         className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
       >
         <Plus
@@ -1427,6 +1427,34 @@ function EmptyCheckout({
           </Button>
         </div>
       </Reveal>
+    </div>
+  );
+}
+
+function NoSavedAddress({
+  onAddAddress,
+}: {
+  onAddAddress: () => void;
+}) {
+  return (
+    <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface-subtle px-5 py-10 text-center">
+      <p className="text-base font-bold text-foreground">
+        Please add an address
+      </p>
+
+      <p className="mt-2 text-sm text-muted-foreground">
+        Add a delivery address to continue with your order.
+      </p>
+
+      <Button
+        type="button"
+        variant="primary"
+        onClick={onAddAddress}
+        className="mt-5 h-11 rounded-xl px-5 font-bold"
+      >
+        <Plus className="h-4 w-4" />
+        Add address
+      </Button>
     </div>
   );
 }

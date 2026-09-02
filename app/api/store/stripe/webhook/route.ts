@@ -243,11 +243,23 @@ async function handlePaymentSucceeded(
           const item of
           order.items
         ) {
-          if (
-            !item.product ||
-            item.product.type ===
-              "Animal"
-          ) {
+          if (!item.product) {
+            continue;
+          }
+
+          if (item.product.type === "Animal") {
+            const updated = await tx.product.updateMany({
+              where: {
+                id: item.productId ?? "",
+                isSold: false,
+              },
+              data: { isSold: true },
+            });
+
+            if (updated.count !== 1) {
+              throw new Error("PET_SOLD");
+            }
+
             continue;
           }
 

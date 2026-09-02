@@ -17,7 +17,7 @@ import {
 
 type AuthMode = "login" | "signup";
 
-export function CheckoutAuth() {
+export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -55,15 +55,22 @@ export function CheckoutAuth() {
   const [submitting, setSubmitting] =
     useState(false);
 
+  const isCheckout = !redirectTo;
+
   useEffect(() => {
     fetch("/api/store/auth/session")
-      .then((response) => { if (response.ok) goToDelivery(); })
+      .then((response) => { if (response.ok) goToNextPage(); })
       .catch(() => undefined);
-  // Redirecting an already signed-in customer is intentional for checkout.
+  // Redirecting an already signed-in customer is intentional.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const goToDelivery = () => {
+  const goToNextPage = () => {
+    if (redirectTo) {
+      router.replace(redirectTo);
+      return;
+    }
+
     const params = new URLSearchParams();
 
     const product =
@@ -122,7 +129,7 @@ export function CheckoutAuth() {
       const response = await fetch("/api/store/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
       const result = await response.json().catch(() => ({ message: "The sign-in service returned an invalid response. Please try again." }));
       if (!response.ok) throw new Error(result.message);
-      goToDelivery();
+      goToNextPage();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to sign in. Please check your details and try again.");
     } finally {
@@ -172,7 +179,7 @@ export function CheckoutAuth() {
       const response = await fetch("/api/store/auth/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: fullName, email: signupEmail, password: signupPassword }) });
       const result = await response.json().catch(() => ({ message: "The account service returned an invalid response. Please try again." }));
       if (!response.ok) throw new Error(result.message);
-      goToDelivery();
+      goToNextPage();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to create your account. Please try again.");
     } finally {
@@ -198,19 +205,19 @@ export function CheckoutAuth() {
         </span>
 
         <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-primary">
-          Secure Checkout
+          {isCheckout ? "Secure Checkout" : "Your Account"}
         </p>
 
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {mode === "login"
-            ? "Sign in to continue"
+            ? isCheckout ? "Sign in to continue" : "Sign in to your account"
             : "Create your account"}
         </h1>
 
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {mode === "login"
-            ? "Sign in to continue with your order and delivery."
-            : "Create an account to continue with your Royal Chins order."}
+            ? isCheckout ? "Sign in to continue with your order and delivery." : "Access your orders, saved addresses, and reviews."
+            : isCheckout ? "Create an account to continue with your Royal Chins order." : "Create an account to manage your Royal Chins orders."}
         </p>
       </div>
 
@@ -279,6 +286,7 @@ export function CheckoutAuth() {
             <div className="flex justify-end">
               <button
                 type="button"
+                onClick={() => router.push("/auth/forgot-password")}
                 className="text-xs font-bold text-primary transition-opacity hover:opacity-70"
               >
                 Forgot password?
@@ -298,7 +306,7 @@ export function CheckoutAuth() {
             >
               {submitting
                 ? "Signing in..."
-                : "Sign In & Continue"}
+                : isCheckout ? "Sign In & Continue" : "Sign In"}
 
               {!submitting && (
                 <ArrowRight className="h-4 w-4" />
@@ -406,7 +414,7 @@ export function CheckoutAuth() {
             >
               {submitting
                 ? "Creating account..."
-                : "Create Account & Continue"}
+                : isCheckout ? "Create Account & Continue" : "Create Account"}
 
               {!submitting && (
                 <ArrowRight className="h-4 w-4" />

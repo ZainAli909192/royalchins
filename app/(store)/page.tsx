@@ -36,6 +36,7 @@ type StoreProduct = {
   stock: number;
   shortMeta?: string;
   isFeatured: boolean;
+  isSold: boolean;
 };
 
 export default function BrowsePage() {
@@ -91,6 +92,7 @@ export default function BrowsePage() {
                 | null;
               quantity: number;
               isFeatured: boolean;
+              isSold: boolean;
               images: {
                 url: string;
               }[];
@@ -146,6 +148,9 @@ export default function BrowsePage() {
 
               isFeatured:
                 product.isFeatured,
+
+              isSold:
+                product.isSold,
             })
           )
         )
@@ -322,6 +327,9 @@ export default function BrowsePage() {
                     }
                     stock={
                       product.stock
+                    }
+                    isSold={
+                      product.isSold
                     }
                   />
                 </RevealItem>

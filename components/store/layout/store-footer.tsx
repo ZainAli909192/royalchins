@@ -3,16 +3,40 @@
 import Link from "next/link";
 
 import {
+    FileText,
+    LockKeyhole,
     Mail,
     MessageCircle,
     Phone,
+    RotateCcw,
+    ShieldCheck,
 } from "lucide-react";
 
 import { useStoreSettings } from "@/components/store/layout/store-settings-provider";
 
 
+const legalLinks = [
+    {
+        label: "Terms & Conditions",
+        href: "/terms-and-conditions",
+        icon: FileText,
+    },
+    {
+        label: "Refund & Cancellation",
+        href: "/refund-and-cancellation-policy",
+        icon: RotateCcw,
+    },
+    {
+        label: "Privacy Policy",
+        href: "/privacy-policy",
+        icon: ShieldCheck,
+    },
+];
+
+
 export function StoreFooter() {
     const { brand, contact } = useStoreSettings();
+
     const telephone = contact.phone.replace(/[^\d+]/g, "");
     const whatsappNumber = contact.whatsapp.replace(/\D/g, "");
     const instagramHandle = contact.instagram.replace(/^@/, "");
@@ -20,7 +44,8 @@ export function StoreFooter() {
     return (
         <footer className="border-t border-border bg-secondary pb-[76px] text-secondary-foreground lg:pb-0">
             <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-                <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+                <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
+                    {/* Brand */}
                     <div>
                         <Link
                             href="/"
@@ -38,8 +63,41 @@ export function StoreFooter() {
                         <p className="mt-4 max-w-sm text-sm leading-6 text-secondary-foreground/65">
                             Browse pets and accessories available from {brand.storeName}.
                         </p>
+
+                        <p className="mt-3 max-w-sm text-xs leading-5 text-secondary-foreground/45">
+                            Royal Chins is operated by Royal Chains, Abu Dhabi,
+                            United Arab Emirates.
+                        </p>
                     </div>
 
+                    {/* Legal */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-secondary-foreground">
+                            Legal
+                        </h3>
+
+                        <div className="mt-4 space-y-2">
+                            {legalLinks.map((link) => {
+                                const Icon = link.icon;
+
+                                return (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className="group flex w-fit items-center gap-2.5 rounded-lg py-1 text-sm text-secondary-foreground/65 transition-colors hover:text-secondary-foreground"
+                                    >
+                                        <Icon className="h-4 w-4 shrink-0 transition-colors group-hover:text-primary" />
+
+                                        <span>
+                                            {link.label}
+                                        </span>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Contact */}
                     <div>
                         <h3 className="text-sm font-semibold text-secondary-foreground">
                             Contact
@@ -61,14 +119,27 @@ export function StoreFooter() {
                             </ContactLink>
 
                             <ContactLink
-                                href={whatsappNumber ? `https://wa.me/${whatsappNumber}` : "#"}
+                                href={
+                                    whatsappNumber
+                                        ? `https://wa.me/${whatsappNumber}`
+                                        : "#"
+                                }
                                 icon={MessageCircle}
+                                external
                             >
-                                {contact.whatsapp ? "WhatsApp" : "WhatsApp unavailable"}
+                                {contact.whatsapp
+                                    ? "WhatsApp"
+                                    : "WhatsApp unavailable"}
                             </ContactLink>
 
                             <a
-                                href={instagramHandle ? `https://www.instagram.com/${instagramHandle}/` : "#"}
+                                href={
+                                    instagramHandle
+                                        ? `https://www.instagram.com/${instagramHandle}/`
+                                        : "#"
+                                }
+                                target={instagramHandle ? "_blank" : undefined}
+                                rel={instagramHandle ? "noreferrer" : undefined}
                                 className="flex w-fit items-center gap-2.5 rounded-lg py-1 text-sm text-secondary-foreground/65 transition-colors hover:text-secondary-foreground"
                             >
                                 <InstagramIcon />
@@ -81,67 +152,54 @@ export function StoreFooter() {
                     </div>
                 </div>
 
-                <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-5 text-xs text-secondary-foreground/50 sm:flex-row sm:items-center sm:justify-between">
-                    <p>
-                        © 2026 {brand.storeName}. All rights reserved.
-                    </p>
+                {/* Bottom */}
+                <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-5 text-xs text-secondary-foreground/50 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p>
+                            © 2026 {brand.storeName}. All rights reserved.
+                        </p>
 
-                    <p>
-                        United Arab Emirates
-                    </p>
+                        <p className="mt-1">
+                            United Arab Emirates
+                        </p>
+                    </div>
+
+                    <Link
+                        href="/admin/login"
+                        className="group inline-flex w-fit items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-secondary-foreground/40 transition-colors hover:bg-white/5 hover:text-secondary-foreground"
+                    >
+                        <LockKeyhole className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-primary" />
+
+                        <span>
+                            Admin
+                        </span>
+                    </Link>
                 </div>
             </div>
         </footer>
     );
 }
 
-type FooterColumnProps = {
-    title: string;
-    links: {
-        label: string;
-        href: string;
-    }[];
-};
-
-function FooterColumn({
-    title,
-    links,
-}: FooterColumnProps) {
-    return (
-        <div>
-            <h3 className="text-sm font-semibold text-secondary-foreground">
-                {title}
-            </h3>
-
-            <div className="mt-4 space-y-3">
-                {links.map((link) => (
-                    <Link
-                        key={link.label}
-                        href={link.href}
-                        className="block w-fit text-sm text-secondary-foreground/65 transition-colors hover:text-secondary-foreground"
-                    >
-                        {link.label}
-                    </Link>
-                ))}
-            </div>
-        </div>
-    );
-}
 
 type ContactLinkProps = {
     href: string;
     icon: React.ElementType;
     children: React.ReactNode;
+    external?: boolean;
 };
+
 
 function ContactLink({
     href,
     icon: Icon,
     children,
+    external = false,
 }: ContactLinkProps) {
     return (
         <a
             href={href}
+            target={external ? "_blank" : undefined}
+            rel={external ? "noreferrer" : undefined}
             className="flex w-fit items-center gap-2.5 rounded-lg py-1 text-sm text-secondary-foreground/65 transition-colors hover:text-secondary-foreground"
         >
             <Icon className="h-4 w-4 shrink-0" />
@@ -152,6 +210,7 @@ function ContactLink({
         </a>
     );
 }
+
 
 function InstagramIcon() {
     return (

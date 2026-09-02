@@ -118,9 +118,12 @@ export function AnimalDetails({
                       className={`h-2 w-2 rounded-full ${
                         availability
                           .toLowerCase()
-                          .includes("stock")
-                          ? "bg-success"
-                          : "bg-error"
+                          .includes("sold") ||
+                        availability
+                          .toLowerCase()
+                          .includes("out")
+                          ? "bg-error"
+                          : "bg-success"
                       }`}
                     />
                   )}

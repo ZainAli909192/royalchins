@@ -12,6 +12,8 @@ type AdminRecord = {
   email: string;
   passwordHash: string;
   adminEmail: string;
+  phone: string;
+  avatar?: string | null;
   resetTokenHash?: string | null;
   resetTokenExpiresAt?: Date | null;
 };
@@ -24,13 +26,13 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
-async function readAdmin(): Promise<AdminRecord> {
+export async function getAdminAccount(): Promise<AdminRecord> {
+  const databaseAdmin = await prisma.adminAccount.findFirst({ orderBy: { createdAt: "asc" } });
+  if (databaseAdmin) return databaseAdmin;
+
   const configuredEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const configuredPassword = process.env.ADMIN_PASSWORD;
   if (!configuredEmail || !configuredPassword) throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be configured.");
-
-  const existing = await prisma.adminAccount.findUnique({ where: { email: configuredEmail } });
-  if (existing) return existing;
 
   return prisma.adminAccount.create({
     data: {
@@ -38,16 +40,17 @@ async function readAdmin(): Promise<AdminRecord> {
       email: configuredEmail,
       passwordHash: await hash(configuredPassword, 12),
       adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL?.trim().toLowerCase() || configuredEmail,
+      phone: "",
     },
   });
 }
 
 export async function getAdminNotificationEmail() {
-  return (await readAdmin()).adminEmail;
+  return (await getAdminAccount()).adminEmail;
 }
 
 export async function authenticateAdmin(email: string, password: string) {
-  const admin = await readAdmin();
+  const admin = await getAdminAccount();
   if (admin.email !== email.trim().toLowerCase() || !(await compare(password, admin.passwordHash))) return null;
   return admin;
 }
@@ -71,7 +74,7 @@ export async function verifyAdminSession(token: string) {
 }
 
 export async function beginPasswordReset(email: string) {
-  const admin = await readAdmin();
+  const admin = await getAdminAccount();
   if (admin.email !== email.trim().toLowerCase()) return null;
   const token = randomBytes(32).toString("base64url");
   admin.resetTokenHash = createHash("sha256").update(token).digest("hex");
@@ -81,7 +84,7 @@ export async function beginPasswordReset(email: string) {
 }
 
 export async function completePasswordReset(token: string, password: string) {
-  const admin = await readAdmin();
+  const admin = await getAdminAccount();
   const hashOfToken = createHash("sha256").update(token).digest("hex");
   const isValid = admin.resetTokenHash === hashOfToken && admin.resetTokenExpiresAt && admin.resetTokenExpiresAt.getTime() > Date.now();
   if (!isValid) return false;
