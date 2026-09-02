@@ -177,41 +177,6 @@ export default function ProfilePage() {
         "Phone number is required.";
     }
 
-    const passwordChangeStarted =
-      form.currentPassword.length > 0 ||
-      form.newPassword.length > 0 ||
-      form.confirmPassword.length > 0;
-
-    if (passwordChangeStarted) {
-      if (!form.currentPassword) {
-        nextErrors.currentPassword =
-          "Current password is required.";
-      }
-
-      if (!form.newPassword) {
-        nextErrors.newPassword =
-          "New password is required.";
-      } else if (form.newPassword.length < 8) {
-        nextErrors.newPassword =
-          "Password must be at least 8 characters.";
-      } else if (
-        form.newPassword === form.currentPassword
-      ) {
-        nextErrors.newPassword =
-          "New password must be different from the current password.";
-      }
-
-      if (!form.confirmPassword) {
-        nextErrors.confirmPassword =
-          "Please confirm your new password.";
-      } else if (
-        form.newPassword !== form.confirmPassword
-      ) {
-        nextErrors.confirmPassword =
-          "Passwords do not match.";
-      }
-    }
-
     setErrors(nextErrors);
 
     return Object.keys(nextErrors).length === 0;
@@ -233,8 +198,6 @@ export default function ProfilePage() {
         email: form.email.trim(),
         phone: form.phone.trim(),
         avatar: form.avatar,
-        currentPassword: form.currentPassword || undefined,
-        newPassword: form.newPassword || undefined,
       };
 
       const response = await fetch("/api/admin/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(profilePayload) });
@@ -243,18 +206,38 @@ export default function ProfilePage() {
 
       setForm((current) => ({
         ...current, fullName: data.fullName, email: data.email, phone: data.phone ?? "", avatar: data.avatar ?? "",
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
       }));
 
-      setSuccessMessage(
-        form.newPassword
-          ? "Profile and password updated successfully."
-          : "Profile updated successfully."
-      );
+      setSuccessMessage("Profile updated successfully.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to save your changes. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePasswordSave = async () => {
+    setSuccessMessage("");
+    setErrorMessage("");
+    const nextErrors: FormErrors = {};
+    if (!form.currentPassword) nextErrors.currentPassword = "Current password is required.";
+    if (!form.newPassword) nextErrors.newPassword = "New password is required.";
+    else if (form.newPassword.length < 8) nextErrors.newPassword = "Password must be at least 8 characters.";
+    else if (form.newPassword === form.currentPassword) nextErrors.newPassword = "New password must be different from the current password.";
+    if (!form.confirmPassword) nextErrors.confirmPassword = "Please confirm your new password.";
+    else if (form.newPassword !== form.confirmPassword) nextErrors.confirmPassword = "Passwords do not match.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
+    try {
+      setSaving(true);
+      const response = await fetch("/api/admin/profile/password", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentPassword: form.currentPassword, newPassword: form.newPassword, confirmPassword: form.confirmPassword }) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message ?? "Unable to update your password.");
+      setForm((current) => ({ ...current, currentPassword: "", newPassword: "", confirmPassword: "" }));
+      setSuccessMessage(data.message ?? "Password updated successfully.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to update your password.");
     } finally {
       setSaving(false);
     }
@@ -503,7 +486,7 @@ export default function ProfilePage() {
                     error={
                       errors.newPassword
                     }
-                    helperText="Leave blank if you do not want to change your password."
+                    helperText="Use the Update Password button below to save a password change."
                   />
                 </div>
 
@@ -526,7 +509,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-7 flex justify-end border-t border-border pt-5">
+              <div className="mt-7 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="primary"
@@ -536,7 +519,10 @@ export default function ProfilePage() {
                 >
                   {saving
                     ? "Saving..."
-                    : "Save Changes"}
+                    : "Save Profile"}
+                </Button>
+                <Button type="button" variant="outline" onClick={handlePasswordSave} disabled={saving} className="w-full sm:w-auto">
+                  Update Password
                 </Button>
               </div>
             </div>

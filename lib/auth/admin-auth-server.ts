@@ -56,7 +56,7 @@ export async function authenticateAdmin(email: string, password: string) {
 }
 
 export async function createAdminSession(admin: AdminRecord, rememberMe: boolean) {
-  const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 8;
+  const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 12;
   const token = await new SignJWT({ name: admin.name, role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(admin.id)

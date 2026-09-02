@@ -1,4 +1,3 @@
-import { compare, hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -11,8 +10,6 @@ const schema = z.object({
   email: z.string().trim().email(),
   phone: z.string().trim().max(40),
   avatar: z.string().max(3_000_000).nullable().optional(),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().min(8).optional(),
 });
 
 function serialize(admin: { id: string; name: string; email: string; phone: string; avatar?: string | null }) {
@@ -31,9 +28,6 @@ export async function PATCH(request: Request) {
 
   const admin = await getAdminAccount();
   const input = parsed.data;
-  if (input.newPassword && (!input.currentPassword || !(await compare(input.currentPassword, admin.passwordHash)))) {
-    return NextResponse.json({ message: "Your current password is incorrect." }, { status: 400 });
-  }
 
   try {
     const updated = await prisma.adminAccount.update({
@@ -43,7 +37,6 @@ export async function PATCH(request: Request) {
         email: input.email.toLowerCase(),
         phone: input.phone,
         avatar: input.avatar ?? null,
-        ...(input.newPassword ? { passwordHash: await hash(input.newPassword, 12) } : {}),
       },
     });
     return NextResponse.json(serialize(updated));
