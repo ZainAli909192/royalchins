@@ -14,7 +14,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { getCartCount } from "@/lib/store/cart-storage";
 import { useStoreSettings } from "@/components/store/layout/store-settings-provider";
 
-export function StoreHeader() {
+export  function StoreHeader() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
@@ -96,14 +96,7 @@ export function StoreHeader() {
           </form>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            <HeaderAction
-              href="/contact"
-              ariaLabel="Contact us"
-              icon={MessageCircleMore}
-              eyebrow="Need help?"
-              label="Contact"
-              className="hidden lg:flex"
-            />
+           
 
             <Link href={accountHref} aria-label="My account" className="flex h-11 w-11 items-center justify-center rounded-xl bg-background/10 text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground lg:hidden">
               <UserRound className="h-5 w-5" strokeWidth={2} />
