@@ -226,23 +226,7 @@ export function AdminMobileNav({
   </div>
 </nav>
 
-          <div className="shrink-0 border-t border-white/10 bg-secondary p-3">
-            <button
-              type="button"
-              onClick={
-                handleLogout
-              }
-              className="flex h-12 w-full items-center gap-3 rounded-xl px-4 text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg">
-                <LogOut className="h-5 w-5" />
-              </div>
-
-              <span>
-                Logout
-              </span>
-            </button>
-          </div>
+         
         </aside>
       </div>
 

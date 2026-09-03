@@ -139,20 +139,7 @@ export function AdminSidebar() {
         </div>
       </nav>
 
-      <div className="border-t border-white/10 p-3">
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="flex h-12 w-full items-center gap-3 rounded-lg px-4 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <LogOut
-            className="h-5 w-5"
-            strokeWidth={1.8}
-          />
-
-          <span>Logout</span>
-        </button>
-      </div>
+      
     </aside>
   );
 }
