@@ -1,9 +1,10 @@
 "use client";
 
 import { ExpressCheckoutElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { CreditCard, ShieldCheck, WalletCards } from "lucide-react";
+import { CreditCard, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import { StripeCardForm } from "@/components/store/checkout/stripe-card-from";
 
 type WalletMethod = "applePay" | "googlePay";
@@ -33,11 +34,11 @@ export function StripePaymentMethodSelector({ total, onPaymentSucceeded }: Strip
         <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">Choose how you want to pay</h2>
       </div>
 
-      <div role="tablist" aria-label="Payment method" className="grid gap-2 sm:grid-cols-3">
+      {/* <div role="tablist" aria-label="Payment method" className="grid gap-2 sm:grid-cols-3">
         <PaymentMethodTab active={selectedMethod === "card"} icon={CreditCard} label="Credit / Debit Card" onClick={() => setSelectedMethod("card")} />
-        <PaymentMethodTab active={selectedMethod === "applePay"} available={walletAvailability?.applePay ?? false} icon={WalletCards} label="Apple Pay" loading={walletAvailability === null} onClick={() => setSelectedMethod("applePay")} />
-        <PaymentMethodTab active={selectedMethod === "googlePay"} available={walletAvailability?.googlePay ?? false} icon={WalletCards} label="Google Pay" loading={walletAvailability === null} onClick={() => setSelectedMethod("googlePay")} />
-      </div>
+        <PaymentMethodTab active={selectedMethod === "applePay"} available={Boolean(walletAvailability?.applePay)} label="Apple Pay" onClick={() => { if (walletAvailability?.applePay) setSelectedMethod("applePay"); }} />
+        <PaymentMethodTab active={selectedMethod === "googlePay"} available={Boolean(walletAvailability?.googlePay)} label="Google Pay" onClick={() => { if (walletAvailability?.googlePay) setSelectedMethod("googlePay"); }} />
+      </div> */}
 
       {selectedMethod === "card" ? (
         <>
@@ -65,32 +66,26 @@ export function StripePaymentMethodSelector({ total, onPaymentSucceeded }: Strip
 type PaymentMethodTabProps = {
   active: boolean;
   available?: boolean;
-  icon: typeof CreditCard;
+  icon?: typeof CreditCard;
   label: string;
-  loading?: boolean;
   onClick: () => void;
 };
 
-function PaymentMethodTab({ active, available = true, icon: Icon, label, loading = false, onClick }: PaymentMethodTabProps) {
-  const disabled = !available;
-
+function PaymentMethodTab({ active, available = true, icon: Icon, label, onClick }: PaymentMethodTabProps) {
   return (
     <button
       type="button"
       role="tab"
       aria-selected={active}
-      aria-disabled={disabled}
-      disabled={disabled}
+      aria-disabled={!available}
       onClick={onClick}
-      className={`min-h-16 rounded-2xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-20 sm:px-4 ${active ? "border-primary bg-primary/5" : disabled ? "cursor-not-allowed border-border bg-background opacity-45" : "border-border bg-background hover:border-primary/50"}`}
+      className={`min-h-16 rounded-2xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-20 sm:px-4 ${active ? "border-primary bg-primary/5" : "border-border bg-background hover:border-primary/50"}`}
     >
       <span className="flex items-center gap-2.5">
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? "bg-primary text-primary-foreground" : "bg-surface-subtle text-foreground"}`}>
-          <Icon className="h-4 w-4" aria-hidden="true" />
-        </span>
+        {Icon ? <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? "bg-primary text-primary-foreground" : "bg-surface-subtle text-foreground"}`}><Icon className="h-4 w-4" aria-hidden="true" /></span> : null}
         <span className="min-w-0">
           <span className="block text-sm font-bold text-foreground">{label}</span>
-          {loading ? <span className="mt-0.5 block text-xs text-muted-foreground">Checking availability…</span> : disabled ? <span className="mt-0.5 block text-xs text-muted-foreground">Unavailable on this device</span> : <span className="mt-0.5 block text-xs text-muted-foreground">Secure checkout</span>}
+          <span className="mt-0.5 block text-xs text-muted-foreground">Secure checkout</span>
         </span>
       </span>
     </button>
@@ -123,6 +118,7 @@ function StripeWalletCheckout({ method, onPaymentSucceeded, onUnavailable }: Str
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isElementReady, setIsElementReady] = useState(false);
   const [error, setError] = useState("");
   const label = method === "applePay" ? "Apple Pay" : "Google Pay";
 
@@ -149,14 +145,15 @@ function StripeWalletCheckout({ method, onPaymentSucceeded, onUnavailable }: Str
   return (
     <div className="border-t border-border pt-5">
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><WalletCards className="h-5 w-5" aria-hidden="true" /></span>
         <div>
           <h3 className="text-base font-bold text-foreground">Pay with {label}</h3>
           <p className="mt-1 text-sm text-muted-foreground">Complete payment with the secure {label} sheet.</p>
         </div>
       </div>
 
-      <div className="mt-5">
+      <div className="relative mt-5 min-h-[180px]">
+        {!isElementReady && <AdminPageLoader label={`Loading ${label}...`} className="min-h-[180px] rounded-2xl" />}
+        <div className={isElementReady ? "transition-opacity duration-200" : "pointer-events-none absolute inset-0 opacity-0"}>
         <ExpressCheckoutElement
           options={{
             paymentMethods: { applePay: method === "applePay" ? "auto" : "never", amazonPay: "never", googlePay: method === "googlePay" ? "auto" : "never", klarna: "never", link: "never", paypal: "never" },
@@ -165,13 +162,20 @@ function StripeWalletCheckout({ method, onPaymentSucceeded, onUnavailable }: Str
             buttonHeight: 48,
             layout: { maxColumns: 1, maxRows: 1, overflow: "never" },
           }}
-          onReady={({ availablePaymentMethods }) => { if (!availablePaymentMethods?.[method]) onUnavailable(); }}
+          onReady={({ availablePaymentMethods }) => {
+            if (!availablePaymentMethods?.[method]) {
+              onUnavailable();
+              return;
+            }
+            setIsElementReady(true);
+          }}
           onConfirm={() => { void handleConfirm(); }}
           onLoadError={({ error: loadError }) => {
             setError(loadError.message ?? `${label} is unavailable right now.`);
             onUnavailable();
           }}
         />
+        </div>
       </div>
 
       {isProcessing && <p className="mt-3 text-center text-sm font-semibold text-primary" aria-live="polite">Confirming {label}...</p>}

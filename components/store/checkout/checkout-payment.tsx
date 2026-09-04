@@ -259,39 +259,7 @@ export function CheckoutPayment() {
       className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]"
     >
       <div className="min-w-0 space-y-4 sm:space-y-5">
-        <Reveal
-          direction="left"
-          distance={40}
-        >
-          <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
-            <Reveal
-              direction="up"
-              distance={25}
-            >
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                  Payment
-                </p>
-
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                  Choose how you
-                  want to pay
-                </h1>
-
-                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                  Select your
-                  preferred
-                  payment method
-                  to complete your
-                  Royal Chins
-                  order.
-                </p>
-              </div>
-            </Reveal>
-
-          </section>
-        </Reveal>
-
+       
         {paymentMethod === "card" && !stripePayment && (
           <Reveal
             key="card-payment"
@@ -336,7 +304,7 @@ export function CheckoutPayment() {
 
         {paymentMethod === "card" && stripePayment && !stripePromise && (
           <section className="rounded-2xl border border-error/30 bg-error/5 p-5 text-sm text-error">
-            Stripe checkout is not configured. Add <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to the environment and restart the application.
+            Stripe checkout is not configured.
           </section>
         )}
 
@@ -577,16 +545,7 @@ function CardPaymentNotice() {
             Payment
           </h2>
 
-          <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
-            Your card details
-            will be entered
-            securely through the
-            payment provider. We
-            will connect the live
-            payment gateway here
-            during backend
-            integration.
-          </p>
+         
         </div>
       </div>
 
