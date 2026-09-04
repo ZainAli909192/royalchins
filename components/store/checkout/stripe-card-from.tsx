@@ -68,8 +68,8 @@ export function StripeCardForm({ total, onPaymentSucceeded }: StripeCardFormProp
     },
 
     wallets: {
-      applePay: "never",
-      googlePay: "never",
+      applePay: "auto",
+      googlePay: "auto",
       link: "never",
     },
   }}
