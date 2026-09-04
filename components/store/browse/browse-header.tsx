@@ -16,13 +16,13 @@ export function BrowseHeader() {
     const interval = window.setInterval(() => {
       setActiveImage(
         (current) =>
-          (current + 1) % heroImages.length
+          (current + 1) %
+          heroImages.length
       );
     }, 3000);
 
-    return () => {
+    return () =>
       window.clearInterval(interval);
-    };
   }, []);
 
   return (
@@ -30,35 +30,37 @@ export function BrowseHeader() {
       aria-label="Royal Chins"
       className="-mx-4 -mt-6 overflow-hidden bg-white sm:mx-0 sm:mt-0 sm:rounded-3xl"
     >
-      <div className="grid lg:min-h-[620px] lg:grid-cols-2 xl:min-h-[660px]">
-        {/* Image */}
-        <div className="relative h-[360px] overflow-hidden bg-[#f7f7f7] sm:h-[440px] lg:h-auto lg:min-h-[620px] xl:min-h-[660px]">
-          {heroImages.map((src, index) => (
-            <Image
-              key={src}
-              src={src}
-              alt="Royal Chins companion animal"
-              fill
-              priority={index === 0}
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              className={`object-cover object-center transition-all duration-700 ease-in-out lg:object-bottom ${
-                activeImage === index
-                  ? "scale-100 opacity-100"
-                  : "scale-[1.015] opacity-0"
-              }`}
-            />
-          ))}
+      <div className="grid min-h-[520px] lg:grid-cols-2">
+        {/* Rotating animal images */}
+        <div className="relative h-[360px] overflow-hidden bg-[#f7f7f7] sm:h-[440px] lg:h-auto lg:min-h-[520px]">
+          {heroImages.map(
+            (src, index) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                fill
+                priority={index === 0}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className={`object-cover object-center transition-all duration-700 ease-in-out ${
+                  activeImage === index
+                    ? "scale-100 opacity-100"
+                    : "scale-[1.02] opacity-0"
+                }`}
+              />
+            )
+          )}
 
-          {/* Desktop white blend */}
+          {/* Soft blend into content on desktop */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-24 bg-gradient-to-r from-transparent to-white lg:block"
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-24 bg-gradient-to-r from-transparent to-white lg:block"
           />
 
           {/* Mobile bottom blend */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-b from-transparent to-white lg:hidden"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-white lg:hidden"
           />
         </div>
 
@@ -76,28 +78,37 @@ export function BrowseHeader() {
             </h1>
 
             <p className="mt-5 max-w-xl text-sm leading-7 text-black/60 sm:text-base">
-              Discover carefully selected companions
-              and everything they need, all in one
-              place.
+              Discover carefully selected
+              companions and everything they
+              need, all in one place.
             </p>
 
-            {/* Slider */}
+         
+
+            {/* Slider indicators */}
             <div className="mt-8 flex items-center gap-2">
-              {heroImages.map((_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  aria-label={`Show hero image ${index + 1}`}
-                  onClick={() =>
-                    setActiveImage(index)
-                  }
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    activeImage === index
-                      ? "w-8 bg-[#6F3CC3]"
-                      : "w-3 bg-black/15 hover:bg-black/30"
-                  }`}
-                />
-              ))}
+              {heroImages.map(
+                (_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    aria-label={`Show hero image ${
+                      index + 1
+                    }`}
+                    onClick={() =>
+                      setActiveImage(
+                        index
+                      )
+                    }
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      activeImage ===
+                      index
+                        ? "w-8 bg-[#6F3CC3]"
+                        : "w-3 bg-black/15 hover:bg-black/30"
+                    }`}
+                  />
+                )
+              )}
             </div>
           </div>
         </div>
