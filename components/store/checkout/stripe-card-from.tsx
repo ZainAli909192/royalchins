@@ -49,22 +49,31 @@ export function StripeCardForm({ total, onPaymentSucceeded }: StripeCardFormProp
   return (
     <div className="space-y-5">
       <div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
-        <PaymentElement
-          options={{
-            layout: { type: "accordion", defaultCollapsed: false },
-            paymentMethodOrder: ["card"],
-            fields: {
-              billingDetails: {
-                name: "always",
-                address: { country: "auto" },
-              },
-            },
-wallets: {
-  applePay: "auto",
-  googlePay: "auto",
-  link: "never",
-},          }}
-        />
+      <PaymentElement
+  options={{
+    layout: {
+      type: "tabs",
+      defaultCollapsed: false,
+    },
+
+    paymentMethodOrder: ["card"],
+
+    fields: {
+      billingDetails: {
+        name: "always",
+        address: {
+          country: "auto",
+        },
+      },
+    },
+
+    wallets: {
+      applePay: "never",
+      googlePay: "never",
+      link: "never",
+    },
+  }}
+/>
       </div>
 
       {error && <div className="rounded-xl bg-error/10 px-4 py-3 text-center text-sm font-semibold text-error">{error}</div>}
