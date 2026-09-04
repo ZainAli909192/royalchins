@@ -52,8 +52,18 @@ export function StripeCardForm({ total, onPaymentSucceeded }: StripeCardFormProp
         <PaymentElement
           options={{
             layout: { type: "accordion", defaultCollapsed: false },
-            fields: { billingDetails: { name: "always" } },
-          }}
+            paymentMethodOrder: ["card"],
+            fields: {
+              billingDetails: {
+                name: "always",
+                address: { country: "auto" },
+              },
+            },
+wallets: {
+  applePay: "auto",
+  googlePay: "auto",
+  link: "never",
+},          }}
         />
       </div>
 

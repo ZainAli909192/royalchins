@@ -31,6 +31,11 @@ const legalLinks = [
         href: "/privacy-policy",
         icon: ShieldCheck,
     },
+     {
+        label: "Employees",
+        href: "/employees",
+        icon: ShieldCheck,
+    },
 ];
 
 

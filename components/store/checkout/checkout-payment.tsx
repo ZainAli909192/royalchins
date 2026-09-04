@@ -30,7 +30,7 @@ import {
   getCheckout,
 } from "@/lib/store/checkout-storage";
 import { clearCart } from "@/lib/store/cart-storage";
-import { StripeCardForm } from "@/components/store/checkout/stripe-card-from";
+import { StripePaymentMethodSelector } from "@/components/store/checkout/stripe-express-checkout";
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -43,13 +43,7 @@ type PaymentMethod =
 export function CheckoutPayment() {
   const router = useRouter();
 
-  const [
-    paymentMethod,
-    setPaymentMethod,
-  ] =
-    useState<PaymentMethod>(
-      "card"
-    );
+  const paymentMethod: PaymentMethod = "card";
 
   const [
     isSubmitting,
@@ -239,8 +233,6 @@ export function CheckoutPayment() {
   useEffect(() => {
     if (paymentMethod !== "card" || stripePayment || !addressId || checkoutItems.length === 0) return;
     void prepareCardPayment();
-  // Preparing a payment intent is deliberately done once for the current checkout selection.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod, stripePayment, addressId, checkoutItems]);
 
   const handlePaymentSucceeded = async (paymentIntentId: string) => {
@@ -297,98 +289,6 @@ export function CheckoutPayment() {
               </div>
             </Reveal>
 
-            <RevealGroup
-              stagger={0.08}
-              delay={0.05}
-              className="mt-7 space-y-3"
-            >
-              <RevealItem
-                direction="scale"
-                scaleFrom={0.95}
-              >
-                <PaymentOption
-                  active={
-                    paymentMethod ===
-                    "card"
-                  }
-                  title="Credit / Debit Card"
-                  description="Pay securely using your Visa or Mastercard."
-                  icon={
-                    CreditCard
-                  }
-                  onClick={() =>
-                    setPaymentMethod(
-                      "card"
-                    )
-                  }
-                >
-                  <div className="flex items-center gap-1.5">
-                    <PaymentBadge>
-                      VISA
-                    </PaymentBadge>
-
-                    <PaymentBadge>
-                      Mastercard
-                    </PaymentBadge>
-                  </div>
-                </PaymentOption>
-              </RevealItem>
-
-
-{/* tabby tamara  */}
-              {/* <RevealItem
-                direction="scale"
-                scaleFrom={0.95}
-              >
-                <PaymentOption
-                  active={
-                    paymentMethod ===
-                    "tamara"
-                  }
-                  title="Tamara"
-                  description="Split your payment with Tamara."
-                  icon={
-                    WalletCards
-                  }
-                  onClick={() =>
-                    setPaymentMethod(
-                      "tamara"
-                    )
-                  }
-                >
-                  <span className="rounded-md bg-foreground px-2.5 py-1 text-[10px] font-bold text-background">
-                    tamara
-                  </span>
-                </PaymentOption>
-              </RevealItem> */}
-
-{/* tabby tamara  */}
-              {/* <RevealItem
-                direction="scale"
-                scaleFrom={0.95}
-              >
-                <PaymentOption
-                  active={
-                    paymentMethod ===
-                    "tabby"
-                  }
-                  title="Tabby"
-                  description="Pay later or split your purchase with Tabby."
-                  icon={
-                    WalletCards
-                  }
-                  onClick={() =>
-                    setPaymentMethod(
-                      "tabby"
-                    )
-                  }
-                >
-                  <span className="rounded-md border border-border bg-background px-2.5 py-1 text-[10px] font-bold text-foreground">
-                    tabby
-                  </span>
-                </PaymentOption>
-              </RevealItem> */}
-            </RevealGroup>
           </section>
         </Reveal>
 
@@ -443,16 +343,26 @@ export function CheckoutPayment() {
         {paymentMethod === "card" && stripePayment && stripePromise && (
           <Reveal direction="up" distance={30}>
             <section className="rounded-2xl border border-border bg-background p-4 shadow-sm sm:rounded-3xl sm:p-5">
-              <h2 className="text-base font-bold text-foreground">Enter card details</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Your payment is securely processed by Stripe.</p>
-              <div className="mt-5">
-                <Elements stripe={stripePromise} options={{ clientSecret: stripePayment.clientSecret, appearance: { theme: "stripe" } }}>
-                  <StripeCardForm
-                    total={stripePayment.amount}
-                    onPaymentSucceeded={handlePaymentSucceeded}
-                  />
-                </Elements>
-              </div>
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret: stripePayment.clientSecret,
+                  appearance: {
+                    theme: "stripe",
+                    variables: {
+                      colorPrimary: "#6F3CC3",
+                      colorBackground: "#FFFFFF",
+                      colorText: "#000000",
+                      borderRadius: "12px",
+                    },
+                  },
+                }}
+              >
+                <StripePaymentMethodSelector
+                  total={stripePayment.amount}
+                  onPaymentSucceeded={handlePaymentSucceeded}
+                />
+              </Elements>
             </section>
           </Reveal>
         )}
