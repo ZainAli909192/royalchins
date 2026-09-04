@@ -9,6 +9,7 @@ export type StoreBrandSettings = {
   logo: string;
   primaryColor: string;
   secondaryColor: string;
+  textColor: string;
 };
 
 export type StoreContactSettings = {
@@ -29,6 +30,7 @@ const fallbackSettings: StoreSettings = {
     logo: "/logo.png",
     primaryColor: "#6F3CC3",
     secondaryColor: "#000000",
+    textColor: "#000000",
   },
   contact: {
     email: "hello@royalchins.ae",
@@ -60,7 +62,7 @@ export function StoreSettingsProvider({ children }: { children: React.ReactNode 
         .then((next) => {
           if (!active) return;
           setSettings(next);
-          applyBrandColors(next.brand.primaryColor, next.brand.secondaryColor);
+          applyBrandColors(next.brand.primaryColor, next.brand.secondaryColor, next.brand.textColor);
         })
         .catch(() => undefined);
     };

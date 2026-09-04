@@ -29,6 +29,7 @@ import {
 } from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
 import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
+import { useStoreSettings } from "@/components/store/layout/store-settings-provider";
 
 type CustomerData = {
   firstName: string;
@@ -80,6 +81,7 @@ const accountLinks = [
 
 export function AccountOverview() {
   const router = useRouter();
+  const { contact } = useStoreSettings();
 
   const [customerData, setCustomerData] =
     useState<CustomerData | null>(null);
@@ -617,7 +619,7 @@ export function AccountOverview() {
           distance={35}
           className="mt-6"
         >
-          <HelpSection />
+          <HelpSection contact={contact} />
         </Reveal>
       </div>
 
@@ -882,7 +884,18 @@ function OrderStatus({
   );
 }
 
-function HelpSection() {
+function HelpSection({
+  contact,
+}: {
+  contact: {
+    email: string;
+    phone: string;
+    whatsapp: string;
+  };
+}) {
+  const callNumber = contact.phone.replace(/[^\d+]/g, "");
+  const whatsappNumber = contact.whatsapp.replace(/\D/g, "");
+
   return (
     <section className="overflow-hidden rounded-2xl bg-secondary p-5 text-secondary-foreground sm:rounded-3xl sm:p-6">
       <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -892,7 +905,7 @@ function HelpSection() {
           </p>
 
           <h2 className="mt-2 text-xl font-bold">
-            We're here for you
+            We&apos;re here for you
           </h2>
 
           <p className="mt-2 max-w-lg text-sm leading-6 opacity-70">
@@ -913,7 +926,7 @@ function HelpSection() {
             scaleFrom={0.92}
           >
             <a
-              href="tel:+971507801110"
+              href={`tel:${callNumber}`}
               className="flex min-h-[78px] flex-col items-center justify-center rounded-xl bg-background/10 px-2 text-center transition-colors hover:bg-background/15"
             >
               <Phone className="h-5 w-5" />
@@ -929,7 +942,7 @@ function HelpSection() {
             scaleFrom={0.92}
           >
             <a
-              href="https://wa.me/971507801110"
+              href={`https://wa.me/${whatsappNumber}`}
               target="_blank"
               rel="noreferrer"
               className="flex min-h-[78px] flex-col items-center justify-center rounded-xl bg-background/10 px-2 text-center transition-colors hover:bg-background/15"
@@ -947,7 +960,7 @@ function HelpSection() {
             scaleFrom={0.92}
           >
             <a
-              href="mailto:hello@royalchins.ae"
+              href={`mailto:${contact.email}`}
               className="flex min-h-[78px] flex-col items-center justify-center rounded-xl bg-background/10 px-2 text-center transition-colors hover:bg-background/15"
             >
               <Mail className="h-5 w-5" />

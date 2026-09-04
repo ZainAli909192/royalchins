@@ -173,9 +173,9 @@ export function StoreFooter() {
                         href="/admin/login"
                         className="group inline-flex w-fit items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-secondary-foreground/40 transition-colors hover:bg-white/5 hover:text-secondary-foreground"
                     >
-                        <LockKeyhole className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-primary" />
+                        <LockKeyhole className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-primary text-white" />
 
-                        <span>
+                        <span className="text-white">
                             Admin
                         </span>
                     </Link>

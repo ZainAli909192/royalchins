@@ -6,8 +6,10 @@ import {
 } from "react";
 
 import {
+  MonitorCog,
   Save,
   Settings,
+  Store,
 } from "lucide-react";
 
 import { AdminPageHeader } from "@/components/admin/layout/admin-page-header";
@@ -42,6 +44,15 @@ const initialBrandSettings: BrandSettings = {
   logo: "/logo.png",
   primaryColor: "#6F3CC3",
   secondaryColor: "#000000",
+  textColor: "#000000",
+};
+
+const initialAdminBrandSettings: BrandSettings = {
+  storeName: "Royal Chins Admin",
+  logo: "/logo.png",
+  primaryColor: "#6F3CC3",
+  secondaryColor: "#000000",
+  textColor: "#000000",
 };
 
 const initialContactSettings: ContactSettings = {
@@ -75,6 +86,12 @@ export default function SettingsPage() {
     useState<BrandSettings>(
       initialBrandSettings
     );
+
+  const [adminBrandSettings, setAdminBrandSettings] =
+    useState<BrandSettings>(initialAdminBrandSettings);
+
+  const [settingsScope, setSettingsScope] =
+    useState<"customer" | "admin">("customer");
 
   const [
     contactSettings,
@@ -122,12 +139,14 @@ export default function SettingsPage() {
 
   useEffect(() => {
     getSettings().then((data: unknown) => {
-      const saved = data as { brand: BrandSettings; contact: ContactSettings; inventory: InventorySettings; reviews: ReviewSettings };
+      const saved = data as { brand: BrandSettings; adminBrand?: BrandSettings; contact: ContactSettings; inventory: InventorySettings; reviews: ReviewSettings };
       setBrandSettings(saved.brand);
+      setAdminBrandSettings(saved.adminBrand ?? initialAdminBrandSettings);
       setContactSettings(saved.contact);
       setInventorySettings(saved.inventory);
       setReviewSettings(saved.reviews);
-      applyBrandColors(saved.brand.primaryColor, saved.brand.secondaryColor);
+      const adminBrand = saved.adminBrand ?? initialAdminBrandSettings;
+      applyBrandColors(adminBrand.primaryColor, adminBrand.secondaryColor, adminBrand.textColor);
     }).catch((error: unknown) => setErrorMessage(
       error instanceof Error
         ? error.message
@@ -163,6 +182,11 @@ export default function SettingsPage() {
         "Secondary color is required."
       );
 
+      return false;
+    }
+
+    if (!brandSettings.textColor.trim() || !adminBrandSettings.primaryColor.trim() || !adminBrandSettings.secondaryColor.trim() || !adminBrandSettings.textColor.trim()) {
+      setErrorMessage("Primary, secondary and text colors are required for both settings areas.");
       return false;
     }
 
@@ -214,11 +238,12 @@ export default function SettingsPage() {
       try {
         setSaving(true);
 
-        await updateSettings({ brand: brandSettings, contact: contactSettings, inventory: inventorySettings, reviews: reviewSettings });
+        await updateSettings({ brand: brandSettings, adminBrand: adminBrandSettings, contact: contactSettings, inventory: inventorySettings, reviews: reviewSettings });
 
         applyBrandColors(
-          brandSettings.primaryColor,
-          brandSettings.secondaryColor
+          adminBrandSettings.primaryColor,
+          adminBrandSettings.secondaryColor,
+          adminBrandSettings.textColor
         );
 
         window.dispatchEvent(new Event("royalchins-settings-updated"));
@@ -239,7 +264,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Settings"
-        description="Manage Royal Chins store, contact, inventory and review settings."
+        description="Manage independent customer storefront and admin dashboard settings."
         action={
           <Button
             type="button"
@@ -295,52 +320,48 @@ export default function SettingsPage() {
 
           <div>
             <h2 className="text-base font-semibold text-foreground">
-              Global Configuration
+              Settings Scope
             </h2>
 
             <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Changes made here affect customer-facing website information and admin operational behavior.
+              Configure the customer storefront or the admin dashboard independently. Each appearance setting is saved separately.
             </p>
           </div>
         </div>
       </section>
 
-      <BrandSettingsForm
-        values={
-          brandSettings
-        }
-        onChange={
-          setBrandSettings
-        }
-      />
+      <div className="grid gap-3 sm:grid-cols-2" role="tablist" aria-label="Settings scope">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={settingsScope === "customer"}
+          onClick={() => setSettingsScope("customer")}
+          className={`flex min-h-12 items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${settingsScope === "customer" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-white text-muted-foreground hover:border-primary/40"}`}
+        >
+          <Store className="h-5 w-5 shrink-0 text-primary" />
+          <span><span className="block text-sm font-semibold">Customer Settings</span><span className="block text-xs">Storefront colors, text, logo and contact details.</span></span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={settingsScope === "admin"}
+          onClick={() => setSettingsScope("admin")}
+          className={`flex min-h-12 items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${settingsScope === "admin" ? "border-primary bg-primary/5 text-foreground" : "border-border bg-white text-muted-foreground hover:border-primary/40"}`}
+        >
+          <MonitorCog className="h-5 w-5 shrink-0 text-primary" />
+          <span><span className="block text-sm font-semibold">Admin Settings</span><span className="block text-xs">Dashboard-only primary, secondary and text colors.</span></span>
+        </button>
+      </div>
 
-      <ContactSettingsForm
-        values={
-          contactSettings
-        }
-        onChange={
-          setContactSettings
-        }
-      />
-
-      <InventorySettingsForm
-        values={
-          inventorySettings
-        }
-        onChange={
-          setInventorySettings
-        }
-      />
-
-      {settingsLoaded && (
-        <ReviewSettingsForm
-          values={
-            reviewSettings
-          }
-          onChange={
-            setReviewSettings
-          }
-        />
+      {settingsScope === "customer" ? (
+        <>
+          <BrandSettingsForm values={brandSettings} onChange={setBrandSettings} scope="customer" />
+          <ContactSettingsForm values={contactSettings} onChange={setContactSettings} />
+          <InventorySettingsForm values={inventorySettings} onChange={setInventorySettings} />
+          {settingsLoaded && <ReviewSettingsForm values={reviewSettings} onChange={setReviewSettings} />}
+        </>
+      ) : (
+        <BrandSettingsForm values={adminBrandSettings} onChange={setAdminBrandSettings} scope="admin" />
       )}
 
       <section className="sticky bottom-4 z-20 rounded-xl border border-border bg-white/95 p-3 shadow-lg backdrop-blur sm:p-4">

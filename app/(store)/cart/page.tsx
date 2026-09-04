@@ -41,6 +41,7 @@ import {
 import {
   saveCheckout,
 } from "@/lib/store/checkout-storage";
+import CompanionStorySection from "@/components/store/layout/companion-story-section";
 
 type CartItem = {
   id: string;
@@ -540,6 +541,7 @@ export default function CartPage() {
           )}
         />
       </Reveal>
+      
     </div>
   );
 }

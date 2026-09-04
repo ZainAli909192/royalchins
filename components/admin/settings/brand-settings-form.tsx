@@ -17,15 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import {
-  applyBrandColors,
-} from "@/lib/settings/brand-settings";
 
 export type BrandSettings = {
   storeName: string;
   logo: string;
   primaryColor: string;
   secondaryColor: string;
+  textColor: string;
 };
 
 type BrandSettingsFormProps = {
@@ -34,6 +32,7 @@ type BrandSettingsFormProps = {
   onChange: (
     values: BrandSettings
   ) => void;
+  scope?: "customer" | "admin";
 };
 
 const DEFAULT_PRIMARY_COLOR =
@@ -42,9 +41,13 @@ const DEFAULT_PRIMARY_COLOR =
 const DEFAULT_SECONDARY_COLOR =
   "#000000";
 
+const DEFAULT_TEXT_COLOR =
+  "#000000";
+
 export function BrandSettingsForm({
   values,
   onChange,
+  scope = "customer",
 }: BrandSettingsFormProps) {
   const fileInputRef =
     useRef<HTMLInputElement | null>(
@@ -143,23 +146,24 @@ export function BrandSettingsForm({
 
       secondaryColor:
         DEFAULT_SECONDARY_COLOR,
+
+      textColor:
+        DEFAULT_TEXT_COLOR,
     };
 
     onChange(
       nextValues
     );
 
-    applyBrandColors(
-      DEFAULT_PRIMARY_COLOR,
-      DEFAULT_SECONDARY_COLOR
-    );
   };
 
   const colorsAreDefault =
     values.primaryColor.toLowerCase() ===
       DEFAULT_PRIMARY_COLOR.toLowerCase() &&
     values.secondaryColor.toLowerCase() ===
-      DEFAULT_SECONDARY_COLOR.toLowerCase();
+    DEFAULT_SECONDARY_COLOR.toLowerCase() &&
+    values.textColor.toLowerCase() ===
+    DEFAULT_TEXT_COLOR.toLowerCase();
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
@@ -171,18 +175,20 @@ export function BrandSettingsForm({
 
           <div>
             <h2 className="text-lg font-semibold text-foreground">
-              Store & Brand
+              {scope === "admin" ? "Admin Appearance" : "Store & Brand"}
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Manage the Royal Chins name, logo and website brand colors.
+              {scope === "admin"
+                ? "Manage colors used only across the admin dashboard."
+                : "Manage the Royal Chins name, logo and customer website colors."}
             </p>
           </div>
         </div>
       </div>
 
       <div className="space-y-7 p-5 sm:p-6">
-        <div className="grid gap-6 lg:grid-cols-2">
+        {scope === "customer" && <div className="grid gap-6 lg:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-semibold text-foreground">
               Store Name
@@ -295,7 +301,7 @@ export function BrandSettingsForm({
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         <div className="border-t border-border pt-6">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -310,7 +316,9 @@ export function BrandSettingsForm({
                 </h3>
 
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  These colors will be applied across the website after saving.
+                  {scope === "admin"
+                    ? "These colors will be applied only across the admin dashboard after saving."
+                    : "These colors will be applied only across the customer website after saving."}
                 </p>
               </div>
             </div>
@@ -335,7 +343,7 @@ export function BrandSettingsForm({
             </Button>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-3">
             <div>
               <label className="mb-2 block text-sm font-semibold text-foreground">
                 Primary Color
@@ -380,6 +388,34 @@ export function BrandSettingsForm({
               <p className="mt-1.5 text-xs text-muted-foreground">
                 Default:{" "}
                 {DEFAULT_PRIMARY_COLOR}
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-foreground">
+                Text Color
+              </label>
+
+              <div className="flex gap-3">
+                <div className="relative h-12 w-14 shrink-0 overflow-hidden rounded-xl border border-border">
+                  <input
+                    type="color"
+                    value={values.textColor}
+                    onChange={(event) => updateField("textColor", event.target.value)}
+                    className="absolute inset-[-8px] h-[64px] w-[72px] cursor-pointer"
+                    aria-label="Text color"
+                  />
+                </div>
+
+                <Input
+                  value={values.textColor}
+                  onChange={(event) => updateField("textColor", event.target.value)}
+                  placeholder="#000000"
+                />
+              </div>
+
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Default: {DEFAULT_TEXT_COLOR}
               </p>
             </div>
 
@@ -491,6 +527,22 @@ export function BrandSettingsForm({
 
                   <p className="mt-1 text-[11px] text-muted-foreground">
                     Secondary
+                  </p>
+                </div>
+
+                <div>
+                  <div
+                    className="flex h-10 w-20 items-center justify-center rounded-xl border border-border text-xs font-semibold"
+                    style={{
+                      backgroundColor: "#ffffff",
+                      color: values.textColor,
+                    }}
+                  >
+                    Aa
+                  </div>
+
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Text
                   </p>
                 </div>
               </div>

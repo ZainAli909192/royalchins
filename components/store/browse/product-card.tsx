@@ -44,21 +44,31 @@ export function ProductCard({
       ? PawPrint
       : PackageOpen;
 
-  const stockLabel = isPet && isSold
-    ? "Sold"
-    : isOutOfStock
+      const stockLabel = isPet
+  ? stock > 0 && !isSold
+    ? "Available"
+    : "Sold"
+  : isOutOfStock
     ? "Out of Stock"
     : isLowStock
       ? `Only ${stock} left`
       : `${stock} In Stock`;
 
-  const stockTextColor = isUnavailable
+const stockTextColor = isPet
+  ? isUnavailable
+    ? "text-error"
+    : "text-success"
+  : isUnavailable
     ? "text-error"
     : isLowStock
       ? "text-warning"
       : "text-success";
 
-  const stockDotColor = isUnavailable
+const stockDotColor = isPet
+  ? isUnavailable
+    ? "bg-error"
+    : "bg-success"
+  : isUnavailable
     ? "bg-error"
     : isLowStock
       ? "bg-warning"

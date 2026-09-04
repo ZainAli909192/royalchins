@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { StoreFooter } from "@/components/store/layout/store-footer";
 import { StoreHeader } from "@/components/store/layout/store-header";
 import { StoreSettingsProvider } from "@/components/store/layout/store-settings-provider";
+import CompanionStorySection from "@/components/store/layout/companion-story-section";
 
 export const metadata: Metadata = {
   title: { absolute: "Royal Chins | Chinchillas, Guinea Pigs & Small Pets UAE" },
@@ -26,7 +27,7 @@ export default function StoreLayout({
         <main className="min-h-[calc(100vh-80px)]">
           {children}
         </main>
-
+        
         <StoreFooter />
       </div>
     </StoreSettingsProvider>

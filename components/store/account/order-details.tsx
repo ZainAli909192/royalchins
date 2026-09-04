@@ -31,6 +31,7 @@ import {
   RevealItem,
 } from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
+import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 
 type OrderStatus =
   | "Pending"
@@ -70,88 +71,8 @@ type Order = {
   items: OrderItem[];
 };
 
-const fallbackOrder: Order = {
-  id: "RC-2026-00124",
-  date: "31 Aug 2026",
-  status: "Confirmed",
-  paymentStatus: "Paid",
-  paymentMethod:
-    "Credit / Debit Card",
-  subtotal: 2125,
-  deliveryFee: 35,
-  total: 2160,
-  items: [
-    {
-      id: "white-chinchilla",
-      slug:
-        "white-chinchilla",
-      name:
-        "White Chinchilla",
-      image:
-        "/animals/1.png",
-      type: "Animal",
-      price: 1400,
-      quantity: 1,
-      shortMeta:
-        "Male • 8 months",
-    },
-    {
-      id:
-        "premium-chinchilla-cage",
-      slug:
-        "premium-chinchilla-cage",
-      name:
-        "Premium Chinchilla Cage",
-      image:
-        "/animals/3.png",
-      type:
-        "Accessory",
-      price: 650,
-      quantity: 1,
-      shortMeta:
-        "Large premium habitat",
-    },
-    {
-      id:
-        "wooden-hideout",
-      slug:
-        "wooden-hideout",
-      name:
-        "Wooden Hideout",
-      image:
-        "/animals/5.png",
-      type:
-        "Accessory",
-      price: 75,
-      quantity: 1,
-      shortMeta:
-        "Natural wood shelter",
-    },
-  ],
-};
-
-const fallbackCustomer = {
-  name: "Ahmed Daniyal",
-  email:
-    "ahmed@example.com",
-  phone:
-    "+971 50 780 1110",
-};
-
-const fallbackAddress = {
-  label: "Home",
-  unit:
-    "Apartment 1204",
-  building:
-    "Marina Residence",
-  street:
-    "Al Marsa Street",
-  area:
-    "Dubai Marina",
-  emirate: "Dubai",
-  notes:
-    "Please call before arrival.",
-};
+type CustomerDetails = { name: string; email: string; phone: string };
+type AddressDetails = { label: string; unit: string; building: string; street: string; area: string; emirate: string; notes: string };
 
 const timeline = [
   {
@@ -185,37 +106,34 @@ const timeline = [
 export function OrderDetails() {
   const params =
     useParams<{
-      orderId: string;
+      id: string;
     }>();
 
   const [
     orderData,
     setOrderData,
   ] =
-    useState<Order>(
-      fallbackOrder
-    );
+    useState<Order | null>(null);
 
   const [
     customerData,
     setCustomerData,
   ] =
-    useState(
-      fallbackCustomer
-    );
+    useState<CustomerDetails | null>(null);
 
   const [
     addressData,
     setAddressData,
   ] =
-    useState(
-      fallbackAddress
-    );
+    useState<AddressDetails | null>(null);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     fetch(
       `/api/store/checkout/orders/${encodeURIComponent(
-        params.orderId
+        params.id
       )}`
     )
       .then(
@@ -223,8 +141,7 @@ export function OrderDetails() {
           response
         ) => ({
           response,
-          data:
-            await response.json(),
+          data: await response.json().catch(() => null),
         })
       )
       .then(
@@ -235,6 +152,7 @@ export function OrderDetails() {
           if (
             !response.ok
           ) {
+            setLoadError(data?.message ?? "Order not found.");
             return;
           }
 
@@ -374,19 +292,28 @@ export function OrderDetails() {
           }
         }
       )
-      .catch(
-        () => undefined
-      );
-  }, [params.orderId]);
+      .catch(() => setLoadError("Unable to load this order. Please try again."))
+      .finally(() => setIsLoading(false));
+  }, [params.id]);
 
-  const order =
-    orderData;
+  if (isLoading) {
+    return <div className="mx-auto max-w-[1150px] px-4 py-10"><AdminPageLoader label="Loading your order" /></div>;
+  }
 
-  const customer =
-    customerData;
+  if (!orderData || !customerData || !addressData) {
+    return (
+      <div className="mx-auto max-w-[1150px] px-4 py-10">
+        <section className="rounded-2xl border border-border bg-background p-6 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-foreground">{loadError || "Order not found."}</h1>
+          <Button asChild variant="outline" className="mt-4"><Link href="/account/orders">Back to Orders</Link></Button>
+        </section>
+      </div>
+    );
+  }
 
-  const address =
-    addressData;
+  const order = orderData;
+  const customer = customerData;
+  const address = addressData;
 
   const statusIndex = {
     Pending: 0,
@@ -1054,7 +981,7 @@ function OrderItemRow({
   return (
     <div className="flex gap-3 py-4 first:pt-0 last:pb-0 sm:gap-4">
       <Link
-        href={`/products/${item.slug}`}
+        href={`/product/${item.slug}`}
         className="relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-xl bg-surface-subtle sm:h-[90px] sm:w-[90px]"
       >
         <Image
@@ -1075,7 +1002,7 @@ function OrderItemRow({
             </span>
 
             <Link
-              href={`/products/${item.slug}`}
+              href={`/product/${item.slug}`}
             >
               <h3 className="mt-2 line-clamp-1 text-sm font-bold text-foreground transition-colors hover:text-primary">
                 {item.name}

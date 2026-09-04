@@ -6,6 +6,7 @@ export type SavedBrandSettings = {
   logo: string;
   primaryColor: string;
   secondaryColor: string;
+  textColor: string;
 };
 
 export function saveBrandSettings(
@@ -56,7 +57,8 @@ export function getBrandSettings():
 
 export function applyBrandColors(
   primaryColor: string,
-  secondaryColor: string
+  secondaryColor: string,
+  textColor = "#000000"
 ) {
   if (
     typeof document ===
@@ -67,6 +69,7 @@ export function applyBrandColors(
 
   const primary = normalizeHex(primaryColor);
   const secondary = normalizeHex(secondaryColor);
+  const foreground = normalizeTextHex(textColor);
 
   document.documentElement.style.setProperty("--primary", primary);
   document.documentElement.style.setProperty("--primary-hover", darken(primary, 0.14));
@@ -74,10 +77,15 @@ export function applyBrandColors(
   document.documentElement.style.setProperty("--primary-foreground", foregroundFor(primary));
   document.documentElement.style.setProperty("--secondary", secondary);
   document.documentElement.style.setProperty("--secondary-foreground", foregroundFor(secondary));
+  document.documentElement.style.setProperty("--foreground", foreground);
 }
 
 function normalizeHex(color: string) {
   return /^#[0-9a-f]{6}$/i.test(color) ? color : "#6F3CC3";
+}
+
+function normalizeTextHex(color: string) {
+  return /^#[0-9a-f]{6}$/i.test(color) ? color : "#000000";
 }
 
 function darken(color: string, amount: number) {

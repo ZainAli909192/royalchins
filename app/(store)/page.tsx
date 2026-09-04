@@ -18,6 +18,7 @@ import { BrowseHeader } from "@/components/store/browse/browse-header";
 import { FeaturedProducts } from "@/components/store/browse/featured-products";
 import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
 import FinalCTA from "@/components/store/layout/finalcta";
+import CompanionStorySection from "@/components/store/layout/companion-story-section";
 
 import {
   Reveal,
@@ -360,7 +361,9 @@ export default function BrowsePage() {
         distance={50}
         duration={0.75}
       >
-        <FinalCTA />
+        <CompanionStorySection />
+
+        {/* <FinalCTA /> */}
       </Reveal>
     </div>
   );

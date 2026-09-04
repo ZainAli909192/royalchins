@@ -9,6 +9,7 @@ import {
 import {
   privacyPolicyDocument,
 } from "@/lib/store/legal/privacy-content";
+import CompanionStorySection from "@/components/store/layout/companion-story-section";
 
 export const metadata: Metadata = {
   title:
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
+    <>
     <LegalDocumentPage
       eyebrow={
         privacyPolicyDocument.eyebrow
@@ -40,6 +42,10 @@ export default function PrivacyPolicyPage() {
       sections={
         privacyPolicyDocument.sections
       }
-    />
+      />
+      <div className="mx-auto max-w-[1440px] px-4 pb-10 sm:px-6 sm:pb-12 lg:px-8 lg:pb-14">
+              <CompanionStorySection />
+            </div>
+      </>
   );
 }

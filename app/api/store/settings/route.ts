@@ -8,6 +8,7 @@ const defaults = {
     logo: "/logo.png",
     primaryColor: "#6F3CC3",
     secondaryColor: "#000000",
+    textColor: "#000000",
   },
   contact: {
     email: "hello@royalchins.ae",

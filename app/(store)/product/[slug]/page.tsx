@@ -27,6 +27,7 @@ import {
   listRelatedStoreProducts,
 } from "@/lib/products/product-store";
 import { absoluteUrl, normalizeDescription, serializeJsonLd } from "@/lib/store/seo";
+import CompanionStorySection from "@/components/store/layout/companion-story-section";
 
 type ProductPageProps = {
   params: Promise<{
@@ -509,6 +510,9 @@ export default async function ProductDetailsPage({
           }
         />
       </Reveal>
+      <div className="mx-auto max-w-[1440px] px-4 pb-10 sm:px-6 sm:pb-12 lg:px-8 lg:pb-14">
+              <CompanionStorySection />
+            </div>
     </div>
   );
 }
@@ -554,6 +558,8 @@ function InfoCard({
           </div>
         ))}
       </div>
+      
     </div>
+
   );
 }
