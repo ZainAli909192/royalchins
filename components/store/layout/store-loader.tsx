@@ -14,7 +14,7 @@ export function StoreLoader() {
       <video
         src="/loader.mp4"
         autoPlay
-        muted
+        
         playsInline
         preload="auto"
         onEnded={() => setVisible(false)}
