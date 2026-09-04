@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import {
-    ArrowRight,
     BadgeCheck,
     Building2,
     ShieldCheck,
@@ -16,9 +15,10 @@ import {
 
 
 export const metadata: Metadata = {
-    title: "Employee Verification | Royal Chins",
+    title: "Employee Verification",
     description:
         "Verify official Royal Chins employees using their employee identification number.",
+    robots: { index: false, follow: false },
 };
 
 

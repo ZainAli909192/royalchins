@@ -12,10 +12,11 @@ import {
 
 export const metadata: Metadata = {
   title:
-    "Privacy Policy | Royal Chins",
+    "Privacy Policy",
 
   description:
     "Read the Royal Chins Privacy Policy to understand how we collect, use, protect, and manage customer information in the UAE.",
+  alternates: { canonical: "/privacy-policy" },
 };
 
 export default function PrivacyPolicyPage() {

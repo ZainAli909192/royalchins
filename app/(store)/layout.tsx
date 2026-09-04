@@ -1,8 +1,15 @@
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 
 import { StoreFooter } from "@/components/store/layout/store-footer";
 import { StoreHeader } from "@/components/store/layout/store-header";
 import { StoreSettingsProvider } from "@/components/store/layout/store-settings-provider";
+
+export const metadata: Metadata = {
+  title: { absolute: "Royal Chins | Chinchillas, Guinea Pigs & Small Pets UAE" },
+  description: "Discover Chinchillas, Guinea Pigs, Micro Squirrels and carefully selected small pet accessories from Royal Chins in the UAE.",
+  alternates: { canonical: "/" },
+};
 
 type StoreLayoutProps = {
   children: ReactNode;

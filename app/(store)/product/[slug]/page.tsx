@@ -1,5 +1,7 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import {
   ChevronRight,
   Heart,
@@ -24,6 +26,7 @@ import {
   findStoreProductBySlug,
   listRelatedStoreProducts,
 } from "@/lib/products/product-store";
+import { absoluteUrl, normalizeDescription, serializeJsonLd } from "@/lib/store/seo";
 
 type ProductPageProps = {
   params: Promise<{
@@ -31,16 +34,50 @@ type ProductPageProps = {
   }>;
 };
 
+const getStoreProduct = cache(findStoreProductBySlug);
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getStoreProduct(slug);
+
+  if (!product) {
+    return { title: "Product not found", robots: { index: false, follow: false } };
+  }
+
+  const isPet = product.type === "Animal";
+  // Sold pets are permanently unavailable. Accessories can return to stock and
+  // should remain discoverable while their Offer schema reports availability.
+  const shouldIndex = !isPet || !product.isSold;
+  const title = isPet
+    ? `${product.name} – ${product.category.name} in UAE`
+    : `${product.name} – ${product.category.name} accessory`;
+  const description = normalizeDescription(product.shortDescription || product.description);
+  const image = product.images[0]?.url ?? "/logo.png";
+  const canonical = `/product/${product.slug}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    robots: { index: shouldIndex, follow: true },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: canonical,
+      images: [{ url: image, alt: product.name }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
+}
+
 export default async function ProductDetailsPage({
   params,
 }: ProductPageProps) {
   const { slug } =
     await params;
 
-  const product =
-    await findStoreProductBySlug(
-      slug
-    );
+  const product = await getStoreProduct(slug);
 
   if (!product) {
     notFound();
@@ -77,6 +114,39 @@ export default async function ProductDetailsPage({
 
   const isAnimal =
     product.type === "Animal";
+
+  const isUnavailable = isAnimal
+    ? product.isSold
+    : product.quantity <= 0;
+
+  const productImage = images[0] ?? "/logo.png";
+  const productUrl = absoluteUrl(`/product/${product.slug}`);
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: normalizeDescription(product.description, 500),
+    image: images.length ? images.map(absoluteUrl) : [absoluteUrl("/logo.png")],
+    sku: product.sku,
+    url: productUrl,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: "AED",
+      price: price.toFixed(2),
+      availability: `https://schema.org/${isUnavailable ? "OutOfStock" : "InStock"}`,
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Products", item: absoluteUrl("/product") },
+      { "@type": "ListItem", position: 3, name: product.name, item: productUrl },
+    ],
+  };
 
   const stockLabel = isAnimal
     ? product.isSold
@@ -123,6 +193,8 @@ export default async function ProductDetailsPage({
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbSchema) }} />
       <Reveal
         direction="left"
         distance={35}
@@ -243,8 +315,7 @@ export default async function ProductDetailsPage({
               slug={product.slug}
               name={product.name}
               image={
-                images[0] ??
-                "/logo.png"
+                productImage
               }
               type={product.type}
               price={price}

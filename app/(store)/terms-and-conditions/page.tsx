@@ -12,10 +12,11 @@ import {
 
 export const metadata: Metadata = {
   title:
-    "Terms & Conditions | Royal Chins",
+    "Terms & Conditions",
 
   description:
     "Read the Royal Chins Terms and Conditions covering orders, payments, companion animals, accessories, delivery, cancellations and refunds in the UAE.",
+  alternates: { canonical: "/terms-and-conditions" },
 };
 
 export default function TermsAndConditionsPage() {
