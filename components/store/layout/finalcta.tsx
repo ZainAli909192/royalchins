@@ -49,7 +49,8 @@ export default function FinalCTA() {
         <div className="group mx-auto max-w-6xl overflow-hidden rounded-3xl border border-border bg-surface shadow-md transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none">
           <div className="relative aspect-[16/6] w-full overflow-hidden bg-secondary">
             <Image
-              src="/home_animals/2.png"
+              src="/finalctadesktop1.png"
+              // src="/cta2.png"
               alt="Royal Chins - Healthy Chins, Happy Lives"
               fill
               sizes="(min-width: 1280px) 1152px, (min-width: 1024px) calc(100vw - 64px)"
