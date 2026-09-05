@@ -7,49 +7,49 @@ datasource db {
 }
 
 model Category {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String       @unique
   type        CategoryType
-  description String   @default("")
-  isActive    Boolean  @default(true)
-  items       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  description String       @default("")
+  isActive    Boolean      @default(true)
+  items       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   products    Product[]
 
   @@index([type, isActive])
 }
 
 model Product {
-  id               String        @id @default(cuid())
-  name             String
-  slug             String        @unique
-  sku              String        @unique
-  type             CategoryType
-  status           ProductStatus @default(Draft)
-  isFeatured       Boolean       @default(false)
-  isSold           Boolean       @default(false)
-  regularPrice     Decimal       @db.Decimal(10, 2)
-  salePrice        Decimal?      @db.Decimal(10, 2)
-  quantity         Int           @default(0)
-  lowStockThreshold Int          @default(2)
-  shortDescription String
-  description      String
-  gender           String?
-  age              String?
-  color            String?
-  brand            String?
-  size             String?
-  compatibility    String?
-  categoryId       String
-  category         Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  images           ProductImage[]
-  orderItems       OrderItem[]
-  inventoryEvents  InventoryAdjustment[]
-  reviews          Review[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id                String                @id @default(cuid())
+  name              String
+  slug              String                @unique
+  sku               String                @unique
+  type              CategoryType
+  status            ProductStatus         @default(Draft)
+  isFeatured        Boolean               @default(false)
+  isSold            Boolean               @default(false)
+  regularPrice      Decimal               @db.Decimal(10, 2)
+  salePrice         Decimal?              @db.Decimal(10, 2)
+  quantity          Int                   @default(0)
+  lowStockThreshold Int                   @default(2)
+  shortDescription  String
+  description       String
+  gender            String?
+  age               String?
+  color             String?
+  brand             String?
+  size              String?
+  compatibility     String?
+  categoryId        String
+  category          Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images            ProductImage[]
+  orderItems        OrderItem[]
+  inventoryEvents   InventoryAdjustment[]
+  reviews           Review[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   @@index([type, status])
   @@index([categoryId])
@@ -57,42 +57,42 @@ model Product {
 }
 
 model InventoryAdjustment {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   previous  Int
   quantity  Int
   action    InventoryAction
   reason    String?
   notes     String?
-  createdAt DateTime @default(now())
+  createdAt DateTime        @default(now())
 
   @@index([productId, createdAt])
 }
 
 model Order {
-  id            String         @id @default(cuid())
-  orderNumber   String         @unique
-  customerName  String
-  email         String
-  phone         String
-  total         Decimal        @db.Decimal(10, 2)
-  subtotal      Decimal        @default(0) @db.Decimal(10, 2)
-  deliveryFee   Decimal        @default(0) @db.Decimal(10, 2)
-  paymentStatus PaymentStatus  @default(Pending)
-  paymentMethod PaymentMethod
-  orderStatus   OrderStatus    @default(Pending)
-  notes         String?
-  customerId    String?
-  customer      Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  id                String           @id @default(cuid())
+  orderNumber       String           @unique
+  customerName      String
+  email             String
+  phone             String
+  total             Decimal          @db.Decimal(10, 2)
+  subtotal          Decimal          @default(0) @db.Decimal(10, 2)
+  deliveryFee       Decimal          @default(0) @db.Decimal(10, 2)
+  paymentStatus     PaymentStatus    @default(Pending)
+  paymentMethod     PaymentMethod
+  orderStatus       OrderStatus      @default(Pending)
+  notes             String?
+  customerId        String?
+  customer          Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
   shippingAddressId String?
-  shippingAddress CustomerAddress? @relation(fields: [shippingAddressId], references: [id], onDelete: SetNull)
-  items         OrderItem[]
-  payment       Payment?
-  refund        Refund?
-  reviews       Review[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  shippingAddress   CustomerAddress? @relation(fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  items             OrderItem[]
+  payment           Payment?
+  refund            Refund?
+  reviews           Review[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   @@index([orderStatus, createdAt])
   @@index([paymentStatus])
@@ -101,23 +101,23 @@ model Order {
 }
 
 model Refund {
-  id             String       @id @default(cuid())
-  orderId        String       @unique
-  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  paymentId      String?
-  amount         Decimal      @db.Decimal(10, 2)
-  status         RefundStatus @default(Requested)
-  reason         String
-  customerNote   String       @default("")
-  adminNote      String       @default("")
-  declineReason  String?
-  gatewayRefundId String?     @unique
-  requestedAt    DateTime     @default(now())
-  approvedAt     DateTime?
-  declinedAt     DateTime?
-  completedAt    DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id              String       @id @default(cuid())
+  orderId         String       @unique
+  order           Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentId       String?
+  amount          Decimal      @db.Decimal(10, 2)
+  status          RefundStatus @default(Requested)
+  reason          String
+  customerNote    String       @default("")
+  adminNote       String       @default("")
+  declineReason   String?
+  gatewayRefundId String?      @unique
+  requestedAt     DateTime     @default(now())
+  approvedAt      DateTime?
+  declinedAt      DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@index([status, requestedAt])
   @@index([paymentId])
@@ -150,36 +150,52 @@ model Payment {
 }
 
 model Customer {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  phone      String
-  passwordHash String?
-  resetTokenHash String?
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  phone               String
+  passwordHash        String?
+  resetTokenHash      String?
   resetTokenExpiresAt DateTime?
-  isActive   Boolean  @default(true)
-  adminNotes String   @default("")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  orders     Order[]
-  reviews    Review[]
-  addresses  CustomerAddress[]
+  isActive            Boolean   @default(true)
+  adminNotes          String    @default("")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  orders        Order[]
+  reviews       Review[]
+  addresses     CustomerAddress[]
+  oauthAccounts CustomerOAuthAccount[]
 
   @@index([isActive, createdAt])
 }
 
-model AdminAccount {
+model CustomerOAuthAccount {
   id                String   @id @default(cuid())
-  name              String
-  email             String   @unique
-  passwordHash      String
-  adminEmail        String
-  phone             String   @default("")
-  avatar            String?
-  resetTokenHash    String?
-  resetTokenExpiresAt DateTime?
+  customerId        String
+  provider          String
+  providerAccountId String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([customerId])
+}
+
+model AdminAccount {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  passwordHash        String
+  adminEmail          String
+  phone               String    @default("")
+  avatar              String?
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 model StoreSetting {
@@ -207,23 +223,23 @@ model DeliveryZone {
 }
 
 model CustomerAddress {
-  id           String   @id @default(cuid())
-  customerId   String
-  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  label        String
+  id            String   @id @default(cuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label         String
   recipientName String
-  phone        String
-  emirate      String
-  area         String
-  street       String
-  building     String
-  unit         String?
-  landmark     String?
-  notes        String?
-  isDefault    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  orders       Order[]
+  phone         String
+  emirate       String
+  area          String
+  street        String
+  building      String
+  unit          String?
+  landmark      String?
+  notes         String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Order[]
 
   @@index([customerId, isDefault])
 }
@@ -267,11 +283,11 @@ model OrderItem {
 }
 
 model ProductImage {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   url       String
-  sortOrder Int      @default(0)
+  sortOrder Int     @default(0)
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId, sortOrder])
 }

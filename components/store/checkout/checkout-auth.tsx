@@ -10,19 +10,21 @@ import {
   UserRound,
 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
-import {
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { GoogleSignIn } from "@/components/auth/google-sign-in";
 
 type AuthMode = "login" | "signup";
 
-export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
+export function CheckoutAuth({
+  redirectTo,
+}: {
+  redirectTo?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [mode, setMode] =
-    useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>("login");
 
   const [showLoginPassword, setShowLoginPassword] =
     useState(false);
@@ -33,54 +35,29 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
 
-  const [loginEmail, setLoginEmail] =
-    useState("");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
-  const [loginPassword, setLoginPassword] =
-    useState("");
-
-  const [fullName, setFullName] =
-    useState("");
-
-  const [signupEmail, setSignupEmail] =
-    useState("");
-
-  const [signupPassword, setSignupPassword] =
-    useState("");
-
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [fullName, setFullName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] =
-    useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const isCheckout = !redirectTo;
 
-  useEffect(() => {
-    fetch("/api/store/auth/session")
-      .then((response) => { if (response.ok) goToNextPage(); })
-      .catch(() => undefined);
-  // Redirecting an already signed-in customer is intentional.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const goToNextPage = () => {
+  const getNextPage = () => {
     if (redirectTo) {
-      router.replace(redirectTo);
-      return;
+      return redirectTo;
     }
 
     const params = new URLSearchParams();
 
-    const product =
-      searchParams.get("product");
-
-    const quantity =
-      searchParams.get("quantity");
-
-    const source =
-      searchParams.get("source");
+    const product = searchParams.get("product");
+    const quantity = searchParams.get("quantity");
+    const source = searchParams.get("source");
 
     if (product) {
       params.set("product", product);
@@ -96,42 +73,84 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
 
     const query = params.toString();
 
-    router.push(
-      query
-        ? `/checkout/delivery?${query}`
-        : "/checkout/delivery"
-    );
+    return query
+      ? `/checkout/delivery?${query}`
+      : "/checkout/delivery";
   };
+
+  const authReturnTo = getNextPage();
+
+  const goToNextPage = () => {
+    const nextPage = getNextPage();
+
+    if (redirectTo) {
+      router.replace(nextPage);
+      return;
+    }
+
+    router.push(nextPage);
+  };
+
+  useEffect(() => {
+    fetch("/api/store/auth/session")
+      .then((response) => {
+        if (response.ok) {
+          goToNextPage();
+        }
+      })
+      .catch(() => undefined);
+
+    // Redirecting an already signed-in customer is intentional.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogin = async (
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+
     setError("");
 
     if (!loginEmail.trim()) {
-      setError(
-        "Please enter your email address."
-      );
+      setError("Please enter your email address.");
       return;
     }
 
     if (!loginPassword) {
-      setError(
-        "Please enter your password."
-      );
+      setError("Please enter your password.");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/store/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
-      const result = await response.json().catch(() => ({ message: "The sign-in service returned an invalid response. Please try again." }));
-      if (!response.ok) throw new Error(result.message);
+      const response = await fetch("/api/store/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: loginEmail,
+          password: loginPassword,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({
+        message:
+          "The sign-in service returned an invalid response. Please try again.",
+      }));
+
+      if (!response.ok) {
+        throw new Error(result.message);
+      }
+
       goToNextPage();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to sign in. Please check your details and try again.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to sign in. Please check your details and try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -141,19 +160,16 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+
     setError("");
 
     if (!fullName.trim()) {
-      setError(
-        "Please enter your full name."
-      );
+      setError("Please enter your full name.");
       return;
     }
 
     if (!signupEmail.trim()) {
-      setError(
-        "Please enter your email address."
-      );
+      setError("Please enter your email address.");
       return;
     }
 
@@ -164,32 +180,48 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
       return;
     }
 
-    if (
-      signupPassword !== confirmPassword
-    ) {
-      setError(
-        "Passwords do not match."
-      );
+    if (signupPassword !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/store/auth/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: fullName, email: signupEmail, password: signupPassword }) });
-      const result = await response.json().catch(() => ({ message: "The account service returned an invalid response. Please try again." }));
-      if (!response.ok) throw new Error(result.message);
+      const response = await fetch("/api/store/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: fullName,
+          email: signupEmail,
+          password: signupPassword,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({
+        message:
+          "The account service returned an invalid response. Please try again.",
+      }));
+
+      if (!response.ok) {
+        throw new Error(result.message);
+      }
+
       goToNextPage();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to create your account. Please try again.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to create your account. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const switchMode = (
-    nextMode: AuthMode
-  ) => {
+  const switchMode = (nextMode: AuthMode) => {
     setMode(nextMode);
     setError("");
   };
@@ -210,14 +242,20 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
 
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {mode === "login"
-            ? isCheckout ? "Sign in to continue" : "Sign in to your account"
+            ? isCheckout
+              ? "Sign in to continue"
+              : "Sign in to your account"
             : "Create your account"}
         </h1>
 
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {mode === "login"
-            ? isCheckout ? "Sign in to continue with your order and delivery." : "Access your orders, saved addresses, and reviews."
-            : isCheckout ? "Create an account to continue with your Royal Chins order." : "Create an account to manage your Royal Chins orders."}
+            ? isCheckout
+              ? "Sign in to continue with your order and delivery."
+              : "Access your orders, saved addresses, and reviews."
+            : isCheckout
+              ? "Create an account to continue with your Royal Chins order."
+              : "Create an account to manage your Royal Chins orders."}
         </p>
       </div>
 
@@ -225,9 +263,7 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
         <div className="grid grid-cols-2 rounded-xl bg-surface-subtle p-1">
           <button
             type="button"
-            onClick={() =>
-              switchMode("login")
-            }
+            onClick={() => switchMode("login")}
             className={`h-11 rounded-lg text-sm font-bold transition-colors ${
               mode === "login"
                 ? "bg-background text-primary shadow-sm"
@@ -239,9 +275,7 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
 
           <button
             type="button"
-            onClick={() =>
-              switchMode("signup")
-            }
+            onClick={() => switchMode("signup")}
             className={`h-11 rounded-lg text-sm font-bold transition-colors ${
               mode === "signup"
                 ? "bg-background text-primary shadow-sm"
@@ -254,6 +288,20 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
       </div>
 
       <div className="p-6 sm:p-8">
+        <div className="mb-6 space-y-5">
+          <GoogleSignIn returnTo={authReturnTo} />
+
+          <div className="flex items-center gap-4">
+            <span className="h-px flex-1 bg-border" />
+
+            <span className="whitespace-nowrap text-xs font-semibold text-muted-foreground">
+              or continue with email
+            </span>
+
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        </div>
+
         {mode === "login" ? (
           <form
             onSubmit={handleLogin}
@@ -286,40 +334,42 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => router.push("/auth/forgot-password")}
+                onClick={() =>
+                  router.push("/auth/forgot-password")
+                }
                 className="text-xs font-bold text-primary transition-opacity hover:opacity-70"
               >
                 Forgot password?
               </button>
             </div>
 
-            {error && (
-              <ErrorMessage
-                message={error}
-              />
-            )}
+            {error && <ErrorMessage message={error} />}
 
             <button
               type="submit"
               disabled={submitting}
               className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground shadow-primary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting
-                ? "Signing in..."
-                : isCheckout ? "Sign In & Continue" : "Sign In"}
+              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                <span>
+                  {submitting
+                    ? "Signing in..."
+                    : isCheckout
+                      ? "Sign In & Continue"
+                      : "Sign In"}
+                </span>
 
-              {!submitting && (
-                <ArrowRight className="h-4 w-4" />
-              )}
+                {!submitting && (
+                  <ArrowRight className="h-4 w-4 shrink-0" />
+                )}
+              </span>
             </button>
 
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
               <button
                 type="button"
-                onClick={() =>
-                  switchMode("signup")
-                }
+                onClick={() => switchMode("signup")}
                 className="font-bold text-primary hover:underline"
               >
                 Create account
@@ -356,12 +406,8 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
               id="signup-password"
               label="Password"
               value={signupPassword}
-              onChange={
-                setSignupPassword
-              }
-              visible={
-                showSignupPassword
-              }
+              onChange={setSignupPassword}
+              visible={showSignupPassword}
               onToggle={() =>
                 setShowSignupPassword(
                   (current) => !current
@@ -370,20 +416,14 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
               autoComplete="new-password"
             />
 
-            <PasswordStrength
-              password={signupPassword}
-            />
+            <PasswordStrength password={signupPassword} />
 
             <PasswordField
               id="confirm-password"
               label="Confirm password"
               value={confirmPassword}
-              onChange={
-                setConfirmPassword
-              }
-              visible={
-                showConfirmPassword
-              }
+              onChange={setConfirmPassword}
+              visible={showConfirmPassword}
               onToggle={() =>
                 setShowConfirmPassword(
                   (current) => !current
@@ -393,41 +433,40 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
             />
 
             {confirmPassword &&
-              signupPassword ===
-                confirmPassword && (
+              signupPassword === confirmPassword && (
                 <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
                   <Check className="h-3.5 w-3.5" />
                   Passwords match
                 </p>
               )}
 
-            {error && (
-              <ErrorMessage
-                message={error}
-              />
-            )}
+            {error && <ErrorMessage message={error} />}
 
             <button
               type="submit"
               disabled={submitting}
               className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground shadow-primary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting
-                ? "Creating account..."
-                : isCheckout ? "Create Account & Continue" : "Create Account"}
+              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                <span>
+                  {submitting
+                    ? "Creating account..."
+                    : isCheckout
+                      ? "Create Account & Continue"
+                      : "Create Account"}
+                </span>
 
-              {!submitting && (
-                <ArrowRight className="h-4 w-4" />
-              )}
+                {!submitting && (
+                  <ArrowRight className="h-4 w-4 shrink-0" />
+                )}
+              </span>
             </button>
 
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <button
                 type="button"
-                onClick={() =>
-                  switchMode("login")
-                }
+                onClick={() => switchMode("login")}
                 className="font-bold text-primary hover:underline"
               >
                 Sign in
@@ -440,9 +479,8 @@ export function CheckoutAuth({ redirectTo }: { redirectTo?: string }) {
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
 
           <p className="text-xs leading-5 text-muted-foreground">
-            Your account helps us securely
-            manage your orders, delivery
-            information and purchase history.
+            Your account helps us securely manage your orders,
+            delivery information and purchase history.
           </p>
         </div>
       </div>
@@ -476,6 +514,7 @@ function Field({
     >
       <span className="text-sm font-bold text-foreground">
         {label}
+
         <span className="ml-1 text-error">
           *
         </span>
@@ -491,9 +530,7 @@ function Field({
           type={type}
           value={value}
           onChange={(event) =>
-            onChange(
-              event.target.value
-            )
+            onChange(event.target.value)
           }
           placeholder={placeholder}
           autoComplete={autoComplete}
@@ -533,6 +570,7 @@ function PasswordField({
     >
       <span className="text-sm font-bold text-foreground">
         {label}
+
         <span className="ml-1 text-error">
           *
         </span>
@@ -543,16 +581,10 @@ function PasswordField({
 
         <input
           id={id}
-          type={
-            visible
-              ? "text"
-              : "password"
-          }
+          type={visible ? "text" : "password"}
           value={value}
           onChange={(event) =>
-            onChange(
-              event.target.value
-            )
+            onChange(event.target.value)
           }
           autoComplete={autoComplete}
           required
@@ -612,32 +644,28 @@ function PasswordStrength({
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
-        {requirements.map(
-          (requirement) => (
-            <div
-              key={
-                requirement.label
-              }
-              className={`flex items-center gap-1.5 text-[11px] font-semibold ${
+        {requirements.map((requirement) => (
+          <div
+            key={requirement.label}
+            className={`flex items-center gap-1.5 text-[11px] font-semibold ${
+              requirement.valid
+                ? "text-success"
+                : "text-muted-foreground"
+            }`}
+          >
+            <span
+              className={`flex h-4 w-4 items-center justify-center rounded-full ${
                 requirement.valid
-                  ? "text-success"
-                  : "text-muted-foreground"
+                  ? "bg-success/10"
+                  : "bg-background"
               }`}
             >
-              <span
-                className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                  requirement.valid
-                    ? "bg-success/10"
-                    : "bg-background"
-                }`}
-              >
-                <Check className="h-2.5 w-2.5" />
-              </span>
+              <Check className="h-2.5 w-2.5" />
+            </span>
 
-              {requirement.label}
-            </div>
-          )
-        )}
+            {requirement.label}
+          </div>
+        ))}
       </div>
     </div>
   );
