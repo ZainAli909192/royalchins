@@ -21,10 +21,14 @@ export const metadata: Metadata = {
 type StoreLayoutProps = {
   children: ReactNode;
 };
+import { PaymentLogoTicker } from "@/components/store/layout/payment-logo-ticker";
 
 export default function StoreLayout({
   children,
 }: StoreLayoutProps) {
+
+
+
   return (
     <StoreSettingsProvider>
       <div className="min-h-screen bg-background text-foreground">
@@ -35,6 +39,7 @@ export default function StoreLayout({
         <main className="min-h-[calc(100vh-80px)]">
           {children}
         </main>
+  <PaymentLogoTicker />
 
         <StoreFooter />
       </div>

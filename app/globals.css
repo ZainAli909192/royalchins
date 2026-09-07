@@ -275,3 +275,26 @@ clip-path: polygon(0 0, 100% 0%, 100% 91%, 0 89%);
     animation: none;
   }
 }
+
+/* slider  */
+
+@keyframes payment-logo-slide {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.payment-logo-track {
+  animation: payment-logo-slide
+    18s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .payment-logo-track {
+    animation: none;
+  }
+}
