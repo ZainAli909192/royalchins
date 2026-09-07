@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ImagePlus,
   Save,
+  Video,
   X,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -50,6 +51,9 @@ export default function CreateProductPage() {
   const [images, setImages] = useState<File[]>([]);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [imageError, setImageError] = useState("");
+  const [video, setVideo] = useState<File | null>(null);
+  const [existingVideoUrl, setExistingVideoUrl] = useState("");
+  const [videoError, setVideoError] = useState("");
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
 
   const {
@@ -96,6 +100,7 @@ export default function CreateProductPage() {
     Promise.all([getCategories(), getProduct(params.id)]).then(([categoryItems, product]) => {
       setCategories(categoryItems.filter((category) => category.isActive));
       setExistingImageUrls(product.images.map((image) => image.url));
+      setExistingVideoUrl(product.videoUrl ?? "");
       reset({ type: product.type, name: product.name, mainCategory: product.type === "Animal" ? "Animals" : "Accessories", subCategory: product.category.name, sku: product.sku, slug: product.slug, regularPrice: Number(product.regularPrice), salePrice: product.salePrice === null ? undefined : Number(product.salePrice), quantity: product.quantity, status: product.status, isFeatured: product.isFeatured, shortDescription: product.shortDescription, description: product.description, gender: product.gender as ProductFormValues["gender"], age: product.age ?? "", color: product.color ?? "", brand: product.brand ?? "", size: product.size ?? "", compatibility: product.compatibility ?? "" });
     }).catch((error) => setFormError(getErrorMessage(error, "Unable to load this product.")));
   }, [params.id, reset]);
@@ -155,6 +160,7 @@ export default function CreateProductPage() {
 
     const allowedTypes = [
       "image/jpeg",
+       "image/jpg",
       "image/png",
       "image/webp",
     ];
@@ -174,12 +180,12 @@ export default function CreateProductPage() {
 
     const largeFile = selectedFiles.find(
       (file) =>
-        file.size > 5 * 1024 * 1024
+        file.size > 10 * 1024 * 1024
     );
 
     if (largeFile) {
       setImageError(
-        "Each image must be 5MB or smaller."
+        "Each image must be 10MB or smaller."
       );
 
       event.target.value = "";
@@ -218,12 +224,40 @@ export default function CreateProductPage() {
     setImageError("");
   };
 
+  const handleVideo = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setVideoError("");
+    const selectedVideo = event.target.files?.[0];
+    if (!selectedVideo) return;
+
+    if (!["video/mp4", "video/webm", "video/quicktime"].includes(selectedVideo.type)) {
+      setVideoError("Only MP4, WebM and MOV videos are allowed.");
+      event.target.value = "";
+      return;
+    }
+
+    if (selectedVideo.size > 25 * 1024 * 1024) {
+      setVideoError("Video must be 25MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    setVideo(selectedVideo);
+    event.target.value = "";
+  };
+
+  const removeVideo = () => {
+    setVideo(null);
+    setExistingVideoUrl("");
+    setVideoError("");
+  };
+
   const onSubmit = async (
     values: ProductFormValues
   ) => {
     setFormError("");
     setSuccessMessage("");
     setImageError("");
+    setVideoError("");
 
     if (images.length + existingImageUrls.length === 0) {
       setImageError(
@@ -234,7 +268,10 @@ export default function CreateProductPage() {
 
     try {
       const imageUrls = await Promise.all(images.map((image) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Unable to read an image.")); reader.readAsDataURL(image); })));
-      await updateProduct(params.id, { ...values, images: [...existingImageUrls, ...imageUrls] });
+      const videoUrl = video
+        ? await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Unable to read the video.")); reader.readAsDataURL(video); })
+        : existingVideoUrl || null;
+      await updateProduct(params.id, { ...values, images: [...existingImageUrls, ...imageUrls], videoUrl });
 
       setSuccessMessage(
         "Product created successfully."
@@ -784,6 +821,34 @@ export default function CreateProductPage() {
             <p className="mt-2 text-xs text-muted-foreground">
               {images.length}/5 images
             </p>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold text-foreground">Product Video</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Upload one optional product video. It appears after the product images in the customer gallery.</p>
+
+          {!video && !existingVideoUrl && (
+            <div className="mt-5">
+              <label className={`flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-5 py-8 text-center transition-colors ${videoError ? "border-error bg-[var(--error-background)]" : "border-border hover:border-primary hover:bg-surface-subtle"}`}>
+                <Video className="h-9 w-9 text-primary" />
+                <p className="mt-3 text-sm font-semibold text-foreground">Upload product video</p>
+                <p className="mt-1 text-xs text-muted-foreground">MP4, WebM or MOV · Maximum 25MB</p>
+                <input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={handleVideo} disabled={isSubmitting} className="hidden" />
+              </label>
+            </div>
+          )}
+
+          {videoError && <p className="mt-2 text-sm text-error" role="alert">{videoError}</p>}
+
+          {(video || existingVideoUrl) && (
+            <div className="mt-5">
+              <div className="relative overflow-hidden rounded-xl border border-border bg-black">
+                <video src={video ? URL.createObjectURL(video) : existingVideoUrl} controls preload="metadata" className="aspect-video w-full object-contain" />
+                <button type="button" onClick={removeVideo} disabled={isSubmitting} aria-label="Remove product video" className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"><X className="h-4 w-4" /></button>
+              </div>
+              <p className="mt-2 truncate text-sm font-medium text-foreground">{video?.name ?? "Current product video"}</p>
+            </div>
           )}
         </section>
 

@@ -161,7 +161,24 @@ export type ProductFormValues = z.infer<
 >;
 
 export const productApiSchema = productSchema.extend({
-  images: z.array(z.string().trim().min(1)).min(1, "At least one product image is required.").max(5),
+  images: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1)
+    )
+    .min(1, "At least one product image is required.")
+    .max(5, "Maximum 5 product images are allowed."),
+
+  videoUrl: z
+    .string()
+    .trim()
+    .min(1, "Invalid product video.")
+    .optional()
+    .nullable(),
 });
 
-export type ProductApiValues = z.infer<typeof productApiSchema>;
+export type ProductApiValues = z.infer<
+  typeof productApiSchema
+>;

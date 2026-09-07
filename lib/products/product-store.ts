@@ -10,6 +10,9 @@ export class ProductStoreError extends Error {
 }
 
 const includeProduct = { category: true, images: { orderBy: { sortOrder: "asc" as const } } };
+// Image and video data is saved with the product. Allow enough time for a
+// medium video upload to complete before Prisma closes the transaction.
+const productTransactionOptions = { maxWait: 10_000, timeout: 30_000 };
 
 function isUniqueError(error: unknown) { return typeof error === "object" && error !== null && "code" in error && (error as { code?: string }).code === "P2002"; }
 
@@ -19,13 +22,42 @@ async function categoryFor(input: Pick<ProductApiValues, "subCategory" | "type">
   return category;
 }
 
-function productData(input: ProductApiValues, categoryId: string): Prisma.ProductUncheckedCreateInput {
+function productData(
+  input: ProductApiValues,
+  categoryId: string
+): Prisma.ProductUncheckedCreateInput {
   return {
-    name: input.name.trim(), slug: input.slug.trim(), sku: input.sku.trim(), type: input.type as CategoryType,
-    status: input.status as ProductStatus, isFeatured: input.isFeatured, regularPrice: input.regularPrice, salePrice: input.salePrice,
-    quantity: input.quantity, shortDescription: input.shortDescription.trim(), description: input.description.trim(),
-    gender: input.gender || null, age: input.age || null, color: input.color || null, brand: input.brand || null,
-    size: input.size || null, compatibility: input.compatibility || null, categoryId,
+    name: input.name.trim(),
+    slug: input.slug.trim(),
+    sku: input.sku.trim(),
+    type: input.type as CategoryType,
+
+    status: input.status as ProductStatus,
+    isFeatured: input.isFeatured,
+
+    regularPrice: input.regularPrice,
+    salePrice: input.salePrice,
+
+    quantity: input.quantity,
+
+    shortDescription:
+      input.shortDescription.trim(),
+
+    description:
+      input.description.trim(),
+
+    gender: input.gender || null,
+    age: input.age || null,
+    color: input.color || null,
+    brand: input.brand || null,
+    size: input.size || null,
+    compatibility:
+      input.compatibility || null,
+
+    videoUrl:
+      input.videoUrl?.trim() || null,
+
+    categoryId,
   };
 }
 
@@ -62,10 +94,10 @@ export async function createProduct(input: ProductApiValues) {
   const category = await categoryFor(input);
   try {
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const product = await tx.product.create({ data: { ...productData(input, category.id), images: { create: input.images.map((url, sortOrder) => ({ url, sortOrder })) } }, include: includeProduct });
+      const product = await tx.product.create({ data: { ...productData({ ...input, status: "Active" }, category.id), images: { create: input.images.map((url, sortOrder) => ({ url, sortOrder })) } }, include: includeProduct });
       await tx.category.update({ where: { id: category.id }, data: { items: { increment: 1 } } });
       return product;
-    });
+    }, productTransactionOptions);
   } catch (error) { if (isUniqueError(error)) throw new ProductStoreError("A product with this SKU or slug already exists.", 409); throw error; }
 }
 
@@ -77,7 +109,7 @@ export async function updateProduct(id: string, input: ProductApiValues) {
       const product = await tx.product.update({ where: { id }, data: { ...productData(input, category.id), images: { deleteMany: {}, create: input.images.map((url, sortOrder) => ({ url, sortOrder })) } }, include: includeProduct });
       if (existing.categoryId !== category.id) { await tx.category.update({ where: { id: existing.categoryId }, data: { items: { decrement: 1 } } }); await tx.category.update({ where: { id: category.id }, data: { items: { increment: 1 } } }); }
       return product;
-    });
+    }, productTransactionOptions);
   } catch (error) { if (isUniqueError(error)) throw new ProductStoreError("A product with this SKU or slug already exists.", 409); throw error; }
 }
 

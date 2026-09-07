@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ImagePlus,
   Save,
+  Video,
   X,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -23,7 +24,10 @@ import {
   type ProductFormValues,
 } from "@/lib/validations/product";
 import { createProduct } from "@/lib/api/products";
-import { getCategories, type CategoryResponse } from "@/lib/api/categories";
+import {
+  getCategories,
+  type CategoryResponse,
+} from "@/lib/api/categories";
 import { getErrorMessage } from "@/lib/api/error-message";
 
 const makeSlug = (value: string) => {
@@ -35,20 +39,64 @@ const makeSlug = (value: string) => {
 };
 
 const makeSku = (type: string) => {
-  const prefix = type === "Animal" ? "ANI" : "ACC";
-  const number = Date.now().toString().slice(-6);
+  const prefix =
+    type === "Animal" ? "ANI" : "ACC";
+
+  const number = Date.now()
+    .toString()
+    .slice(-6);
 
   return `RC-${prefix}-${number}`;
+};
+
+const fileToDataUrl = (
+  file: File
+): Promise<string> => {
+  return new Promise(
+    (resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () =>
+        resolve(String(reader.result));
+
+      reader.onerror = () =>
+        reject(
+          new Error(
+            "Unable to read uploaded file."
+          )
+        );
+
+      reader.readAsDataURL(file);
+    }
+  );
 };
 
 export default function CreateProductPage() {
   const router = useRouter();
 
-  const [formError, setFormError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [images, setImages] = useState<File[]>([]);
-  const [imageError, setImageError] = useState("");
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [formError, setFormError] =
+    useState("");
+
+  const [
+    successMessage,
+    setSuccessMessage,
+  ] = useState("");
+
+  const [images, setImages] = useState<
+    File[]
+  >([]);
+
+  const [imageError, setImageError] =
+    useState("");
+
+  const [video, setVideo] =
+    useState<File | null>(null);
+
+  const [videoError, setVideoError] =
+    useState("");
+
+  const [categories, setCategories] =
+    useState<CategoryResponse[]>([]);
 
   const {
     register,
@@ -61,6 +109,7 @@ export default function CreateProductPage() {
     },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
+
     defaultValues: {
       type: "Animal",
       name: "",
@@ -71,7 +120,7 @@ export default function CreateProductPage() {
       regularPrice: 0,
       salePrice: undefined,
       quantity: 0,
-      status: "Draft",
+      status: "Active",
       isFeatured: false,
       shortDescription: "",
       description: "",
@@ -82,6 +131,7 @@ export default function CreateProductPage() {
       size: "",
       compatibility: "",
     },
+
     mode: "onTouched",
   });
 
@@ -90,14 +140,33 @@ export default function CreateProductPage() {
   const sku = watch("sku");
 
   useEffect(() => {
-    getCategories().then((items) => setCategories(items.filter((category) => category.isActive))).catch((error) => setFormError(getErrorMessage(error, "Unable to load categories.")));
+    getCategories()
+      .then((items) =>
+        setCategories(
+          items.filter(
+            (category) =>
+              category.isActive
+          )
+        )
+      )
+      .catch((error) =>
+        setFormError(
+          getErrorMessage(
+            error,
+            "Unable to load categories."
+          )
+        )
+      );
   }, []);
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter(
-      (category) => category.type === productType
-    );
-  }, [categories, productType]);
+  const filteredCategories =
+    useMemo(() => {
+      return categories.filter(
+        (category) =>
+          category.type ===
+          productType
+      );
+    }, [categories, productType]);
 
   useEffect(() => {
     const mainCategory =
@@ -105,13 +174,24 @@ export default function CreateProductPage() {
         ? "Animals"
         : "Accessories";
 
-    setValue("mainCategory", mainCategory);
+    setValue(
+      "mainCategory",
+      mainCategory
+    );
+
     setValue("subCategory", "");
 
     if (!sku) {
-      setValue("sku", makeSku(productType));
+      setValue(
+        "sku",
+        makeSku(productType)
+      );
     }
-  }, [productType, setValue, sku]);
+  }, [
+    productType,
+    setValue,
+    sku,
+  ]);
 
   const generateSlug = () => {
     setValue(
@@ -140,11 +220,13 @@ export default function CreateProductPage() {
   ) => {
     setImageError("");
 
-    const selectedFiles = Array.from(
-      event.target.files ?? []
-    );
+    const selectedFiles =
+      Array.from(
+        event.target.files ?? []
+      );
 
-    if (!selectedFiles.length) return;
+    if (!selectedFiles.length)
+      return;
 
     const allowedTypes = [
       "image/jpeg",
@@ -152,9 +234,13 @@ export default function CreateProductPage() {
       "image/webp",
     ];
 
-    const invalidFile = selectedFiles.find(
-      (file) => !allowedTypes.includes(file.type)
-    );
+    const invalidFile =
+      selectedFiles.find(
+        (file) =>
+          !allowedTypes.includes(
+            file.type
+          )
+      );
 
     if (invalidFile) {
       setImageError(
@@ -162,20 +248,24 @@ export default function CreateProductPage() {
       );
 
       event.target.value = "";
+
       return;
     }
 
-    const largeFile = selectedFiles.find(
-      (file) =>
-        file.size > 5 * 1024 * 1024
-    );
+    const largeFile =
+      selectedFiles.find(
+        (file) =>
+          file.size >
+          10 * 1024 * 1024
+      );
 
     if (largeFile) {
       setImageError(
-        "Each image must be 5MB or smaller."
+        "Each image must be 10MB or smaller."
       );
 
       event.target.value = "";
+
       return;
     }
 
@@ -189,6 +279,7 @@ export default function CreateProductPage() {
       );
 
       event.target.value = "";
+
       return;
     }
 
@@ -200,7 +291,9 @@ export default function CreateProductPage() {
     event.target.value = "";
   };
 
-  const removeImage = (index: number) => {
+  const removeImage = (
+    index: number
+  ) => {
     setImages((current) =>
       current.filter(
         (_, imageIndex) =>
@@ -211,34 +304,111 @@ export default function CreateProductPage() {
     setImageError("");
   };
 
+  const handleVideo = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setVideoError("");
+
+    const selectedVideo =
+      event.target.files?.[0];
+
+    if (!selectedVideo) return;
+
+    const allowedTypes = [
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        selectedVideo.type
+      )
+    ) {
+      setVideoError(
+        "Only MP4, WebM and MOV videos are allowed."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    if (
+      selectedVideo.size >
+      25 * 1024 * 1024
+    ) {
+      setVideoError(
+        "Video must be 25MB or smaller."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    setVideo(selectedVideo);
+
+    event.target.value = "";
+  };
+
+  const removeVideo = () => {
+    setVideo(null);
+    setVideoError("");
+  };
+
   const onSubmit = async (
     values: ProductFormValues
   ) => {
     setFormError("");
     setSuccessMessage("");
     setImageError("");
+    setVideoError("");
 
     if (images.length === 0) {
       setImageError(
         "Please upload at least one product image."
       );
+
       return;
     }
 
     try {
-      const imageUrls = await Promise.all(images.map((image) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Unable to read an image.")); reader.readAsDataURL(image); })));
-      await createProduct({ ...values, images: imageUrls });
+      const imageUrls =
+        await Promise.all(
+          images.map((image) =>
+            fileToDataUrl(image)
+          )
+        );
+
+      const videoUrl = video
+        ? await fileToDataUrl(video)
+        : undefined;
+
+      await createProduct({
+  ...values,
+  images: imageUrls,
+  videoUrl,
+});
 
       setSuccessMessage(
         "Product created successfully."
       );
 
       setTimeout(() => {
-        router.push("/admin/products");
+        router.push(
+          "/admin/products"
+        );
+
         router.refresh();
       }, 700);
     } catch (error) {
-      setFormError(getErrorMessage(error, "Unable to create product. Please try again."));
+      setFormError(
+        getErrorMessage(
+          error,
+          "Unable to create product. Please try again."
+        )
+      );
     }
   };
 
@@ -251,7 +421,9 @@ export default function CreateProductPage() {
           <Button
             variant="outline"
             onClick={() =>
-              router.push("/admin/products")
+              router.push(
+                "/admin/products"
+              )
             }
           >
             <span className="flex items-center gap-2 whitespace-nowrap">
@@ -280,7 +452,9 @@ export default function CreateProductPage() {
       )}
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(
+          onSubmit
+        )}
         noValidate
         className="space-y-6"
       >
@@ -291,7 +465,9 @@ export default function CreateProductPage() {
             </h2>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Enter the basic information for this product.
+              Enter the basic
+              information for this
+              product.
             </p>
           </div>
 
@@ -303,7 +479,9 @@ export default function CreateProductPage() {
 
               <select
                 {...register("type")}
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 className="h-12 w-full rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               >
                 <option value="Animal">
@@ -321,7 +499,9 @@ export default function CreateProductPage() {
               label="Product Name"
               placeholder="Enter product name"
               disabled={isSubmitting}
-              error={errors.name?.message}
+              error={
+                errors.name?.message
+              }
             />
 
             <div>
@@ -333,7 +513,9 @@ export default function CreateProductPage() {
                 {...register(
                   "subCategory"
                 )}
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 className={`h-12 w-full rounded-lg border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 ${
                   errors.subCategory
                     ? "border-error"
@@ -347,19 +529,28 @@ export default function CreateProductPage() {
                 {filteredCategories.map(
                   (category) => (
                     <option
-                      key={category.id}
-                      value={category.name}
+                      key={
+                        category.id
+                      }
+                      value={
+                        category.name
+                      }
                     >
-                      {category.name}
+                      {
+                        category.name
+                      }
                     </option>
                   )
                 )}
               </select>
 
-              {errors.subCategory?.message && (
+              {errors
+                .subCategory
+                ?.message && (
                 <p className="mt-1.5 text-sm text-error">
                   {
-                    errors.subCategory
+                    errors
+                      .subCategory
                       .message
                   }
                 </p>
@@ -371,13 +562,20 @@ export default function CreateProductPage() {
                 {...register("sku")}
                 label="SKU"
                 placeholder="RC-ANI-000001"
-                disabled={isSubmitting}
-                error={errors.sku?.message}
+                disabled={
+                  isSubmitting
+                }
+                error={
+                  errors.sku
+                    ?.message
+                }
               />
 
               <button
                 type="button"
-                onClick={generateSku}
+                onClick={
+                  generateSku
+                }
                 className="mt-2 text-sm font-medium text-primary hover:underline"
               >
                 Generate SKU
@@ -389,33 +587,51 @@ export default function CreateProductPage() {
                 {...register("slug")}
                 label="Slug"
                 placeholder="product-name"
-                disabled={isSubmitting}
-                error={errors.slug?.message}
+                disabled={
+                  isSubmitting
+                }
+                error={
+                  errors.slug
+                    ?.message
+                }
               />
 
               <button
                 type="button"
-                onClick={generateSlug}
+                onClick={
+                  generateSlug
+                }
                 className="mt-2 text-sm font-medium text-primary hover:underline"
               >
-                Generate from product name
+                Generate from
+                product name
               </button>
             </div>
 
             <label className="flex min-h-12 items-center gap-3 rounded-lg border border-border bg-surface-subtle px-4 text-sm font-medium text-foreground">
               <input
-                {...register("isFeatured")}
+                {...register(
+                  "isFeatured"
+                )}
                 type="checkbox"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
+
               <span>
-                <span className="block font-semibold">Featured product</span>
-                <span className="block text-xs font-normal text-muted-foreground">Show this product in the storefront featured section.</span>
+                <span className="block font-semibold">
+                  Featured product
+                </span>
+
+                <span className="block text-xs font-normal text-muted-foreground">
+                  Show this product in
+                  the storefront
+                  featured section.
+                </span>
               </span>
             </label>
-
-           
           </div>
         </section>
 
@@ -426,7 +642,8 @@ export default function CreateProductPage() {
             </h2>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Manage pricing and available stock.
+              Manage pricing and
+              available stock.
             </p>
           </div>
 
@@ -435,10 +652,13 @@ export default function CreateProductPage() {
               {...register(
                 "regularPrice",
                 {
-                  setValueAs: (value) =>
-                    value === ""
-                      ? 0
-                      : Number(value),
+                  setValueAs:
+                    (value) =>
+                      value === ""
+                        ? 0
+                        : Number(
+                            value
+                          ),
                 }
               )}
               label="Regular Price"
@@ -449,7 +669,8 @@ export default function CreateProductPage() {
               helperText="Price in AED"
               disabled={isSubmitting}
               error={
-                errors.regularPrice
+                errors
+                  .regularPrice
                   ?.message
               }
             />
@@ -458,10 +679,13 @@ export default function CreateProductPage() {
               {...register(
                 "salePrice",
                 {
-                  setValueAs: (value) =>
-                    value === ""
-                      ? undefined
-                      : Number(value),
+                  setValueAs:
+                    (value) =>
+                      value === ""
+                        ? undefined
+                        : Number(
+                            value
+                          ),
                 }
               )}
               label="Sale Price"
@@ -481,8 +705,11 @@ export default function CreateProductPage() {
               {...register(
                 "quantity",
                 {
-                  setValueAs: (value) =>
-                    Number(value),
+                  setValueAs:
+                    (value) =>
+                      Number(
+                        value
+                      ),
                 }
               )}
               label="Quantity"
@@ -509,13 +736,19 @@ export default function CreateProductPage() {
 
           <div className="space-y-5">
             <Textarea
-              {...register("shortDescription")}
+              {...register(
+                "shortDescription"
+              )}
               label="Short Description"
               required
               placeholder="Brief product summary"
               rows={3}
               disabled={isSubmitting}
-              error={errors.shortDescription?.message}
+              error={
+                errors
+                  .shortDescription
+                  ?.message
+              }
             />
 
             <Textarea
@@ -534,7 +767,8 @@ export default function CreateProductPage() {
           </div>
         </section>
 
-        {productType === "Animal" && (
+        {productType ===
+          "Animal" && (
           <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-foreground">
@@ -542,7 +776,9 @@ export default function CreateProductPage() {
               </h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Additional information for this pet.
+                Additional
+                information for this
+                pet.
               </p>
             </div>
 
@@ -553,8 +789,12 @@ export default function CreateProductPage() {
                 </label>
 
                 <select
-                  {...register("gender")}
-                  disabled={isSubmitting}
+                  {...register(
+                    "gender"
+                  )}
+                  disabled={
+                    isSubmitting
+                  }
                   className={`h-12 w-full rounded-lg border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 ${
                     errors.gender
                       ? "border-error"
@@ -578,9 +818,14 @@ export default function CreateProductPage() {
                   </option>
                 </select>
 
-                {errors.gender?.message && (
+                {errors.gender
+                  ?.message && (
                   <p className="mt-1.5 text-sm text-error">
-                    {errors.gender.message}
+                    {
+                      errors
+                        .gender
+                        .message
+                    }
                   </p>
                 )}
               </div>
@@ -589,24 +834,33 @@ export default function CreateProductPage() {
                 {...register("age")}
                 label="Age"
                 placeholder="Example: 6 months"
-                disabled={isSubmitting}
-                error={errors.age?.message}
+                disabled={
+                  isSubmitting
+                }
+                error={
+                  errors.age
+                    ?.message
+                }
               />
 
               <Input
                 {...register("color")}
                 label="Color"
                 placeholder="Example: White"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 error={
-                  errors.color?.message
+                  errors.color
+                    ?.message
                 }
               />
             </div>
           </section>
         )}
 
-        {productType === "Accessory" && (
+        {productType ===
+          "Accessory" && (
           <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-foreground">
@@ -614,18 +868,25 @@ export default function CreateProductPage() {
               </h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Additional information for this accessory.
+                Additional
+                information for this
+                accessory.
               </p>
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
               <Input
-                {...register("brand")}
+                {...register(
+                  "brand"
+                )}
                 label="Brand"
                 placeholder="Enter brand name"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 error={
-                  errors.brand?.message
+                  errors.brand
+                    ?.message
                 }
               />
 
@@ -633,19 +894,27 @@ export default function CreateProductPage() {
                 {...register("size")}
                 label="Size"
                 placeholder="Enter size"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 error={
-                  errors.size?.message
+                  errors.size
+                    ?.message
                 }
               />
 
               <Input
-                {...register("color")}
+                {...register(
+                  "color"
+                )}
                 label="Color"
                 placeholder="Enter color"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 error={
-                  errors.color?.message
+                  errors.color
+                    ?.message
                 }
               />
 
@@ -655,9 +924,12 @@ export default function CreateProductPage() {
                 )}
                 label="Compatibility"
                 placeholder="Example: Chinchillas, Guinea Pigs"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting
+                }
                 error={
-                  errors.compatibility
+                  errors
+                    .compatibility
                     ?.message
                 }
               />
@@ -665,89 +937,161 @@ export default function CreateProductPage() {
           </section>
         )}
 
-        <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-lg font-semibold text-foreground">
-            Product Images
-          </h2>
+<div className="grid gap-6 lg:grid-cols-2">
+  <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
+    <h2 className="text-lg font-semibold text-foreground">
+      Product Images
+    </h2>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Upload up to 5 images. The first image will be the main image.
+    <p className="mt-1 text-sm text-muted-foreground">
+      Upload up to 5 images. The first image will be the main image.
+    </p>
+
+    <div className="mt-5">
+      <label
+        className={`flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-5 py-8 text-center ${
+          imageError
+            ? "border-error bg-[var(--error-background)]"
+            : "border-border hover:border-primary hover:bg-surface-subtle"
+        }`}
+      >
+        <ImagePlus className="h-9 w-9 text-primary" />
+
+        <p className="mt-3 text-sm font-semibold text-foreground">
+          Upload product images
+        </p>
+
+        <p className="mt-1 text-xs text-muted-foreground">
+          JPG, PNG or WebP · Maximum 10MB each
+        </p>
+
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          onChange={handleImages}
+          disabled={isSubmitting}
+          className="hidden"
+        />
+      </label>
+
+      {imageError && (
+        <p className="mt-2 text-sm text-error">
+          {imageError}
+        </p>
+      )}
+    </div>
+
+    {images.length > 0 && (
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {images.map((image, index) => (
+          <div
+            key={`${image.name}-${index}`}
+            className="relative overflow-hidden rounded-lg border border-border bg-surface-subtle"
+          >
+            <img
+              src={URL.createObjectURL(image)}
+              alt={`Product image ${index + 1}`}
+              className="aspect-square w-full object-cover"
+            />
+
+            {index === 0 && (
+              <span className="absolute bottom-2 left-2 rounded bg-black/75 px-2 py-1 text-[10px] text-white">
+                Main
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => removeImage(index)}
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+
+  <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
+    <h2 className="text-lg font-semibold text-foreground">
+      Product Video
+    </h2>
+
+    <p className="mt-1 text-sm text-muted-foreground">
+      Upload one optional product video.
+    </p>
+
+    {!video && (
+      <div className="mt-5">
+        <label
+          className={`flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-5 py-8 text-center transition-colors ${
+            videoError
+              ? "border-error bg-[var(--error-background)]"
+              : "border-border hover:border-primary hover:bg-surface-subtle"
+          }`}
+        >
+          <Video className="h-9 w-9 text-primary" />
+
+          <p className="mt-3 text-sm font-semibold text-foreground">
+            Upload product video
           </p>
 
-          <div className="mt-5">
-            <label
-              className={`flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-5 py-8 text-center ${
-                imageError
-                  ? "border-error bg-[var(--error-background)]"
-                  : "border-border hover:border-primary hover:bg-surface-subtle"
-              }`}
-            >
-              <ImagePlus className="h-9 w-9 text-primary" />
+          <p className="mt-1 text-xs text-muted-foreground">
+            MP4, WebM or MOV · Maximum 25MB
+          </p>
 
-              <p className="mt-3 text-sm font-semibold text-foreground">
-                Upload product images
-              </p>
+          <input
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime"
+            onChange={handleVideo}
+            disabled={isSubmitting}
+            className="hidden"
+          />
+        </label>
+      </div>
+    )}
 
-              <p className="mt-1 text-xs text-muted-foreground">
-                JPG, PNG or WebP · Maximum 5MB each
-              </p>
+    {videoError && (
+      <p className="mt-2 text-sm text-error">
+        {videoError}
+      </p>
+    )}
 
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                onChange={handleImages}
-                disabled={isSubmitting}
-                className="hidden"
-              />
-            </label>
+    {video && (
+      <div className="mt-5">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-black">
+          <video
+            src={URL.createObjectURL(video)}
+            controls
+            preload="metadata"
+            className="aspect-video w-full object-contain"
+          />
 
-            {imageError && (
-              <p className="mt-2 text-sm text-error">
-                {imageError}
-              </p>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={removeVideo}
+            aria-label="Remove video"
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-          {images.length > 0 && (
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {images.map(
-                (image, index) => (
-                  <div
-                    key={`${image.name}-${index}`}
-                    className="relative overflow-hidden rounded-lg border border-border bg-surface-subtle"
-                  >
-                    <img
-                      src={URL.createObjectURL(
-                        image
-                      )}
-                      alt={`Product image ${
-                        index + 1
-                      }`}
-                      className="aspect-square w-full object-cover"
-                    />
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <p className="truncate text-sm font-medium text-foreground">
+            {video.name}
+          </p>
 
-                    {index === 0 && (
-                      <span className="absolute bottom-2 left-2 rounded bg-black/75 px-2 py-1 text-[10px] text-white">
-                        Main
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeImage(index)
-                      }
-                      className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </section>
+          <p className="shrink-0 text-xs text-muted-foreground">
+            {(video.size / 1024 / 1024).toFixed(1)} MB
+          </p>
+        </div>
+      </div>
+    )}
+  </section>
+</div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
@@ -755,7 +1099,9 @@ export default function CreateProductPage() {
             variant="outline"
             disabled={isSubmitting}
             onClick={() =>
-              router.push("/admin/products")
+              router.push(
+                "/admin/products"
+              )
             }
             className="w-full sm:w-auto"
           >
@@ -763,14 +1109,18 @@ export default function CreateProductPage() {
           </Button>
 
           <SubmitButton
-            loading={isSubmitting}
+            loading={
+              isSubmitting
+            }
             loadingText="Saving..."
             fullWidth={false}
             className="w-full sm:w-auto"
           >
             <span className="flex items-center gap-2 whitespace-nowrap">
-              <Save className="h-4 w-4" />
-              Save Product
+              <Save className="h-4 w-4 shrink-0" />
+              <span>
+                Save Product
+              </span>
             </span>
           </SubmitButton>
         </div>

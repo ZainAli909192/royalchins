@@ -41,7 +41,7 @@ export function StoreHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-black">
+    <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-[82px] items-center gap-3 lg:h-20">
           <Link
@@ -49,7 +49,7 @@ export function StoreHeader() {
             aria-label="Royal Chins home"
             className="shrink-0"
           >
-            <div className="flex h-[56px] w-[120px] items-center justify-center rounded-[22px] bg-white px-3 sm:w-[135px] lg:h-auto lg:w-auto lg:rounded-none lg:bg-transparent lg:p-0">
+            <div className="flex h-[56px] w-[120px] items-center justify-center rounded-[22px]  px-3 sm:w-[135px] lg:h-auto lg:w-auto lg:rounded-none lg:bg-transparent lg:p-0">
               <Image
                 src="/logo.png"
                 alt="Royal Chins"

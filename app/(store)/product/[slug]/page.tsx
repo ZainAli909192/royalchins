@@ -236,6 +236,7 @@ export default async function ProductDetailsPage({
           <ProductGallery
             name={product.name}
             images={images}
+            videoUrl={product.videoUrl}
           />
         </Reveal>
 
