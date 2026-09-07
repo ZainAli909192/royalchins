@@ -1,19 +1,20 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import { ArrowLeft } from "lucide-react";
 import {
-  ArrowLeft,
-  Check,
-  CreditCard,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+  useEffect,
+  useState,
+} from "react";
 
 import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
+import { CardPaymentOption } from "@/components/store/checkout/card-payment-option";
 import { StripePaymentMethodSelector } from "@/components/store/checkout/stripe-express-checkout";
+import { TabbyPaymentOption } from "@/components/store/checkout/tabby/tabby-payment-option";
+import { TabbyPaymentPanel } from "@/components/store/checkout/tabby/tabby-payment-panel";
 import type { CheckoutOrderItem } from "@/components/store/checkout/order-summary";
 import { Reveal } from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,10 @@ export function CheckoutPayment() {
   const [
     selectedPaymentMethod,
     setSelectedPaymentMethod,
-  ] = useState<SelectedPaymentMethod>(null);
+  ] =
+    useState<SelectedPaymentMethod>(
+      null
+    );
 
   const [
     isSubmitting,
@@ -51,12 +55,16 @@ export function CheckoutPayment() {
   const [
     checkoutItems,
     setCheckoutItems,
-  ] = useState<CheckoutOrderItem[]>([]);
+  ] = useState<
+    CheckoutOrderItem[]
+  >([]);
 
   const [
     addressId,
     setAddressId,
-  ] = useState<string | null>(null);
+  ] = useState<string | null>(
+    null
+  );
 
   const [
     deliveryFee,
@@ -78,20 +86,31 @@ export function CheckoutPayment() {
   } | null>(null);
 
   useEffect(() => {
-    const checkout = getCheckout();
+    const checkout =
+      getCheckout();
 
     if (
       !checkout?.items.length ||
       !checkout.addressId
     ) {
-      router.replace("/checkout/delivery");
+      router.replace(
+        "/checkout/delivery"
+      );
+
       return;
     }
 
-    setCheckoutItems(checkout.items);
-    setAddressId(checkout.addressId);
+    setCheckoutItems(
+      checkout.items
+    );
+
+    setAddressId(
+      checkout.addressId
+    );
+
     setDeliveryFee(
-      checkout.deliveryFee ?? 0
+      checkout.deliveryFee ??
+        0
     );
   }, [router]);
 
@@ -105,13 +124,13 @@ export function CheckoutPayment() {
     );
 
   const total =
-    subtotal +
-    deliveryFee;
+    subtotal + deliveryFee;
 
   async function prepareStripePayment() {
     if (
       !addressId ||
-      checkoutItems.length === 0 ||
+      checkoutItems.length ===
+        0 ||
       stripePayment ||
       isSubmitting
     ) {
@@ -126,30 +145,36 @@ export function CheckoutPayment() {
         await fetch(
           "/api/store/checkout/orders",
           {
-            method: "POST",
+            method:
+              "POST",
 
             headers: {
               "Content-Type":
                 "application/json",
             },
 
-            body: JSON.stringify({
-              addressId,
+            body:
+              JSON.stringify(
+                {
+                  addressId,
 
-              paymentMethod:
-                "Card",
+                  paymentMethod:
+                    "Card",
 
-              items:
-                checkoutItems.map(
-                  (item) => ({
-                    productId:
-                      item.id,
+                  items:
+                    checkoutItems.map(
+                      (
+                        item
+                      ) => ({
+                        productId:
+                          item.id,
 
-                    quantity:
-                      item.quantity,
-                  })
-                ),
-            }),
+                        quantity:
+                          item.quantity,
+                      })
+                    ),
+                }
+              ),
           }
         );
 
@@ -163,7 +188,9 @@ export function CheckoutPayment() {
         );
       }
 
-      if (!order.clientSecret) {
+      if (
+        !order.clientSecret
+      ) {
         throw new Error(
           "Stripe could not prepare your secure payment form."
         );
@@ -177,16 +204,21 @@ export function CheckoutPayment() {
           order.clientSecret,
 
         amount:
-          Number(order.amount),
+          Number(
+            order.amount
+          ),
       });
     } catch (caught) {
       setError(
-        caught instanceof Error
+        caught instanceof
+          Error
           ? caught.message
           : "Unable to prepare your payment."
       );
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(
+        false
+      );
     }
   }
 
@@ -208,10 +240,26 @@ export function CheckoutPayment() {
     setError("");
   }
 
+  async function payWithTabby() {
+    if (!addressId || !checkoutItems.length || isSubmitting) return;
+    setError("");
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/store/tabby/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addressId, items: checkoutItems.map((item) => ({ productId: item.id, quantity: item.quantity })) }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.checkoutUrl) throw new Error(data.message ?? "Unable to start Tabby payment.");
+      window.location.assign(data.checkoutUrl);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to connect to Tabby.");
+      setIsSubmitting(false);
+    }
+  }
+
   async function handlePaymentSucceeded(
     paymentIntentId: string
   ) {
-    if (!stripePayment) return;
+    if (!stripePayment)
+      return;
 
     const response =
       await fetch(
@@ -227,9 +275,11 @@ export function CheckoutPayment() {
           },
 
           body:
-            JSON.stringify({
-              paymentIntentId,
-            }),
+            JSON.stringify(
+              {
+                paymentIntentId,
+              }
+            ),
         }
       );
 
@@ -268,61 +318,30 @@ export function CheckoutPayment() {
             </p>
 
             <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Choose how you want to pay
+              Choose how you
+              want to pay
             </h1>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <PaymentOption
+              <CardPaymentOption
                 active={
                   selectedPaymentMethod ===
                   "stripe"
                 }
-                title="Credit / Debit Card"
-                description="Card, Apple Pay and Google Pay"
-                icon={CreditCard}
                 onClick={() => {
                   void selectStripePayment();
                 }}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <PaymentLogo
-                    src="/payments/visa.png"
-                    alt="Visa"
-                  />
+              />
 
-                  <PaymentLogo
-                    src="/payments/mastercard.svg"
-                    alt="Mastercard"
-                  />
-
-                  <PaymentLogo
-                    src="/payments/apple-pay.png"
-                    alt="Apple Pay"
-                  />
-
-                  <PaymentLogo
-                    src="/payments/googlepay.png"
-                    alt="Google Pay"
-                  />
-                </div>
-              </PaymentOption>
-
-              <PaymentOption
+              <TabbyPaymentOption
                 active={
                   selectedPaymentMethod ===
                   "tabby"
                 }
-                title="Tabby"
-                description="Buy now pay later with Tabby"
                 onClick={
                   selectTabbyPayment
                 }
-              >
-                <PaymentLogo
-                  src="/payments/tabby-logo.svg"
-                  alt="Tabby"
-                />
-              </PaymentOption>
+              />
             </div>
           </section>
         </Reveal>
@@ -335,8 +354,9 @@ export function CheckoutPayment() {
           >
             <section className="rounded-2xl border border-border bg-surface-subtle p-5 text-center">
               <p className="text-sm font-semibold text-foreground">
-                Select a payment
-                method to continue.
+                Select a
+                payment method
+                to continue.
               </p>
             </section>
           </Reveal>
@@ -390,8 +410,9 @@ export function CheckoutPayment() {
           stripePayment &&
           !stripePromise && (
             <section className="rounded-2xl border border-error/30 bg-error/5 p-5 text-sm text-error">
-              Stripe checkout is
-              not configured.
+              Stripe checkout
+              is not
+              configured.
             </section>
           )}
 
@@ -416,19 +437,20 @@ export function CheckoutPayment() {
                       theme:
                         "stripe",
 
-                      variables: {
-                        colorPrimary:
-                          "#6F3CC3",
+                      variables:
+                        {
+                          colorPrimary:
+                            "#6F3CC3",
 
-                        colorBackground:
-                          "#FFFFFF",
+                          colorBackground:
+                            "#FFFFFF",
 
-                        colorText:
-                          "#000000",
+                          colorText:
+                            "#000000",
 
-                        borderRadius:
-                          "12px",
-                      },
+                          borderRadius:
+                            "12px",
+                        },
                     },
                   }}
                 >
@@ -452,23 +474,7 @@ export function CheckoutPayment() {
               scaleFrom={0.96}
               duration={0.4}
             >
-              <section className="rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center sm:rounded-3xl">
-                <div className="flex justify-center">
-                  <PaymentLogo
-                    src="/payments/tabby-logo.svg"
-                    alt="Tabby"
-                    large
-                  />
-                </div>
-
-                <h2 className="mt-4 text-lg font-bold text-foreground">
-                  Tabby selected
-                </h2>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Tabby payment will be connected in the next step.
-                </p>
-              </section>
+              <TabbyPaymentPanel total={total} loading={isSubmitting} error={error} onPay={() => { void payWithTabby(); }} />
             </Reveal>
           )}
 
@@ -501,116 +507,5 @@ export function CheckoutPayment() {
         </Reveal>
       </div>
     </div>
-  );
-}
-
-type PaymentOptionProps = {
-  active: boolean;
-  title: string;
-  description: string;
-  icon?: React.ElementType;
-  onClick: () => void;
-  children?: React.ReactNode;
-};
-
-function PaymentOption({
-  active,
-  title,
-  description,
-  icon: Icon,
-  onClick,
-  children,
-}: PaymentOptionProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`relative w-full rounded-2xl border-2 p-4 text-left transition-all sm:p-5 ${
-        active
-          ? "border-primary bg-primary/5"
-          : "border-border bg-background hover:border-primary/40"
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        {Icon && (
-          <span
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-              active
-                ? "bg-primary text-primary-foreground"
-                : "bg-surface-subtle text-muted-foreground"
-            }`}
-          >
-            <Icon
-              className="h-5 w-5"
-              strokeWidth={2}
-            />
-          </span>
-        )}
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <p className="text-sm font-bold text-foreground sm:text-base">
-              {title}
-            </p>
-
-            {children}
-          </div>
-
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            {description}
-          </p>
-        </div>
-
-        <span
-          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-            active
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border bg-background"
-          }`}
-        >
-          {active && (
-            <Check
-              className="h-3.5 w-3.5"
-              strokeWidth={3}
-            />
-          )}
-        </span>
-      </div>
-    </button>
-  );
-}
-
-type PaymentLogoProps = {
-  src: string;
-  alt: string;
-  large?: boolean;
-};
-
-function PaymentLogo({
-  src,
-  alt,
-  large = false,
-}: PaymentLogoProps) {
-  return (
-    <span
-      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-white ${
-        large
-          ? "h-10 w-[72px]"
-          : "h-8 w-14"
-      }`}
-    >
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes={
-          large
-            ? "72px"
-            : "56px"
-        }
-        className="object-contain p-1.5"
-      />
-    </span>
   );
 }

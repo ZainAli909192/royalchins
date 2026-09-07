@@ -184,6 +184,7 @@ export function CheckoutConfirmation() {
 
     const loadOrder = async () => {
       const paymentIntentId = searchParams.get("payment_intent");
+      const isTabby = searchParams.get("tabby") === "1";
       if (paymentIntentId) {
         const confirmation = await fetch(
           `/api/store/checkout/orders/${encodeURIComponent(number)}/payment`,
@@ -194,6 +195,10 @@ export function CheckoutConfirmation() {
           }
         );
         if (!confirmation.ok) throw new Error("We could not confirm your Stripe payment.");
+      }
+      if (isTabby) {
+        const confirmation = await fetch(`/api/store/tabby/orders/${encodeURIComponent(number)}/confirm`, { method: "POST" });
+        if (!confirmation.ok) throw new Error("We could not confirm your Tabby payment.");
       }
 
       return fetch(
