@@ -15,6 +15,8 @@ import { CardPaymentOption } from "@/components/store/checkout/card-payment-opti
 import { StripePaymentMethodSelector } from "@/components/store/checkout/stripe-express-checkout";
 import { TabbyPaymentOption } from "@/components/store/checkout/tabby/tabby-payment-option";
 import { TabbyPaymentPanel } from "@/components/store/checkout/tabby/tabby-payment-panel";
+import { TamaraPaymentOption } from "@/components/store/checkout/tamara/tamara-payment-option";
+import { TamaraPaymentPanel } from "@/components/store/checkout/tamara/tamara-payment-panel";
 import type { CheckoutOrderItem } from "@/components/store/checkout/order-summary";
 import { Reveal } from "@/components/store/shared/reveal";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,7 @@ const stripePromise = stripePublishableKey
 type SelectedPaymentMethod =
   | "stripe"
   | "tabby"
+  | "tamara"
   | null;
 
 export function CheckoutPayment() {
@@ -240,17 +243,152 @@ export function CheckoutPayment() {
     setError("");
   }
 
+  function selectTamaraPayment() {
+    setSelectedPaymentMethod(
+      "tamara"
+    );
+
+    setError("");
+  }
+
   async function payWithTabby() {
-    if (!addressId || !checkoutItems.length || isSubmitting) return;
+    if (
+      !addressId ||
+      !checkoutItems.length ||
+      isSubmitting
+    ) {
+      return;
+    }
+
     setError("");
     setIsSubmitting(true);
+
     try {
-      const response = await fetch("/api/store/tabby/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addressId, items: checkoutItems.map((item) => ({ productId: item.id, quantity: item.quantity })) }) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.checkoutUrl) throw new Error(data.message ?? "Unable to start Tabby payment.");
-      window.location.assign(data.checkoutUrl);
+      const response =
+        await fetch(
+          "/api/store/tabby/checkout",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                addressId,
+
+                items:
+                  checkoutItems.map(
+                    (item) => ({
+                      productId:
+                        item.id,
+
+                      quantity:
+                        item.quantity,
+                    })
+                  ),
+              }),
+          }
+        );
+
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
+
+      if (
+        !response.ok ||
+        !data.checkoutUrl
+      ) {
+        throw new Error(
+          data.message ??
+            "Unable to start Tabby payment."
+        );
+      }
+
+      window.location.assign(
+        data.checkoutUrl
+      );
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to connect to Tabby.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to connect to Tabby."
+      );
+
+      setIsSubmitting(false);
+    }
+  }
+
+  async function payWithTamara() {
+    if (
+      !addressId ||
+      !checkoutItems.length ||
+      isSubmitting
+    ) {
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const response =
+        await fetch(
+          "/api/store/tamara/checkout",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                addressId,
+
+                items:
+                  checkoutItems.map(
+                    (item) => ({
+                      productId:
+                        item.id,
+
+                      quantity:
+                        item.quantity,
+                    })
+                  ),
+              }),
+          }
+        );
+
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
+
+      if (
+        !response.ok ||
+        !data.checkoutUrl
+      ) {
+        throw new Error(
+          data.message ??
+            "Unable to start Tamara payment."
+        );
+      }
+
+      window.location.assign(
+        data.checkoutUrl
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to connect to Tamara."
+      );
+
       setIsSubmitting(false);
     }
   }
@@ -340,6 +478,16 @@ export function CheckoutPayment() {
                 }
                 onClick={
                   selectTabbyPayment
+                }
+              />
+
+              <TamaraPaymentOption
+                selected={
+                  selectedPaymentMethod ===
+                  "tamara"
+                }
+                onClick={
+                  selectTamaraPayment
                 }
               />
             </div>
@@ -474,7 +622,36 @@ export function CheckoutPayment() {
               scaleFrom={0.96}
               duration={0.4}
             >
-              <TabbyPaymentPanel total={total} loading={isSubmitting} error={error} onPay={() => { void payWithTabby(); }} />
+              <TabbyPaymentPanel
+                total={total}
+                loading={
+                  isSubmitting
+                }
+                error={error}
+                onPay={() => {
+                  void payWithTabby();
+                }}
+              />
+            </Reveal>
+          )}
+
+        {selectedPaymentMethod ===
+          "tamara" && (
+            <Reveal
+              direction="scale"
+              scaleFrom={0.96}
+              duration={0.4}
+            >
+              <TamaraPaymentPanel
+                total={total}
+                loading={
+                  isSubmitting
+                }
+                error={error}
+                onPay={() => {
+                  void payWithTamara();
+                }}
+              />
             </Reveal>
           )}
 

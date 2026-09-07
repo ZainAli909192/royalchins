@@ -185,6 +185,7 @@ export function CheckoutConfirmation() {
     const loadOrder = async () => {
       const paymentIntentId = searchParams.get("payment_intent");
       const isTabby = searchParams.get("tabby") === "1";
+      const isTamara = searchParams.get("tamara") === "1";
       if (paymentIntentId) {
         const confirmation = await fetch(
           `/api/store/checkout/orders/${encodeURIComponent(number)}/payment`,
@@ -199,6 +200,10 @@ export function CheckoutConfirmation() {
       if (isTabby) {
         const confirmation = await fetch(`/api/store/tabby/orders/${encodeURIComponent(number)}/confirm`, { method: "POST" });
         if (!confirmation.ok) throw new Error("We could not confirm your Tabby payment.");
+      }
+      if (isTamara) {
+        const confirmation = await fetch(`/api/store/tamara/orders/${encodeURIComponent(number)}/confirm`, { method: "POST" });
+        if (!confirmation.ok) throw new Error("We could not confirm your Tamara payment.");
       }
 
       return fetch(
