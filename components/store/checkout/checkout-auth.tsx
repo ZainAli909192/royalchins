@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AppleSignIn } from "@/components/auth/apple-sign-in";
 
 import { GoogleSignIn } from "@/components/auth/google-sign-in";
 
@@ -288,19 +289,25 @@ export function CheckoutAuth({
       </div>
 
       <div className="p-6 sm:p-8">
-        <div className="mb-6 space-y-5">
-          <GoogleSignIn returnTo={authReturnTo} />
+       <div className="mb-6 space-y-3">
+  <GoogleSignIn
+    returnTo={authReturnTo}
+  />
 
-          <div className="flex items-center gap-4">
-            <span className="h-px flex-1 bg-border" />
+  <AppleSignIn
+    returnTo={authReturnTo}
+  />
 
-            <span className="whitespace-nowrap text-xs font-semibold text-muted-foreground">
-              or continue with email
-            </span>
+  <div className="flex items-center gap-4 pt-2">
+    <span className="h-px flex-1 bg-border" />
 
-            <span className="h-px flex-1 bg-border" />
-          </div>
-        </div>
+    <span className="whitespace-nowrap text-xs font-semibold text-muted-foreground">
+      or continue with email
+    </span>
+
+    <span className="h-px flex-1 bg-border" />
+  </div>
+</div>
 
         {mode === "login" ? (
           <form
