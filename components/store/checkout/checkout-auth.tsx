@@ -288,7 +288,7 @@ export function CheckoutAuth({
 
       <div className="p-6 sm:p-8">
         <div className="mb-6 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid md:grid-cols-2 sm:grid-cols-1  gap-3">
             <GoogleSignIn
               returnTo={authReturnTo}
             />

@@ -16,11 +16,11 @@ export function GoogleSignIn({
     <button
       type="button"
       onClick={handleGoogleSignIn}
-      className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-5 text-sm font-bold text-foreground transition-colors hover:bg-surface-subtle"
+      className="inline-flex h-12 min-w-0 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground transition-colors hover:bg-surface-subtle sm:gap-3 sm:px-5 sm:text-sm"
     >
       <GoogleIcon />
 
-      <span className="whitespace-nowrap">
+      <span className="min-w-0 whitespace-nowrap">
         Continue with Google
       </span>
     </button>
