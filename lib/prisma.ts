@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client";
 // Increment this whenever the Prisma schema gains a model or field.  Next's
 // development hot-reloader preserves `globalThis`, which otherwise leaves an
 // old generated Prisma client alive after `prisma generate`.
-const prismaSchemaRevision = "settings-pets-2026-09-01";
+const prismaSchemaRevision = "category-images-2026-09-08";
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   prismaSchemaRevision?: string;

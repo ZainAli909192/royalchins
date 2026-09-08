@@ -265,11 +265,10 @@ export function CheckoutAuth({
           <button
             type="button"
             onClick={() => switchMode("login")}
-            className={`h-11 rounded-lg text-sm font-bold transition-colors ${
-              mode === "login"
+            className={`h-11 rounded-lg text-sm font-bold transition-colors ${mode === "login"
                 ? "bg-background text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             Sign In
           </button>
@@ -277,11 +276,10 @@ export function CheckoutAuth({
           <button
             type="button"
             onClick={() => switchMode("signup")}
-            className={`h-11 rounded-lg text-sm font-bold transition-colors ${
-              mode === "signup"
+            className={`h-11 rounded-lg text-sm font-bold transition-colors ${mode === "signup"
                 ? "bg-background text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             Create Account
           </button>
@@ -289,25 +287,27 @@ export function CheckoutAuth({
       </div>
 
       <div className="p-6 sm:p-8">
-       <div className="mb-6 space-y-3">
-  <GoogleSignIn
-    returnTo={authReturnTo}
-  />
+        <div className="mb-6 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <GoogleSignIn
+              returnTo={authReturnTo}
+            />
 
-  <AppleSignIn
-    returnTo={authReturnTo}
-  />
+            <AppleSignIn
+              returnTo={authReturnTo}
+            />
+          </div>
 
-  <div className="flex items-center gap-4 pt-2">
-    <span className="h-px flex-1 bg-border" />
+          <div className="flex items-center gap-4 pt-2">
+            <span className="h-px flex-1 bg-border" />
 
-    <span className="whitespace-nowrap text-xs font-semibold text-muted-foreground">
-      or continue with email
-    </span>
+            <span className="whitespace-nowrap text-xs font-semibold text-muted-foreground">
+              or continue with email
+            </span>
 
-    <span className="h-px flex-1 bg-border" />
-  </div>
-</div>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        </div>
 
         {mode === "login" ? (
           <form
@@ -542,9 +542,8 @@ function Field({
           placeholder={placeholder}
           autoComplete={autoComplete}
           required
-          className={`h-12 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary ${
-            icon ? "pl-11" : ""
-          }`}
+          className={`h-12 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary ${icon ? "pl-11" : ""
+            }`}
         />
       </div>
     </label>
@@ -567,8 +566,8 @@ function PasswordField({
   visible: boolean;
   onToggle: () => void;
   autoComplete:
-    | "current-password"
-    | "new-password";
+  | "current-password"
+  | "new-password";
 }) {
   return (
     <label
@@ -654,18 +653,16 @@ function PasswordStrength({
         {requirements.map((requirement) => (
           <div
             key={requirement.label}
-            className={`flex items-center gap-1.5 text-[11px] font-semibold ${
-              requirement.valid
+            className={`flex items-center gap-1.5 text-[11px] font-semibold ${requirement.valid
                 ? "text-success"
                 : "text-muted-foreground"
-            }`}
+              }`}
           >
             <span
-              className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                requirement.valid
+              className={`flex h-4 w-4 items-center justify-center rounded-full ${requirement.valid
                   ? "bg-success/10"
                   : "bg-background"
-              }`}
+                }`}
             >
               <Check className="h-2.5 w-2.5" />
             </span>

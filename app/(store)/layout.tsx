@@ -39,7 +39,7 @@ export default function StoreLayout({
         <main className="min-h-[calc(100vh-80px)]">
           {children}
         </main>
-  <PaymentLogoTicker />
+  {/* <PaymentLogoTicker /> */}
 
         <StoreFooter />
       </div>

@@ -24,6 +24,7 @@ type Category = {
   id: string;
   name: string;
   slug: string;
+  imageUrl: string | null;
   type: "Animal" | "Accessory";
   status: "Active" | "Inactive";
   items: number;
@@ -56,6 +57,7 @@ export default function CategoriesPage() {
           id: category.id,
           name: category.name,
           slug: category.slug,
+          imageUrl: category.imageUrl ?? null,
           type: category.type,
           status: category.isActive ? "Active" : "Inactive",
           items: category.items,
@@ -260,9 +262,7 @@ export default function CategoriesPage() {
                       className="border-t border-border"
                     >
                       <td className="px-5 py-4">
-                        <p className="text-sm font-semibold text-foreground">
-                          {category.name}
-                        </p>
+                        <div className="flex items-center gap-3"><img src={category.imageUrl || "/logo.png"} alt="" className="h-10 w-10 rounded-lg object-cover" /><p className="text-sm font-semibold text-foreground">{category.name}</p></div>
                       </td>
 
                       <td className="px-5 py-4 text-sm text-muted-foreground">

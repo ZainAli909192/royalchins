@@ -352,152 +352,187 @@ export default async function ProductDetailsPage({
         </Reveal>
       </section>
 
-      <RevealGroup
-        className="mt-8 grid gap-4 lg:mt-10 lg:grid-cols-[0.95fr_1.5fr_1fr_1fr]"
-        stagger={0.1}
-      >
-        <RevealItem
-          direction="scale"
-          scaleFrom={0.9}
-        >
-          <div className="flex h-full flex-col rounded-2xl border border-border bg-background p-5 shadow-sm sm:p-6">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <PawPrint className="h-5 w-5" />
-              </span>
+   <RevealGroup
+  className="mt-8 grid gap-4 lg:mt-10 lg:grid-cols-[1.45fr_1fr_1fr]"
+  stagger={0.1}
+>
+  {/* Animal / Accessory Details */}
+  <RevealItem
+    direction="up"
+    distance={30}
+  >
+    {isAnimal ? (
+      <AnimalDetails
+        category={
+          product.category.name
+        }
+        gender={
+          product.gender ||
+          "Not specified"
+        }
+        age={
+          product.age ||
+          "Not specified"
+        }
+        color={
+          product.color ||
+          "Not specified"
+        }
+        weight="Not specified"
+        temperament="Not specified"
+        availability={
+          stockLabel
+        }
+        origin="UAE Bred"
+      />
+    ) : (
+      <AccessoryDetails
+        category={
+          product.category.name
+        }
+        suitableFor={
+          product.compatibility ||
+          "Not specified"
+        }
+        size={
+          product.size ||
+          undefined
+        }
+        brand={
+          product.brand ||
+          undefined
+        }
+        material={
+          product.color
+            ? `${product.color} finish`
+            : undefined
+        }
+      />
+    )}
+  </RevealItem>
 
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                  About
-                </p>
+  {/* Care & Health */}
+  <RevealItem
+    direction="scale"
+    scaleFrom={0.9}
+  >
+    <InfoCard
+      icon={Heart}
+      eyebrow="Our promise"
+      title="Care & health"
+      lines={[
+        "What we provide with our pets from Royal Chins ✨",
+        "Pet will be trained to use a litter box",
+        "Pedigree certificate confirming breed purity",
+        "Passport registered under the new owner’s name, including all certified vaccinations according to veterinary protocol",
+        "Microchip identification",
+        "Full veterinary examination confirming the bunny is free from internal parasites",
+      ]}
+    />
+  </RevealItem>
 
-                <h2 className="mt-0.5 text-base font-bold text-foreground sm:text-lg">
-                  {isAnimal
-                    ? "About this companion"
-                    : "About this product"}
-                </h2>
-              </div>
-            </div>
+  {/* Delivery */}
+ <RevealItem
+  direction="right"
+  distance={35}
+>
+  <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+    {/* Header */}
+    <div className="flex items-center gap-3 border-b border-border bg-primary/[0.035] px-5 py-5 sm:px-6">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <Truck className="h-5 w-5" />
+      </span>
 
-            <p className="mt-5 text-sm leading-6 text-muted-foreground sm:leading-7">
-              {
-                product.shortDescription
-              }
-            </p>
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+          Delivered with care
+        </p>
 
-            <div className="mt-5 flex items-center gap-2 border-t border-border pt-4 text-sm font-semibold text-primary">
-              <Heart className="h-4 w-4" />
-              Selected with care
-            </div>
-          </div>
-        </RevealItem>
+        <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground sm:text-xl">
+          Delivery information
+        </h2>
+      </div>
+    </div>
 
-        <RevealItem
-          direction="up"
-          distance={30}
-        >
-          {isAnimal ? (
-            <AnimalDetails
-              category={
-                product.category
-                  .name
-              }
-              gender={
-                product.gender ||
-                "Not specified"
-              }
-              age={
-                product.age ||
-                "Not specified"
-              }
-              color={
-                product.color ||
-                "Not specified"
-              }
-              weight="Not specified"
-              temperament="Not specified"
-              availability={
-                stockLabel
-              }
-              origin="UAE Bred"
-            />
-          ) : (
-            <AccessoryDetails
-              category={
-                product.category
-                  .name
-              }
-              suitableFor={
-                product.compatibility ||
-                "Not specified"
-              }
-              size={
-                product.size ||
-                undefined
-              }
-              brand={
-                product.brand ||
-                undefined
-              }
-              material={
-                product.color
-                  ? `${product.color} finish`
-                  : undefined
-              }
-            />
-          )}
-        </RevealItem>
+    {/* Content */}
+    <div className="p-5 sm:p-6">
+      <p className="text-sm leading-7 text-muted-foreground sm:text-base">
+        UAE-wide delivery is available with safe and comfortable transport.
+      </p>
 
-        <RevealItem
-          direction="scale"
-          scaleFrom={0.9}
-        >
-          <InfoCard
-            icon={Heart}
-            eyebrow="Our promise"
-            title="Care & health"
-            lines={[
-              "Regularly health checked",
-              "High quality food & nutrition",
-              "Clean & comfortable environment",
-              "Care guide provided",
-            ]}
-          />
-        </RevealItem>
+      {/* Highlight */}
+      <div className="mt-5 rounded-2xl bg-primary/[0.06] p-4">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-background text-primary shadow-sm">
+            <Truck className="h-4 w-4" />
+          </span>
 
-        <RevealItem
-          direction="right"
-          distance={35}
-        >
-          <div className="flex h-full flex-col rounded-2xl border border-border bg-background p-5 shadow-sm sm:p-6">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Truck className="h-5 w-5" />
-              </span>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                  Delivered with care
-                </p>
-
-                <h2 className="mt-0.5 text-base font-bold text-foreground sm:text-lg">
-                  Delivery information
-                </h2>
-              </div>
-            </div>
-
-            <p className="mt-5 text-sm leading-6 text-muted-foreground sm:leading-7">
-              UAE-wide delivery is
-              available with safe and
-              comfortable transport.
-            </p>
-
-            <div className="mt-5 rounded-xl bg-surface-subtle p-3.5 text-sm font-bold text-foreground">
+          <div>
+            <p className="text-sm font-bold text-foreground">
               UAE-wide delivery
-            </div>
+            </p>
+
+            <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+              Safe transport across the UAE
+            </p>
           </div>
-        </RevealItem>
-      </RevealGroup>
+        </div>
+      </div>
+
+      {/* Small reassurance */}
+      <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-primary">
+        <span className="h-2 w-2 rounded-full bg-primary" />
+
+        <span>
+          Comfortable transport for your companion
+        </span>
+      </div>
+    </div>
+
+    {/* Accent */}
+    <div className="h-1 w-full bg-primary" />
+  </div>
+</RevealItem>
+</RevealGroup>
+
+{/* About */}
+<Reveal
+  direction="up"
+  distance={30}
+  className="mt-7 sm:mt-8"
+>
+  <section className="border-t border-border pt-6 sm:pt-8">
+    <div className="flex items-start gap-3">
+      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <PawPrint className="h-5 w-5" />
+      </span>
+
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+          About
+        </p>
+
+        <h2 className="mt-1 text-lg font-bold text-foreground sm:text-xl">
+          {isAnimal
+            ? "About this companion"
+            : "About this product"}
+        </h2>
+
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">
+          {product.shortDescription}
+        </p>
+
+        <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+          <Heart className="h-4 w-4 shrink-0" />
+
+          <span>
+            Selected with care
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+</Reveal>
 
       <Reveal
         direction="up"
@@ -530,37 +565,69 @@ function InfoCard({
   lines: string[];
 }) {
   return (
-    <div className="h-full rounded-2xl border border-border bg-background p-5 shadow-sm sm:p-6">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Icon className="h-5 w-5" />
-        </span>
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+      {/* Header */}
+      <div className="border-b border-border bg-primary/[0.035] px-5 py-5 sm:px-6">
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Icon className="h-5 w-5" />
+          </span>
 
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-            {eyebrow}
-          </p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              {eyebrow}
+            </p>
 
-          <h2 className="mt-0.5 text-base font-bold text-foreground sm:text-lg">
-            {title}
-          </h2>
+            <h2 className="mt-1 text-lg font-bold tracking-tight text-foreground sm:text-xl">
+              {title}
+            </h2>
+          </div>
         </div>
       </div>
 
-      <div className="mt-5 space-y-3 text-sm text-muted-foreground">
-        {lines.map((line) => (
-          <div
-            className="flex gap-2.5"
-            key={line}
-          >
-            <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
+      {/* Content */}
+      <div className="flex-1 p-4 sm:p-5">
+        <div className="space-y-2.5">
+          {lines.map((line, index) => (
+            <div
+              key={line}
+              className={[
+                "group flex items-start gap-3 rounded-xl px-3 py-3 transition-colors",
+                index === 0
+                  ? "bg-primary/[0.06]"
+                  : "hover:bg-surface-subtle",
+              ].join(" ")}
+            >
+              {/* Number / Marker */}
+              <span
+                className={[
+                  "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                  index === 0
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-primary/10 text-primary",
+                ].join(" ")}
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
 
-            {line}
-          </div>
-        ))}
+              {/* Text */}
+              <p
+                className={[
+                  "min-w-0 text-sm leading-6",
+                  index === 0
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground",
+                ].join(" ")}
+              >
+                {line}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
-      
-    </div>
 
+      {/* Bottom accent */}
+      <div className="h-1 w-full bg-primary" />
+    </div>
   );
 }

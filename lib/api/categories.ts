@@ -4,6 +4,7 @@ export type CategoryPayload = {
   slug?: string;
   type: "Animal" | "Accessory";
   description?: string;
+  imageUrl?: string | null;
   isActive: boolean;
 };
 export type CategoryResponse = CategoryPayload & { id: string; slug: string; items: number; createdAt: string; updatedAt: string };

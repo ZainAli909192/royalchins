@@ -40,6 +40,7 @@ export default function CreateCategoryPage() {
       slug: "",
       type: "Animal",
       description: "",
+      imageUrl: null,
       isActive: true,
     },
     mode: "onTouched",
@@ -163,6 +164,13 @@ export default function CreateCategoryPage() {
                   {errors.type.message}
                 </p>
               )}
+            </div>
+
+            <div className="w-full">
+              <label className="mb-2 block text-sm font-semibold text-foreground">Category image</label>
+              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting} onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { setFormError("Category image must be 5 MB or smaller."); return; } const reader = new FileReader(); reader.onload = () => setValue("imageUrl", String(reader.result), { shouldDirty: true, shouldValidate: true }); reader.readAsDataURL(file); }} className="block h-12 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm" />
+              {watch("imageUrl") && <img src={watch("imageUrl") || ""} alt="Category image preview" className="mt-3 h-16 w-16 rounded-lg object-cover" />}
+              {errors.imageUrl?.message && <p className="mt-1.5 text-sm text-error">{errors.imageUrl.message}</p>}
             </div>
 
             <div className="w-full">

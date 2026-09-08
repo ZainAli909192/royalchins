@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ChevronDown,
+  ChevronUp,
   PackageOpen,
   PawPrint,
   Search,
@@ -21,6 +23,8 @@ export function StoreHeader() {
   const [cartCount, setCartCount] = useState(0);
   const [customerName, setCustomerName] =
     useState<string | null>(null);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string; type: "Animal" | "Accessory"; imageUrl: string | null }>>([]);
+  const [mobileCategoryType, setMobileCategoryType] = useState<"Animal" | "Accessory" | null>(null);
 
   const { brand } = useStoreSettings();
 
@@ -63,6 +67,7 @@ export function StoreHeader() {
         .catch(() => setCustomerName(null));
 
     refreshAccount();
+    fetch("/api/store/categories").then((response) => response.ok ? response.json() : []).then(setCategories).catch(() => setCategories([]));
 
     window.addEventListener(
       "royalchins-auth-changed",
@@ -270,8 +275,7 @@ export function StoreHeader() {
           {/* Mobile Categories */}
           <div className="mt-2 grid grid-cols-2 gap-2">
 
-            <Link
-              href="/search?type=Animal"
+            <button type="button" aria-expanded={mobileCategoryType === "Animal"} onClick={() => setMobileCategoryType((current) => current === "Animal" ? null : "Animal")}
               className="inline-flex h-11 items-center justify-center gap-2  rounded-xl bg-white  px-3 text-sm font-semibold text-secondary transition-colors duration-200 hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <PawPrint className="h-4 w-4 shrink-0" />
@@ -279,10 +283,10 @@ export function StoreHeader() {
               <span>
                 Pets
               </span>
-            </Link>
+              {mobileCategoryType === "Animal" ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
+            </button>
 
-            <Link
-              href="/search?type=Accessory"
+            <button type="button" aria-expanded={mobileCategoryType === "Accessory"} onClick={() => setMobileCategoryType((current) => current === "Accessory" ? null : "Accessory")}
               className="inline-flex h-11 items-center justify-center gap-2  rounded-xl bg-white  px-3 text-sm font-semibold text-secondary transition-colors duration-200 hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <PackageOpen className="h-4 w-4 shrink-0" />
@@ -290,8 +294,48 @@ export function StoreHeader() {
               <span>
                 Accessories
               </span>
-            </Link>
+              {mobileCategoryType === "Accessory" ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
+            </button>
           </div>
+          {mobileCategoryType && (
+            <nav
+              aria-label={`${mobileCategoryType === "Animal" ? "Pet" : "Accessory"} categories`}
+              className="mt-2 grid gap-1 rounded-2xl border border-border bg-white p-2 shadow-sm"
+            >
+              <Link
+                href={`/search?type=${mobileCategoryType}`}
+                onClick={() => setMobileCategoryType(null)}
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-secondary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-subtle">
+                  {mobileCategoryType === "Animal" ? <PawPrint className="h-4 w-4" /> : <PackageOpen className="h-4 w-4" />}
+                </span>
+                All {mobileCategoryType === "Animal" ? "Pets" : "Accessories"}
+              </Link>
+              {categories
+                .filter((category) => category.type === mobileCategoryType)
+                .map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/search?type=${category.type}&category=${encodeURIComponent(category.name)}`}
+                    onClick={() => setMobileCategoryType(null)}
+                    className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-secondary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    {category.imageUrl ? (
+                      <img src={category.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-subtle">
+                        <PackageOpen className="h-4 w-4" />
+                      </span>
+                    )}
+                    <span>{category.name}</span>
+                  </Link>
+                ))}
+              {categories.every((category) => category.type !== mobileCategoryType) && (
+                <p className="px-3 py-3 text-sm text-muted-foreground">No categories available yet.</p>
+              )}
+            </nav>
+          )}
         </form>
       </div>
     </header>

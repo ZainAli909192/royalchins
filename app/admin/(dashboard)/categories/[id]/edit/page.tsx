@@ -70,6 +70,7 @@ export default function EditCategoryPage() {
           slug: category.slug,
           type: category.type,
           description: category.description ?? "",
+          imageUrl: category.imageUrl ?? null,
           isActive: category.isActive,
         });
       } catch (error) {
@@ -225,9 +226,14 @@ export default function EditCategoryPage() {
                 disabled={isSubmitting}
                 className="h-12 w-full rounded-lg border border-border bg-white px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               >
-                <option value="true">Active</option>
+                <option value="true" selected >Active</option>
                 <option value="false">Inactive</option>
               </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-foreground">Replace category image</label>
+              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting} onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { setFormError("Category image must be 5 MB or smaller."); return; } const reader = new FileReader(); reader.onload = () => setValue("imageUrl", String(reader.result), { shouldDirty: true, shouldValidate: true }); reader.readAsDataURL(file); }} className="block h-12 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm" />
+              {watch("imageUrl") && <img src={watch("imageUrl") || ""} alt="Current category" className="mt-3 h-16 w-16 rounded-lg object-cover" />}
             </div>
           </div>
 

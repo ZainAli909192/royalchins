@@ -26,6 +26,7 @@ type SearchPageProps = {
     type?:
       | "Animal"
       | "Accessory";
+    category?: string;
   }>;
 };
 
@@ -165,6 +166,8 @@ export default async function SearchPage({
   const type =
     params.type;
 
+  const category = params.category?.trim().toLowerCase();
+
   const normalizedQuery =
     query.toLowerCase();
 
@@ -211,7 +214,7 @@ export default async function SearchPage({
     }));
 
   const results =
-    normalizedQuery || type
+    normalizedQuery || type || category
       ? products.filter(
           (product) => {
             if (
@@ -221,6 +224,8 @@ export default async function SearchPage({
             ) {
               return false;
             }
+
+            if (category && product.category.toLowerCase() !== category) return false;
 
             const searchableText =
               [

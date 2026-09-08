@@ -9,7 +9,23 @@ export class ProductStoreError extends Error {
   constructor(message: string, public status: number) { super(message); }
 }
 
-const includeProduct = { category: true, images: { orderBy: { sortOrder: "asc" as const } } };
+// Select only fields the product storefront needs. This also keeps existing
+// product reads working while a database migration is being rolled out.
+const categorySelection = {
+  id: true,
+  name: true,
+  slug: true,
+  type: true,
+  description: true,
+  isActive: true,
+  items: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+const includeProduct = {
+  category: { select: categorySelection },
+  images: { orderBy: { sortOrder: "asc" as const } },
+};
 // Image and video data is saved with the product. Allow enough time for a
 // medium video upload to complete before Prisma closes the transaction.
 const productTransactionOptions = { maxWait: 10_000, timeout: 30_000 };

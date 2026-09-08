@@ -12,6 +12,7 @@ model Category {
   slug        String       @unique
   type        CategoryType
   description String       @default("")
+  imageUrl    String?
   isActive    Boolean      @default(true)
   items       Int          @default(0)
   createdAt   DateTime     @default(now())

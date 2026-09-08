@@ -31,10 +31,38 @@ const legalLinks = [
         href: "/privacy-policy",
         icon: ShieldCheck,
     },
-     {
+    {
         label: "Employees",
         href: "/employees",
         icon: ShieldCheck,
+    },
+];
+
+
+const paymentLogos = [
+    {
+        src: "/payments/visa.png",
+        alt: "Visa",
+    },
+    {
+        src: "/payments/mastercard.svg",
+        alt: "Mastercard",
+    },
+    {
+        src: "/payments/apple-pay.png",
+        alt: "Apple Pay",
+    },
+    {
+        src: "/payments/googlepay.png",
+        alt: "Google Pay",
+    },
+    {
+        src: "/payments/tabby-logo.svg",
+        alt: "Tabby",
+    },
+    {
+        src: "/payments/tamara.png",
+        alt: "Tamara",
     },
 ];
 
@@ -157,8 +185,33 @@ export function StoreFooter() {
                     </div>
                 </div>
 
+                {/* Payment Methods */}
+                <div className="mt-10 border-t border-white/10 pt-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <p className="shrink-0 text-sm font-semibold text-secondary-foreground">
+                            We accept:
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            {paymentLogos.map((payment) => (
+                                <div
+                                    key={payment.alt}
+                                    title={payment.alt}
+                                    className="flex h-[42px] w-[76px] shrink-0 items-center justify-center rounded border border-white/10 bg-white px-2"
+                                >
+                                    <img
+                                        src={payment.src}
+                                        alt={payment.alt}
+                                        className="h-[26px] w-[58px] object-contain"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Bottom */}
-                <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-5 text-xs text-secondary-foreground/50 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-6 flex flex-col gap-4 border-t border-white/10 pt-5 text-xs text-secondary-foreground/50 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p>
                             © 2026 {brand.storeName}. All rights reserved.
@@ -173,7 +226,7 @@ export function StoreFooter() {
                         href="/admin/login"
                         className="group inline-flex w-fit items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-secondary-foreground/40 transition-colors hover:bg-white/5 hover:text-secondary-foreground"
                     >
-                        <LockKeyhole className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-primary text-white" />
+                        <LockKeyhole className="h-3.5 w-3.5 shrink-0 text-white transition-colors group-hover:text-primary" />
 
                         <span className="text-white">
                             Admin
