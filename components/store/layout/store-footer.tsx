@@ -49,7 +49,7 @@ const paymentLogos = [
         alt: "Mastercard",
     },
     {
-        src: "/payments/apple-pay.png",
+        src: "/payments/applepay.png",
         alt: "Apple Pay",
     },
     {
@@ -193,19 +193,27 @@ export function StoreFooter() {
                         </p>
 
                         <div className="flex flex-wrap items-center gap-2.5">
-                            {paymentLogos.map((payment) => (
-                                <div
-                                    key={payment.alt}
-                                    title={payment.alt}
-                                    className="flex h-[42px] w-[76px] shrink-0 items-center justify-center rounded border border-white/10 bg-white px-2"
-                                >
-                                    <img
-                                        src={payment.src}
-                                        alt={payment.alt}
-                                        className="h-[26px] w-[58px] object-contain"
-                                    />
-                                </div>
-                            ))}
+                      {paymentLogos.map((payment) => {
+    const isLargeLogo =
+        payment.alt === "Apple Pay" ||
+        payment.alt === "Google Pay";
+
+    return (
+        <div
+            key={payment.alt}
+            title={payment.alt}
+            className="flex shrink-0 items-center justify-center"
+        >
+            <img
+                src={payment.src}
+                alt={payment.alt}
+                className={`h-[26px] w-[58px] object-contain ${
+                    isLargeLogo ? "scale-[1.7]" : ""
+                }`}
+            />
+        </div>
+    );
+})}
                         </div>
                     </div>
                 </div>
