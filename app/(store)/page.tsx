@@ -7,7 +7,6 @@ import {
 } from "react";
 
 import { CategoryCards } from "@/components/store/browse/category-cards";
-import { PartnersSection } from "@/components/store/layout/partners-section";
 import {
   ProductTypeFilter,
   type ProductFilter,
@@ -365,7 +364,6 @@ export default function BrowsePage() {
         distance={50}
         duration={0.75}
       >
-        <PartnersSection />
         <CompanionStorySection />
 
 

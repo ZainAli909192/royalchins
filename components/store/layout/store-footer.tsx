@@ -186,37 +186,74 @@ export function StoreFooter() {
                 </div>
 
                 {/* Payment Methods */}
-                <div className="mt-10 border-t border-white/10 pt-6">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <p className="shrink-0 text-sm font-semibold text-secondary-foreground">
-                            We accept:
-                        </p>
+              {/* Payment Methods + Partners */}
+<div className="mt-10 border-t border-white/10 pt-6">
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 
-                        <div className="flex flex-wrap items-center gap-2.5">
-                      {paymentLogos.map((payment) => {
-    const isLargeLogo =
-        payment.alt === "Apple Pay" ||
-        payment.alt === "Google Pay";
+        {/* Payment Methods */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <p className="shrink-0 text-sm font-semibold text-secondary-foreground">
+                We accept:
+            </p>
 
-    return (
-        <div
-            key={payment.alt}
-            title={payment.alt}
-            className="flex shrink-0 items-center justify-center"
-        >
-            <img
-                src={payment.src}
-                alt={payment.alt}
-                className={`h-[26px] w-[58px] object-contain ${
-                    isLargeLogo ? "scale-[1.7]" : ""
-                }`}
-            />
-        </div>
-    );
-})}
+            <div className="flex flex-wrap items-center gap-2.5">
+                {paymentLogos.map((payment) => {
+                    const isLargeLogo =
+                        payment.alt === "Apple Pay" ||
+                        payment.alt === "Google Pay";
+
+                    return (
+                        <div
+                            key={payment.alt}
+                            title={payment.alt}
+                            className="flex shrink-0 items-center justify-center"
+                        >
+                            <img
+                                src={payment.src}
+                                alt={payment.alt}
+                                className={`h-[26px] w-[58px] object-contain ${
+                                    isLargeLogo
+                                        ? "scale-[1.7]"
+                                        : ""
+                                }`}
+                            />
                         </div>
-                    </div>
+                    );
+                })}
+            </div>
+        </div>
+
+        {/* Partners */}
+        <div className="flex items-center gap-4">
+            <p className="shrink-0 text-sm font-semibold text-secondary-foreground">
+                Partners:
+            </p>
+
+            <div className="flex items-center gap-3">
+
+                {/* Noon */}
+                <div className="flex h-[42px] w-[92px] items-center justify-center overflow-hidden  px-2">
+                    <img
+                        src="/partners/noon.png"
+                        alt="Noon"
+                        className="h-[32px] w-full object-contain"
+                    />
                 </div>
+
+                {/* Petzone */}
+                <div className="flex h-[42px] w-[92px] items-center justify-center overflow-hidden g  px-2">
+                    <img
+                        src="/partners/petzone.png"
+                        alt="Petzone"
+                        className="h-[32px] w-full object-contain"
+                    />
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
 
                 {/* Bottom */}
                 <div className="mt-6 flex flex-col gap-4 border-t border-white/10 pt-5 text-xs text-secondary-foreground/50 sm:flex-row sm:items-center sm:justify-between">
