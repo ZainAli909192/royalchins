@@ -7,10 +7,11 @@ import {
 } from "react";
 
 import { CategoryCards } from "@/components/store/browse/category-cards";
-
+import { PartnersSection } from "@/components/store/layout/partners-section";
 import {
   ProductTypeFilter,
   type ProductFilter,
+  type StoreCategory,
 } from "@/components/store/browse/product-type-filter";
 
 import { ProductCard } from "@/components/store/browse/product-card";
@@ -47,6 +48,9 @@ export default function BrowsePage() {
   const [productsLoaded, setProductsLoaded] =
     useState(false);
 
+  const [categories, setCategories] =
+    useState<StoreCategory[]>([]);
+
   const [
     filter,
     setFilter,
@@ -55,10 +59,8 @@ export default function BrowsePage() {
       "all"
     );
 
-  const [
-    animalMenuOpen,
-    setAnimalMenuOpen,
-  ] = useState(false);
+  const [openCategoryType, setOpenCategoryType] =
+    useState<"Animal" | "Accessory" | null>(null);
 
   useEffect(() => {
     fetch("/api/products")
@@ -164,6 +166,13 @@ export default function BrowsePage() {
       );
   }, []);
 
+  useEffect(() => {
+    fetch("/api/store/categories")
+      .then((response) => response.ok ? response.json() : [])
+      .then((items: StoreCategory[]) => setCategories(items))
+      .catch(() => setCategories([]));
+  }, []);
+
   const filteredProducts =
     useMemo(() => {
       if (filter === "all") {
@@ -202,7 +211,7 @@ export default function BrowsePage() {
     value: ProductFilter
   ) => {
     setFilter(value);
-    setAnimalMenuOpen(false);
+    setOpenCategoryType(null);
   };
 
   return (
@@ -276,15 +285,9 @@ export default function BrowsePage() {
               onChange={
                 handleFilterChange
               }
-              animalMenuOpen={
-                animalMenuOpen
-              }
-              onAnimalMenuToggle={() =>
-                setAnimalMenuOpen(
-                  (current) =>
-                    !current
-                )
-              }
+              categories={categories}
+              openType={openCategoryType}
+              onMenuToggle={(type) => setOpenCategoryType((current) => current === type ? null : type)}
             />
           </Reveal>
         </div>
@@ -356,12 +359,15 @@ export default function BrowsePage() {
         )}
       </section>
 
+
       <Reveal
         direction="up"
         distance={50}
         duration={0.75}
       >
+        <PartnersSection />
         <CompanionStorySection />
+
 
         {/* <FinalCTA /> */}
       </Reveal>
