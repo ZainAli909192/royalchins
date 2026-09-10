@@ -19,10 +19,14 @@ type FeaturedProduct = {
 
 type FeaturedProductsProps = {
   products: FeaturedProduct[];
+  heading?: string;
+  description?: string;
 };
 
 export function FeaturedProducts({
   products,
+  heading = "Featured Products",
+  description = "Hand-picked companions and essentials.",
 }: FeaturedProductsProps) {
   if (products.length === 0) {
     return null;
@@ -41,11 +45,11 @@ export function FeaturedProducts({
             id="featured-products-heading"
             className="mt-1 text-xl font-bold tracking-tight text-primary sm:text-2xl"
           >
-            Featured Products
+            {heading}
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Hand-picked companions and essentials.
+            {description}
           </p>
         </div>
       </div>

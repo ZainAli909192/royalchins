@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   PackageOpen,
   PawPrint,
-  ShoppingCart,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -120,7 +119,7 @@ const stockDotColor = isPet
         
         {/* Name */}
         <Link
-          href={productHref}
+          href={productHref}    
           className="block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <h3 className="line-clamp-1 text-sm font-bold leading-5 text-muted-foreground transition-colors duration-200 hover:text-primary sm:text-base">

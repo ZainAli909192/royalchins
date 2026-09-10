@@ -50,6 +50,9 @@ export default function BrowsePage() {
   const [categories, setCategories] =
     useState<StoreCategory[]>([]);
 
+  const [showAllCategories, setShowAllCategories] =
+    useState(false);
+
   const [
     filter,
     setFilter,
@@ -213,6 +216,16 @@ export default function BrowsePage() {
     setOpenCategoryType(null);
   };
 
+  const visibleCategories = useMemo(
+    () => showAllCategories
+      ? categories
+      : [
+          ...categories.filter((category) => category.type === "Animal").slice(0, 3),
+          ...categories.filter((category) => category.type === "Accessory").slice(0, 3),
+        ],
+    [categories, showAllCategories]
+  );
+
   return (
     <div className="mx-auto max-w-[1440px] space-y-10 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <Reveal
@@ -227,18 +240,54 @@ export default function BrowsePage() {
         distance={50}
         delay={0.08}
       >
+        <section aria-labelledby="shop-by-category-heading" className="hidden md:block">
+          <div className="mb-5">
+            <h2 id="shop-by-category-heading" className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Shop by Category</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Explore pets and accessories selected for your home.</p>
+          </div>
+          {categories.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
+              {visibleCategories.map((category) => (
+                <button key={category.id} type="button" onClick={() => handleFilterChange(category.slug)} className="group flex w-24 shrink-0 flex-col items-center gap-2 rounded-2xl p-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:w-28">
+                  {category.imageUrl ? (
+                    <img src={category.imageUrl} alt="" className="h-20 w-20 rounded-full object-cover ring-1 ring-border transition-transform duration-200 group-hover:scale-105 sm:h-24 sm:w-24" />
+                  ) : (
+                    <span className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-subtle text-primary ring-1 ring-border sm:h-24 sm:w-24">{category.type === "Animal" ? <span className="text-2xl">🐾</span> : <span className="text-2xl">📦</span>}</span>
+                  )}
+                  <span className="line-clamp-2 text-sm font-semibold text-foreground">{category.name}</span>
+                </button>
+              ))}
+              {!showAllCategories && categories.length > visibleCategories.length && (
+                <button type="button" onClick={() => setShowAllCategories(true)} className="group flex w-24 shrink-0 flex-col items-center gap-2 rounded-2xl p-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:w-28">
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full border border-primary bg-primary/10 text-2xl font-semibold text-primary transition-transform duration-200 group-hover:scale-105 sm:h-24 sm:w-24">+</span>
+                  <span className="text-sm font-semibold text-foreground">Show all</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <AdminPageLoader label="Loading categories" />
+          )}
+        </section>
+      </Reveal>
+
+      {filter === "all" && <Reveal
+        direction="right"
+        distance={50}
+        delay={0.08}
+      >
         {productsLoaded ? (
           <FeaturedProducts
+            heading="Featured Accessories"
+            description="Hand-picked essentials for your pets."
             products={products.filter(
               (product) =>
-                product.isFeatured !==
-                false
+                product.type === "Accessory"
             )}
           />
         ) : (
           <AdminPageLoader label="Loading featured products" />
         )}
-      </Reveal>
+      </Reveal>}
 
       <Reveal
         direction="scale"
@@ -255,7 +304,7 @@ export default function BrowsePage() {
           >
             <div>
               <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                Products
+                Our Companion Pets
               </h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
@@ -265,10 +314,10 @@ export default function BrowsePage() {
                     <span className="font-semibold text-foreground">
                       {filteredProducts.length}
                     </span>{" "}
-                    products
+                    companion pets
                   </>
                 ) : (
-                  "Loading products..."
+                  "Loading companion pets..."
                 )}
               </p>
             </div>
@@ -292,7 +341,7 @@ export default function BrowsePage() {
         </div>
 
         {!productsLoaded ? (
-          <AdminPageLoader label="Loading products" />
+          <AdminPageLoader label="Loading companion pets" />
         ) : filteredProducts.length >
         0 ? (
           <RevealGroup
@@ -347,7 +396,7 @@ export default function BrowsePage() {
           >
             <div className="rounded-2xl border border-border bg-surface-subtle px-5 py-12 text-center">
               <p className="font-semibold text-foreground">
-                No products found.
+                No companion pet found.
               </p>
 
               <p className="mt-1 text-sm text-muted-foreground">
