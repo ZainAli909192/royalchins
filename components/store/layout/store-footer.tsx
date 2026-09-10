@@ -224,12 +224,12 @@ export function StoreFooter() {
         </div>
 
         {/* Partners */}
-        <div className="flex items-center gap-4">
+        <div className="md:flex  sm:grid  items-center gap-4">
             <p className="shrink-0 text-sm font-semibold text-secondary-foreground">
                 Partners:
             </p>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ">
 
                 {/* Noon */}
                 <div className="flex h-[42px] w-[92px] items-center justify-center overflow-hidden  px-2">
