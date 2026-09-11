@@ -1,7 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+
+import {
+  motion,
+  type Variants,
+} from "framer-motion";
 
 const brands = [
   {
@@ -18,11 +22,11 @@ const brands = [
   },
   {
     name: "Exotic Nutrition",
-    src: "/brands/exotic.png",
+    src: "/brands/exotic-nutrition.png",
   },
   {
     name: "Pawise",
-    src: "/brands/pawis.png",
+    src: "/brands/pawise.png",
   },
   {
     name: "Oxbow",
@@ -34,8 +38,21 @@ const brands = [
   },
 ];
 
-const containerVariants = {
+const smoothEase: [
+  number,
+  number,
+  number,
+  number,
+] = [
+  0.22,
+  1,
+  0.36,
+  1,
+];
+
+const containerVariants: Variants = {
   hidden: {},
+
   visible: {
     transition: {
       staggerChildren: 0.09,
@@ -44,19 +61,21 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: {
     opacity: 0,
     y: 24,
     scale: 0.96,
   },
+
   visible: {
     opacity: 1,
     y: 0,
     scale: 1,
+
     transition: {
       duration: 0.5,
-      ease: [0.22, 1, 0.36, 1],
+      ease: smoothEase,
     },
   },
 };
@@ -76,12 +95,12 @@ export function BrandsSection() {
             y: 0,
           }}
           viewport={{
-            once: false,
+            once: true,
             amount: 0.3,
           }}
           transition={{
             duration: 0.6,
-            ease: [0.22, 1, 0.36, 1],
+            ease: smoothEase,
           }}
           className="mx-auto max-w-3xl text-center"
         >
@@ -108,7 +127,7 @@ export function BrandsSection() {
           </p>
         </motion.div>
 
-        {/* Brand Grid */}
+        {/* Brands */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -132,7 +151,7 @@ export function BrandsSection() {
               }}
               className="group"
             >
-              <div className="flex min-h-[120px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-sm transition-shadow duration-300 group-hover:shadow-md sm:min-h-[140px] sm:p-5">
+              <div className="flex min-h-[120px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-sm transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-md sm:min-h-[140px] sm:p-5">
                 <div className="relative h-[70px] w-full sm:h-[82px]">
                   <Image
                     src={brand.src}
