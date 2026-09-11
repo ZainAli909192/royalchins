@@ -10,6 +10,7 @@ export type CategoryInput = { name: string; slug?: string; type: CategoryTypeVal
 function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""); }
 
 const legacyCategorySelection = { id: true, name: true, slug: true, type: true, description: true, isActive: true, items: true, createdAt: true, updatedAt: true } as const;
+const storeCategorySelection = { id: true, name: true, slug: true, type: true, imageUrl: true } as const;
 const withNoImage = <T extends object>(category: T) => ({ ...category, imageUrl: null });
 function isMissingImageColumn(error: unknown) { return typeof error === "object" && error !== null && "code" in error && (error as { code?: string }).code === "P2022"; }
 
@@ -18,6 +19,22 @@ export async function listCategories() {
   catch (error) {
     if (!isMissingImageColumn(error)) throw error;
     return (await prisma.category.findMany({ select: legacyCategorySelection, orderBy: { name: "asc" } })).map(withNoImage);
+  }
+}
+export async function listStoreCategories() {
+  try {
+    return await prisma.category.findMany({
+      where: { isActive: true },
+      select: storeCategorySelection,
+      orderBy: { name: "asc" },
+    });
+  } catch (error) {
+    if (!isMissingImageColumn(error)) throw error;
+    return (await prisma.category.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, slug: true, type: true },
+      orderBy: { name: "asc" },
+    })).map(withNoImage);
   }
 }
 export async function findCategory(id: string) {

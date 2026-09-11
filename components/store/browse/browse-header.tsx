@@ -4,16 +4,12 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const heroImages = [
-    "/home_animals/ctadesktop.png",
+  "/home_animals/2.png",
+  "/home_animals/1.jpeg",
 
-      "/home_animals/5.png",
-
-  "/home_animals/1.png",
-
-  "/home_animals/3.png",
-  "/home_animals/4.png",
-
-
+  // "/home_animals/1.png",
+  // "/home_animals/3.png",
+  // "/home_animals/4.png",
 ];
 
 export function BrowseHeader() {
@@ -58,12 +54,6 @@ export function BrowseHeader() {
             )
           )}
 
-          {/* Soft blend into content on desktop */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-24 bg-gradient-to-r from-transparent to-white lg:block"
-          />
-
           {/* Mobile bottom blend */}
           <div
             aria-hidden="true"
@@ -90,8 +80,6 @@ export function BrowseHeader() {
               need, all in one place.
             </p>
 
-         
-
             {/* Slider indicators */}
             <div className="mt-8 flex items-center gap-2">
               {heroImages.map(
@@ -103,13 +91,10 @@ export function BrowseHeader() {
                       index + 1
                     }`}
                     onClick={() =>
-                      setActiveImage(
-                        index
-                      )
+                      setActiveImage(index)
                     }
                     className={`h-1.5 rounded-full transition-all duration-300 ${
-                      activeImage ===
-                      index
+                      activeImage === index
                         ? "w-8 bg-[#6F3CC3]"
                         : "w-3 bg-black/15 hover:bg-black/30"
                     }`}

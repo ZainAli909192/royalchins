@@ -26,6 +26,25 @@ const includeProduct = {
   category: { select: categorySelection },
   images: { orderBy: { sortOrder: "asc" as const } },
 };
+// Public cards intentionally omit descriptions, internal inventory settings,
+// timestamps, SKU and secondary media. They are the most frequently requested
+// product shape on the storefront.
+const storeProductCardSelect = {
+  id: true,
+  slug: true,
+  name: true,
+  type: true,
+  regularPrice: true,
+  salePrice: true,
+  quantity: true,
+  isFeatured: true,
+  isSold: true,
+  gender: true,
+  age: true,
+  shortDescription: true,
+  category: { select: { name: true, slug: true } },
+  images: { select: { url: true }, orderBy: { sortOrder: "asc" as const }, take: 1 },
+} as const;
 // Image and video data is saved with the product. Allow enough time for a
 // medium video upload to complete before Prisma closes the transaction.
 const productTransactionOptions = { maxWait: 10_000, timeout: 30_000 };
@@ -83,7 +102,7 @@ export async function listStoreProducts() {
   const hideOutOfStock = typeof inventorySetting?.value === "object" && inventorySetting.value !== null && !Array.isArray(inventorySetting.value) && inventorySetting.value.hideOutOfStock === true;
   return prisma.product.findMany({
     where: { status: ProductStatus.Active, ...(hideOutOfStock ? { NOT: { type: "Accessory", quantity: { lte: 0 } } } : {}) },
-    include: includeProduct,
+    select: storeProductCardSelect,
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
   });
 }
@@ -99,7 +118,7 @@ export async function findStoreProductBySlug(slug: string) {
 export async function listRelatedStoreProducts(productId: string, type: CategoryType, categoryId: string) {
   return prisma.product.findMany({
     where: { id: { not: productId }, status: ProductStatus.Active, OR: [{ categoryId }, { type }] },
-    include: includeProduct,
+    select: storeProductCardSelect,
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     take: 4,
   });

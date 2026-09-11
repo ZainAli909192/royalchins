@@ -5,8 +5,7 @@ import { useEffect, useState } from "react";
 
 const companionImages = [
   "/home_animals/ctadesktop.png",
-  "/home_animals/1.jpeg",
-  "/home_animals/3.jpeg",
+  "/home_animals/4.png",
   //  "/home_animals/4.jpeg",
   //     "/home_animals/5.jpeg",
 

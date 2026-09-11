@@ -38,11 +38,11 @@ export async function GET() {
         brand: { ...defaults.brand, ...saved.brand },
         contact: { ...defaults.contact, ...saved.contact },
       },
-      { headers: { "Cache-Control": "no-store, max-age=0" } }
+      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } }
     );
   } catch {
     return NextResponse.json(defaults, {
-      headers: { "Cache-Control": "no-store, max-age=0" },
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
     });
   }
 }

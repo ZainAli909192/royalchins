@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { listCategories } from "@/lib/categories/category-store";
+import { listStoreCategories } from "@/lib/categories/category-store";
+
+export const revalidate = 120;
 
 export async function GET() {
-  const categories = await listCategories();
-  return NextResponse.json(
-    categories
-      .filter((category) => category.isActive)
-      .map(({ id, name, slug, type, imageUrl }) => ({ id, name, slug, type, imageUrl }))
-  );
+  return NextResponse.json(await listStoreCategories());
 }

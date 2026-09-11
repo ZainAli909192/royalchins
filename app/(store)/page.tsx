@@ -8,7 +8,6 @@ import {
 
 import { CategoryCards } from "@/components/store/browse/category-cards";
 import {
-  ProductTypeFilter,
   type ProductFilter,
   type StoreCategory,
 } from "@/components/store/browse/product-type-filter";
@@ -60,9 +59,6 @@ export default function BrowsePage() {
     useState<ProductFilter>(
       "all"
     );
-
-  const [openCategoryType, setOpenCategoryType] =
-    useState<"Animal" | "Accessory" | null>(null);
 
   useEffect(() => {
     fetch("/api/products")
@@ -213,7 +209,6 @@ export default function BrowsePage() {
     value: ProductFilter
   ) => {
     setFilter(value);
-    setOpenCategoryType(null);
   };
 
   const visibleCategories = useMemo(
@@ -323,21 +318,6 @@ export default function BrowsePage() {
             </div>
           </Reveal>
 
-          <Reveal
-            direction="right"
-            distance={45}
-            delay={0.05}
-          >
-            <ProductTypeFilter
-              value={filter}
-              onChange={
-                handleFilterChange
-              }
-              categories={categories}
-              openType={openCategoryType}
-              onMenuToggle={(type) => setOpenCategoryType((current) => current === type ? null : type)}
-            />
-          </Reveal>
         </div>
 
         {!productsLoaded ? (
