@@ -189,13 +189,13 @@ export function StoreFooter() {
         {/* Payment Methods */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center mb-5">
             <p className="shrink-0 text-sm font-semibold text-secondary-foreground">
-                We accept:
+                Payments: 
             </p>
 
             <div className="flex flex-wrap items-center gap-2.5">
                 {paymentLogos.map((payment) => {
                     const isLargeLogo =
-                        payment.alt === "Apple Pay" ||
+                        payment.alt === "Apple Pay" ||payment.alt === "Visa" ||
                         payment.alt === "Google Pay";
 
                     return (
@@ -209,7 +209,7 @@ export function StoreFooter() {
                                 alt={payment.alt}
                                 className={`h-[26px] w-[58px] object-contain ${
                                     isLargeLogo
-                                        ? "scale-[1.7]"
+                                        ? "scale-[1.8]"
                                         : ""
                                 }`}
                             />
@@ -237,11 +237,11 @@ export function StoreFooter() {
                 </div>
 
                 {/* Petzone */}
-                <div className="flex h-[42px] w-[92px] items-center justify-center overflow-hidden g  px-2 scale-90">
+                <div className="flex h-[42px] w-[92px] items-center justify-center overflow-hidden g  px-2 ">
                     <img
                         src="/partners/petzone.png"
                         alt="Petzone"
-                        className="h-[32px] w-full object-contain"
+                        className="h-[32px] w-full object-contain scale-170"
                     />
                 </div>
 

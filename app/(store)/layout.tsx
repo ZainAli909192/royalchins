@@ -5,6 +5,7 @@ import { StoreFooter } from "@/components/store/layout/store-footer";
 import { StoreHeader } from "@/components/store/layout/store-header";
 import { StoreSettingsProvider } from "@/components/store/layout/store-settings-provider";
 import { StoreLoader } from "@/components/store/layout/store-loader";
+import { BrandsSection } from "@/components/store/browse/brands-section";
 
 export const metadata: Metadata = {
   title: {
@@ -38,9 +39,9 @@ export default function StoreLayout({
 
         <main className="min-h-[calc(100vh-80px)]">
           {children}
+          
         </main>
   {/* <PaymentLogoTicker /> */}
-
         <StoreFooter />
       </div>
     </StoreSettingsProvider>

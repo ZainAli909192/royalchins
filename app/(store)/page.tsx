@@ -16,7 +16,6 @@ import { ProductCard } from "@/components/store/browse/product-card";
 import { BrowseHeader } from "@/components/store/browse/browse-header";
 import { FeaturedProducts } from "@/components/store/browse/featured-products";
 import { AdminPageLoader } from "@/components/admin/shared/admin-page-loader";
-import FinalCTA from "@/components/store/layout/finalcta";
 import CompanionStorySection from "@/components/store/layout/companion-story-section";
 
 import {
@@ -24,6 +23,7 @@ import {
   RevealGroup,
   RevealItem,
 } from "@/components/store/shared/reveal";
+import { BrandsSection } from "@/components/store/browse/brands-section";
 
 type StoreProduct = {
   slug: string;
@@ -387,7 +387,8 @@ export default function BrowsePage() {
         )}
       </section>
 
-
+<BrandsSection />
+        
       <Reveal
         direction="up"
         distance={50}
