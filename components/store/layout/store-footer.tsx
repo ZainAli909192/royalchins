@@ -237,7 +237,7 @@ export function StoreFooter() {
                 </div>
 
                 {/* Petzone */}
-                <div className="flex h-[42px] w-[92px] items-center justify-center overflow-hidden g  px-2">
+                <div className="flex h-[42px] w-[92px] items-center justify-center overflow-hidden g  px-2 scale-90">
                     <img
                         src="/partners/petzone.png"
                         alt="Petzone"
