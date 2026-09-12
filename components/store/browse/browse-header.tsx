@@ -8,7 +8,7 @@ const heroImages = [
   "/home_animals/1.jpeg",
  
   // "/home_animals/1.png",
-  "/home_animals/3.png",
+  "/home_animals/5.png",
   // "/home_animals/4.png",
 ];
 
